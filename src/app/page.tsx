@@ -40,8 +40,8 @@ export default function Home() {
           <div className="flex items-center space-x-4">
             {[
               { href: "/fiszki", label: "Fiszki" },
-              { href: "/trener-slowek", label: "Trener słówek" },
-              { href: "/trener-nieregularnych", label: "Trener nieregularnych" },
+              { href: "/slowka", label: "Trener słówek" },
+              { href: "/czasowniki-nieregularne", label: "Trener nieregularnych" },
               { href: "/login", label: "Zaloguj się" },
             ].map(({ href, label }) => (
               <Link
