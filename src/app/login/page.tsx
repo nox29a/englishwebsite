@@ -1,10 +1,13 @@
 "use client";
 
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+
+export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
   const router = useRouter();
