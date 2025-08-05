@@ -129,22 +129,22 @@ export default function IrregularVerbsTrainer() {
   const [darkMode, setDarkMode] = useState(true); // default na ciemny tryb
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user);
-      }
-    };
+  // useEffect(() => {
+  //   const getUser = async () => {
+  //     const { data, error } = await supabase.auth.getUser();
+  //     if (data?.user) {
+  //       setUser(data.user);
+  //     }
+  //   };
 
-    getUser();
-  }, []);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeSpent((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  //   getUser();
+  // }, []);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setTimeSpent((prev) => prev + 1);
+  //   }, 1000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   
 
