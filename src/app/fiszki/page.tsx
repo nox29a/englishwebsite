@@ -3723,12 +3723,12 @@ export default function FlashcardGame() {
 
       <form onSubmit={handleSubmit} className="flex space-x-4">
         <Input
-          className={`text-black bg-white transition-colors duration-200 ${feedbackColor}`}
+          className={`text-white transition-colors duration-200 ${feedbackColor}`}
           placeholder="Wpisz tłumaczenie..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
-        <Button type="submit" className="border border-white">
+        <Button type="submit" className={`border border-white transition-colors duration-200 ${feedbackColor}`}>
           Sprawdź
         </Button>
       </form>
@@ -3743,7 +3743,7 @@ export default function FlashcardGame() {
         Pozostało słów: {remaining.length} / {getWords().length} | Trafienia: {score}
       </div>
 
-      <Button onClick={resetGame} variant="outline" className="text-black">
+      <Button onClick={resetGame} variant="outline" className="text-white">
         Reset
       </Button>
     </div>

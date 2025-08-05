@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -26,6 +27,18 @@ const cardVariants = {
 export default function Home() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+      }
+    };
+
+    getUser();
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -36,22 +49,32 @@ export default function Home() {
       {/* Header */}
       <header className="w-full py-6 bg-white dark:bg-gray-900 shadow-md">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-indigo-600">LearnEnglishAI</h1>
+          {/* <h1 className="text-2xl font-bold text-indigo-600">LearnEnglishAI</h1> */}
           <div className="flex items-center space-x-4">
-            {[
-              { href: "/fiszki", label: "Fiszki" },
-              { href: "/slowka", label: "Trener słówek" },
-              { href: "/czasowniki-nieregularne", label: "Trener nieregularnych" },
-              { href: "/login", label: "Zaloguj się" },
-            ].map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition"
-              >
-                {label}
-              </Link>
-            ))}
+{[
+  { href: "/fiszki", label: "Fiszki" },
+  { href: "/slowka", label: "Trener słówek" },
+  { href: "/czasowniki-nieregularne", label: "Trener nieregularnych" },
+]
+  .map(({ href, label }) => (
+    <Link
+      key={href}
+      href={href}
+      className="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition"
+    >
+      {label}
+    </Link>
+))}
+
+{/* Zaloguj się tylko, jeśli user == null */}
+{!user && (
+  <Link
+    href="/login"
+    className="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition"
+  >
+    Zaloguj się
+  </Link>
+)}
 
             {/* Theme Toggle */}
             {mounted && (
@@ -72,7 +95,7 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="max-w-7xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-12 items-center">
+      {/* <section className="max-w-7xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-12 items-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -104,10 +127,10 @@ export default function Home() {
         >
           <RocketIcon className="w-48 h-48 text-indigo-500 dark:text-indigo-400" />
         </motion.div>
-      </section>
+      </section> */}
 
       {/* Features */}
-      <section
+      {/* <section
         id="features"
         className="max-w-7xl mx-auto px-6 py-20 grid md:grid-cols-3 gap-8"
       >
@@ -145,7 +168,7 @@ export default function Home() {
             <p className="text-gray-700 dark:text-gray-300">{description}</p>
           </motion.div>
         ))}
-      </section>
+      </section> */}
 
       {/* Tools */}
       <section
@@ -211,7 +234,7 @@ export default function Home() {
       </section>
 
       {/* FAQ */}
-      <section
+      {/* <section
         id="faq"
         className="max-w-7xl mx-auto px-6 py-20 bg-white dark:bg-gray-900 rounded-3xl shadow-lg mb-20"
       >
@@ -247,7 +270,7 @@ export default function Home() {
             </p>
           </details>
         </div>
-      </section>
+      </section> */}
 
       {/* Footer */}
       <footer className="py-6 bg-indigo-900 text-white text-center">

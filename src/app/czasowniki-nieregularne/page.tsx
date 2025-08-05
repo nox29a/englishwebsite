@@ -5,7 +5,11 @@ import { useState, useEffect, useRef, } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabaseClient";
 //test
+
+
+
 const verbs = [
   { base: "arise", past: "arose", participle: "arisen", translation: "powstawać" },
   { base: "awake", past: "awoke", participle: "awoken", translation: "budzić się" },
@@ -123,13 +127,26 @@ export default function IrregularVerbsTrainer() {
   const [totalAnswers, setTotalAnswers] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [darkMode, setDarkMode] = useState(true); // default na ciemny tryb
+  const [user, setUser] = useState(null);
 
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+      }
+    };
+
+    getUser();
+  }, []);
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeSpent((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  
 
   const resetTrainer = () => {
     const freshVerbs = [...verbs];
@@ -182,7 +199,7 @@ export default function IrregularVerbsTrainer() {
     setResult("");
     setShowAnswer(false);
     setAnsweredCorrectly(false);
-
+    console.log(remainingVerbs)
     setTimeout(() => {
       baseInputRef.current?.focus();
     }, 0);
@@ -226,7 +243,7 @@ export default function IrregularVerbsTrainer() {
       tabIndex={0}
     >
       {/* Tryb jasny/ciemny */}
-      <div className="flex justify-end mb-4">
+      {/* <div className="flex justify-end mb-4">
         <Button
           variant="outline"
           onClick={() => setDarkMode(!darkMode)}
@@ -234,15 +251,15 @@ export default function IrregularVerbsTrainer() {
         >
           {darkMode ? "Jasny tryb" : "Ciemny tryb"}
         </Button>
-      </div>
+      </div> */}
 
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-2 md:gap-0">
-        <h1 className="text-2xl font-bold text-center md:text-left">
+        {/* <h1 className="text-2xl font-bold text-center md:text-left">
           Trener czasowników nieregularnych
-        </h1>
+        </h1> */}
         <div className={`text-center md:text-right text-sm md:text-base ${accuracyColor}`}>
-          <p>Odpowiedzi: <strong>{correctAnswers}/{totalAnswers}</strong></p>
-          <p>Skuteczność: <strong>{accuracy}%</strong></p>
+          {/* <p>Odpowiedzi: <strong>{correctAnswers}/{totalAnswers}</strong></p>
+          <p>Skuteczność: <strong>{accuracy}%</strong></p> */}
           <p>Czas: <strong>{formatTime(timeSpent)}</strong></p>
           <p>Poprawne: <strong>{correctAnswers}</strong></p>
           <p>Pozostało: <strong>{remainingVerbs.length} z {verbs.length}</strong></p>
@@ -352,8 +369,10 @@ export default function IrregularVerbsTrainer() {
               <p>
                 Participle: <strong>{currentVerb.participle}</strong>
               </p>
+              
             </div>
           )}
+          
         </CardContent>
       </Card>
     </div>
