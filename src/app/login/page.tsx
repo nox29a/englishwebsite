@@ -1,5 +1,6 @@
+ "use client";
  export default function LoginPage() {
-    <div>Login Page</div>
+    <div>Login  P1age</div>
  }
 
 
