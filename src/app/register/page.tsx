@@ -6,66 +6,90 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function RegisterPage() {
   const router = useRouter();
-
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [agreed, setAgreed] = useState(false);
-
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    agreed: false
+  });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!agreed) {
+    // Walidacja
+    if (!formData.agreed) {
       setErrorMsg("Musisz zaakceptować regulamin.");
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setErrorMsg("Hasła nie są identyczne.");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setErrorMsg("Hasło musi mieć co najmniej 6 znaków.");
       return;
     }
 
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    try {
+      // 1. Rejestracja użytkownika
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName
+          }
+        }
+      });
 
-    if (error) {
-      setErrorMsg(error.message);
-      setLoading(false);
-      return;
-    }
+      if (error) throw error;
 
-    const user = data.user;
+      // 2. Dodatkowe dane profilowe (jeśli potrzebne)
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: data.user.id,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+           
+          });
 
-    if (user) {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert([
-          {
-            id: user.id,
-            first_name: firstName,
-            last_name: lastName,
-          },
-        ]);
+        if (profileError) throw profileError;
+      }
 
-      if (profileError) {
-        setErrorMsg("Błąd przy tworzeniu profilu: " + profileError.message);
+      // 3. Weryfikacja email
+      if (data.user?.identities?.length === 0) {
+        setErrorMsg("Użytkownik już istnieje. Spróbuj zalogować się.");
         setLoading(false);
         return;
       }
-    }
 
-    setLoading(false);
-    router.push("/dashboard");
+      // 4. Przekierowanie po sukcesie
+      router.push("/verify-email"); // Nowa strona z informacją o weryfikacji
+    } catch (error: any) {
+      setErrorMsg(error.message || "Wystąpił błąd podczas rejestracji");
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,71 +102,87 @@ export default function RegisterPage() {
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <input
+              name="firstName"
               type="text"
               placeholder="Imię"
-              value={firstName}
+              value={formData.firstName}
               required
-              onChange={(e) => setFirstName(e.target.value)}
+              onChange={handleChange}
               className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
             <input
+              name="lastName"
               type="text"
               placeholder="Nazwisko"
-              value={lastName}
+              value={formData.lastName}
               required
-              onChange={(e) => setLastName(e.target.value)}
+              onChange={handleChange}
               className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
           <input
+            name="email"
             type="email"
             placeholder="Adres email"
-            value={email}
+            value={formData.email}
             required
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={handleChange}
             className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
 
           <input
+            name="password"
             type="password"
-            placeholder="Hasło"
-            value={password}
+            placeholder="Hasło (min. 6 znaków)"
+            value={formData.password}
             required
-            onChange={(e) => setPassword(e.target.value)}
+            minLength={6}
+            onChange={handleChange}
             className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
 
           <input
+            name="confirmPassword"
             type="password"
             placeholder="Powtórz hasło"
-            value={confirmPassword}
+            value={formData.confirmPassword}
             required
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            minLength={6}
+            onChange={handleChange}
             className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
 
           <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
             <input
+              name="agreed"
               type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
+              checked={formData.agreed}
+              onChange={handleChange}
               className="accent-indigo-600"
             />
             <span>
               Akceptuję{" "}
-              <a href="/regulamin" className="underline text-indigo-600 hover:text-indigo-800">
+              <a href="/regulamin" className="underline text-indigo-600 hover:text-indigo-800 dark:hover:text-indigo-400">
                 regulamin
               </a>
             </span>
           </label>
 
-          {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+          {errorMsg && (
+            <div className="p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg">
+              {errorMsg}
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 rounded-xl hover:bg-indigo-700 transition font-semibold"
+            className={`w-full py-2 rounded-xl transition font-semibold ${
+              loading 
+                ? 'bg-indigo-400 cursor-not-allowed' 
+                : 'bg-indigo-600 hover:bg-indigo-700'
+            } text-white`}
           >
             {loading ? "Rejestruję..." : "Zarejestruj się"}
           </button>
@@ -150,8 +190,8 @@ export default function RegisterPage() {
 
         <p className="text-sm text-center text-gray-600 dark:text-gray-400 mt-4">
           Masz już konto?{" "}
-          <a href="/login" className="text-indigo-600 underline hover:text-indigo-800">
-            Zaloguj się
+          <a href="/login" className="text-indigo-600 underline hover:text-indigo-800 dark:hover:text-indigo-400">
+            Zaloguj s
           </a>
         </p>
       </div>

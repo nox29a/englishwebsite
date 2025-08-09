@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 // Typy
 
@@ -3682,41 +3683,123 @@ export default function WordMatchGame() {
   const [errors, setErrors] = useState(0);
   const [startTime, setStartTime] = useState(Date.now());
   const [now, setNow] = useState(Date.now());
+    const [userId, setUserId] = useState<string | null>(null);
+  const [progressId, setProgressId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (user) setUserId(user.id);
+      setLoading(false);
+    };
+    fetchUser();
+  }, []);
+
+    // Ładuj postępy
+  const loadProgress = async () => {
+    if (!userId) return;
+    
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('word_match_progress')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('difficulty', difficulty)
+      .single();
+
+    if (data) {
+      setProgressId(data.id);
+      setUsedIds(data.learned_ids || []);
+      setScore(data.score || 0);
+      setErrors(data.errors || 0);
+      setStartTime(Date.now() - (data.time_spent || 0) * 1000);
+    }
+    setLoading(false);
+  };
+
+  // Zapisz postępy
+  const saveProgress = async () => {
+    if (!userId) return;
+
+    const progressData = {
+      user_id: userId,
+      difficulty,
+      learned_ids: usedIds,
+      score,
+
+    };
+
+    try {
+      if (progressId) {
+        await supabase
+          .from('word_match_progress')
+          .update(progressData)
+          .eq('id', progressId);
+      } else {
+        const { data, error } = await supabase
+          .from('word_match_progress')
+          .insert(progressData)
+          .select()
+          .single();
+        if (data) setProgressId(data.id);
+      }
+    } catch (error) {
+      console.error("Error saving progress:", error);
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (userId) loadProgress();
+  }, [userId, difficulty]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (userId && progressId) saveProgress();
+    }, 5000);
+    
+    return () => clearInterval(timer);
+  }, [userId, progressId, usedIds, score, errors, startTime]);
+
   const shuffleArray = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
 
   const getEmptySlots = (slots: SlotWord[]) =>
     slots.map((slot, idx) => (slot.id === null ? idx : -1)).filter((i) => i !== -1);
 
-  const addNewPairs = (n: number) => {
-    let plCopy = [...plSlots];
-    let enCopy = [...enSlots];
-    let used = [...usedIds];
+const addNewPairs = (n: number, currentPlSlots = plSlots, currentEnSlots = enSlots) => {
+  const emptyPlSlots = shuffleArray(getEmptySlots(currentPlSlots));
+  const emptyEnSlots = shuffleArray(getEmptySlots(currentEnSlots));
+  const slotsToFill = Math.min(emptyPlSlots.length, emptyEnSlots.length, n);
+  if (slotsToFill <= 0) return;
 
-    const emptyPlSlots = shuffleArray(getEmptySlots(plCopy));
-    const emptyEnSlots = shuffleArray(getEmptySlots(enCopy));
-    const slotsToFill = Math.min(emptyPlSlots.length, emptyEnSlots.length, n);
-    const candidates = shuffleArray(words.filter((w) => !used.includes(w.id))).slice(
-      0,
-      slotsToFill
-    );
+  // Używamy funkcjonalnego setUsedIds, żeby bezpiecznie dobrać kandydatów
+  setUsedIds((prevUsed) => {
+    const candidates = shuffleArray(words.filter((w) => !prevUsed.includes(w.id))).slice(0, slotsToFill);
+    if (candidates.length === 0) return prevUsed;
 
-    for (let i = 0; i < slotsToFill; i++) {
+    const newUsed = [...prevUsed];
+    const plCopy = [...currentPlSlots];
+    const enCopy = [...currentEnSlots];
+
+    for (let i = 0; i < candidates.length; i++) {
       const word = candidates[i];
       plCopy[emptyPlSlots[i]] = { id: word.id, word: word.pl };
       enCopy[emptyEnSlots[i]] = { id: word.id, word: word.en };
-      used.push(word.id);
+      newUsed.push(word.id);
     }
 
+    // Zaktualizuj stany na podstawie kopii
     setPlSlots(plCopy);
     setEnSlots(enCopy);
-    setUsedIds(used);
-  };
+
+    return newUsed;
+  });
+};
 
   useEffect(() => {
     resetGame();
@@ -3761,29 +3844,53 @@ export default function WordMatchGame() {
     }
 
     if (selected.id === slot.id && selected.side !== side) {
-      const plIndex = side === "pl" ? slotIndex : selected.slotIndex;
-      const enIndex = side === "en" ? slotIndex : selected.slotIndex;
+  // Znajdź indeksy pewnie po ID (awaryjnie użyj slotIndex/selected.slotIndex)
+  let plIndex = side === "pl" ? slotIndex : plSlots.findIndex((s) => s.id === slot.id);
+  let enIndex = side === "en" ? slotIndex : enSlots.findIndex((s) => s.id === slot.id);
 
-      setCorrectHighlight({ plIndex, enIndex });
-      setSelected(null);
-      setScore((s) => s + 1);
+  if (plIndex === -1 && selected.side === "pl") plIndex = selected.slotIndex;
+  if (enIndex === -1 && selected.side === "en") enIndex = selected.slotIndex;
 
-      setTimeout(() => {
-        setPlSlots((prev) =>
-          prev.map((s, i) => (i === plIndex ? { id: null, word: null } : s))
-        );
-        setEnSlots((prev) =>
-          prev.map((s, i) => (i === enIndex ? { id: null, word: null } : s))
-        );
-        setCorrectHighlight(null);
-        const totalWords =
-          plSlots.filter((s) => s.id !== null).length +
-          enSlots.filter((s) => s.id !== null).length;
-        if (totalWords - 2 < 6) addNewPairs(2);
-      }, 500);
+  // Bezpieczny guard
+  if (plIndex === -1 || enIndex === -1) {
+    // coś poszło nie tak — anuluj wybór
+    setSelected(null);
+    return;
+  }
 
-      return;
+  setCorrectHighlight({ plIndex, enIndex });
+  setSelected(null);
+  setScore((s) => s + 1);
+
+  // Po krótkim highlight -> usuń parę i (opcjonalnie) dodaj nowe z delayem
+  setTimeout(() => {
+    // Stwórz kopie aktualnych slotów i usuń odpowiednie indeksy
+    const updatedPl = plSlots.map((s, i) => (i === plIndex ? { id: null, word: null } : s));
+    const updatedEn = enSlots.map((s, i) => (i === enIndex ? { id: null, word: null } : s));
+
+    // Aktualizuj stan natychmiast na bazie kopii
+    setPlSlots(updatedPl);
+    setEnSlots(updatedEn);
+    setCorrectHighlight(null);
+
+    // Ile par (liczone po PL) zostało na planszy?
+    const remainingPairs = updatedPl.filter((s) => s.id !== null).length;
+
+    // Jeśli brakuje par do minimalnego progu - uzupełnij, ale z dodatkowym delayem,
+    // żeby wszystko się najpierw "rozjechało" w UI i nie było race condition.
+    const MIN_PAIRS = 5;
+    const toAdd = Math.max(0, MIN_PAIRS - remainingPairs);
+    if (toAdd > 3) {
+      // delay pozwala dokończyć animację/usunięcie, a addNewPairs użyje przekazanych kopii
+      setTimeout(() => addNewPairs(toAdd, updatedPl, updatedEn), 300);
+      
+
     }
+  }, 500);
+
+  return;
+}
+
 
     // Zliczanie błędów:
     setErrors((e) => e + 1);
@@ -3886,17 +3993,21 @@ const getButtonClass = (
       </div>
 
       {/* Statystyki */}
-      <div className="mt-8 text-lg space-y-1">
-        <p>
-          Punkty: <strong>{score}</strong>
-        </p>
-        <p>
-          Błędy: <strong>{errors}</strong>
-        </p>
-        <p>
-          Czas gry: <strong>{gameTime}s</strong>
-        </p>
-      </div>
+<div className="mt-8 text-lg space-y-1">
+
+  <p>
+    Czas gry: <strong>{gameTime}s</strong>
+  </p>
+  <p>
+    Nauczone słowa: <strong>{Math.max(0, usedIds.length - 5)}</strong>
+  </p>
+  <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
+    <div 
+      className="bg-blue-600 h-2.5 rounded-full" 
+      style={{ width: `${(usedIds.length / words.length) * 100}%` }}
+    ></div>
+  </div>
+</div>
 
       {/* Reset */}
       <button
