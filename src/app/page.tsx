@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { User } from '@supabase/supabase-js'; // <-- Add this import
 import {
   Sparkles,
   BookOpen,
