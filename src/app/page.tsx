@@ -27,7 +27,7 @@ const cardVariants = {
 export default function Home() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -76,6 +76,7 @@ export default function Home() {
   </Link>
 )}
 
+
             {/* Theme Toggle */}
             {mounted && (
               <button
@@ -91,6 +92,7 @@ export default function Home() {
               </button>
             )}
           </div>
+          
         </div>
       </header>
 
