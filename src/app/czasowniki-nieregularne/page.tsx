@@ -116,39 +116,109 @@ export default function IrregularVerbsTrainer() {
 
   const [remainingVerbs, setRemainingVerbs] = useState([...verbs]);
   const [currentVerb, setCurrentVerb] = useState(getRandomVerb(verbs));
-  const [timeSpent, setTimeSpent] = useState(0);
   const [inputBase, setInputBase] = useState("");
   const [inputPast, setInputPast] = useState("");
   const [inputParticiple, setInputParticiple] = useState("");
   const baseInputRef = useRef<HTMLInputElement>(null);
   const [result, setResult] = useState("");
+  const [firstName, setFirstName] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
   const [totalAnswers, setTotalAnswers] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [darkMode, setDarkMode] = useState(true); // default na ciemny tryb
-  const [user, setUser] = useState(null);
+  const [darkMode, setDarkMode] = useState(true);
+  const [progressId, setProgressId] = useState<string | null>(null);
 
-  // useEffect(() => {
-  //   const getUser = async () => {
-  //     const { data, error } = await supabase.auth.getUser();
-  //     if (data?.user) {
-  //       setUser(data.user);
-  //     }
-  //   };
 
-  //   getUser();
-  // }, []);
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setTimeSpent((prev) => prev + 1);
-  //   }, 1000);
-  //   return () => clearInterval(interval);
-  // }, []);
+  const loadUserData = async () => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return;
+    }}
+  // Ładowanie postępów
+  useEffect(() => {
+    loadUserData();
+  }, []);
 
-  
+  const loadProgress = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-  const resetTrainer = () => {
+        // Pobieranie danych z tabeli profiles
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name')
+      .eq('id', user.id)
+      .single();
+
+    if (!profileError && profileData) {
+      setFirstName(profileData.first_name);
+    }
+
+    const { data, error } = await supabase
+      .from('progress')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data) {
+      setProgressId(data.id);
+      setRemainingVerbs(data.remaining_verbs || [...verbs]);
+      setCorrectAnswers(data.correct_answers || 0);
+      setTotalAnswers(data.total_answers || 0);
+      
+      if (data.remaining_verbs && data.remaining_verbs.length > 0) {
+        setCurrentVerb(getRandomVerb(data.remaining_verbs));
+      }
+    }
+  };
+
+  // Zapisywanie postępów
+  const saveProgress = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const progressData = {
+      user_id: user.id,
+      remaining_verbs: remainingVerbs,
+      correct_answers: correctAnswers,
+      total_answers: totalAnswers,
+      updated_at: new Date().toISOString()
+    };
+
+    if (progressId) {
+      await supabase
+        .from('progress')
+        .update(progressData)
+        .eq('id', progressId);
+    } else {
+      const { data, error } = await supabase
+        .from('progress')
+        .insert(progressData)
+        .select()
+        .single();
+      
+      if (data) {
+        setProgressId(data.id);
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadProgress();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      saveProgress();
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [remainingVerbs, correctAnswers, totalAnswers]);
+
+  const resetTrainer = async () => {
     const freshVerbs = [...verbs];
     const randomVerb = getRandomVerb(freshVerbs);
     setRemainingVerbs(freshVerbs);
@@ -156,12 +226,13 @@ export default function IrregularVerbsTrainer() {
     setInputBase("");
     setInputPast("");
     setInputParticiple("");
-    setTimeSpent(0);
     setResult("");
     setShowAnswer(false);
     setAnsweredCorrectly(false);
     setTotalAnswers(0);
     setCorrectAnswers(0);
+
+    await saveProgress();
   };
 
   const checkAnswers = () => {
@@ -199,20 +270,10 @@ export default function IrregularVerbsTrainer() {
     setResult("");
     setShowAnswer(false);
     setAnsweredCorrectly(false);
-    console.log(remainingVerbs)
+    
     setTimeout(() => {
       baseInputRef.current?.focus();
     }, 0);
-  };
-
-  const formatTime = (totalSeconds: number) => {
-    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(
-      2,
-      "0"
-    );
-    const seconds = String(totalSeconds % 60).padStart(2, "0");
-    return `${hours}:${minutes}:${seconds}`;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -237,30 +298,23 @@ export default function IrregularVerbsTrainer() {
   const accuracyColor = accuracy >= 80 ? "text-green-600" : "text-red-600";
 
   return (
-    <div
+<div
       className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"} max-w-3xl mx-auto mt-10 p-4 rounded shadow-md`}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      {/* Tryb jasny/ciemny */}
-      {/* <div className="flex justify-end mb-4">
-        <Button
-          variant="outline"
-          onClick={() => setDarkMode(!darkMode)}
-          className="w-auto"
-        >
-          {darkMode ? "Jasny tryb" : "Ciemny tryb"}
-        </Button>
-      </div> */}
-
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-2 md:gap-0">
-        {/* <h1 className="text-2xl font-bold text-center md:text-left">
-          Trener czasowników nieregularnych
-        </h1> */}
+        {/* Lewa strona - pusta, aby zachować równowagę */}
+        <div className="text-left">
+          {firstName && (
+            <p className={`${darkMode ? "text-gray-300" : "text-gray-700"} text-sm md:text-base`}>
+              Cześć, <strong>{firstName}</strong>!
+            </p>
+          )}
+        </div>
+        
+        {/* Prawa strona - statystyki */}
         <div className={`text-center md:text-right text-sm md:text-base ${accuracyColor}`}>
-          {/* <p>Odpowiedzi: <strong>{correctAnswers}/{totalAnswers}</strong></p>
-          <p>Skuteczność: <strong>{accuracy}%</strong></p> */}
-          <p>Czas: <strong>{formatTime(timeSpent)}</strong></p>
           <p>Poprawne: <strong>{correctAnswers}</strong></p>
           <p>Pozostało: <strong>{remainingVerbs.length} z {verbs.length}</strong></p>
         </div>
@@ -369,10 +423,8 @@ export default function IrregularVerbsTrainer() {
               <p>
                 Participle: <strong>{currentVerb.participle}</strong>
               </p>
-              
             </div>
           )}
-          
         </CardContent>
       </Card>
     </div>

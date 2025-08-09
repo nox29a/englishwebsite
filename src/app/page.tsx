@@ -29,16 +29,16 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
 
-  // useEffect(() => {
-  //   const getUser = async () => {
-  //     const { data, error } = await supabase.auth.getUser();
-  //     if (data?.user) {
-  //       setUser(data.user);
-  //     }
-  //   };
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+      }
+    };
 
-  //   getUser();
-  // }, []);
+    getUser();
+  }, []);
 
   useEffect(() => {
     setMounted(true);

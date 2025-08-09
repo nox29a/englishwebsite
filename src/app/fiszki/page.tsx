@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect} from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabaseClient";
 
 
 const popular1000 = [
@@ -3637,15 +3638,90 @@ const c1words = [
 
 export default function FlashcardGame() {
   const [level, setLevel] = useState<'1000' | '3000' | 'c1'>('1000');
-  const getWords = () => level === '1000' ? popular1000 : level === '3000' ? popular3000 : c1words;
-
   const [direction, setDirection] = useState<'pl-en' | 'en-pl'>('pl-en');
   const [input, setInput] = useState('');
-  const [remaining, setRemaining] = useState(getWords());
-  const [current, setCurrent] = useState(getWords()[0]);
+  const [remaining, setRemaining] = useState(popular1000);
+  const [current, setCurrent] = useState(popular1000[0]);
   const [score, setScore] = useState(0);
   const [feedbackColor, setFeedbackColor] = useState<string>('');
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  // Pobierz postępy z bazy danych
+  const loadProgress = async () => {
+    setLoading(true);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('flashcards_progress')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('level', level)
+      .eq('direction', direction)
+      .single();
+
+    if (error || !data) {
+      // Jeśli nie ma postępów, zacznij od początku
+      setRemaining(getWords());
+      setCurrent(getWords()[0]);
+      setScore(0);
+    } else {
+      // Przywróć zapisane postępy
+      const remainingWords = getWords().filter(word => 
+        data.remaining_ids.includes(word.id)
+      );
+      setRemaining(remainingWords);
+      setCurrent(remainingWords[0] || getWords()[0]);
+      setScore(data.correct_answers);
+    }
+    setLoading(false);
+  };
+
+  // Zapisz postępy do bazy danych
+  const saveProgress = async () => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return;
+    }
+
+    const progressData = {
+      user_id: user.id,
+      level,
+      direction,
+      remaining_ids: remaining.map(word => word.id),
+      correct_answers: score,
+      total_answers: score + (getWords().length - remaining.length),
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('flashcards_progress')
+      .upsert(progressData, { onConflict: 'user_id,level,direction' });
+
+    if (error) {
+      console.error('Error saving progress:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadProgress();
+  }, [level, direction]);
+
+  useEffect(() => {
+    if (!loading) {
+      saveProgress();
+    }
+  }, [remaining, score]);
+
+  const getWords = () => level === '1000' ? popular1000 : level === '3000' ? popular3000 : c1words;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -3665,7 +3741,7 @@ export default function FlashcardGame() {
       nextDelay = 1500;
     }
 
-    const next = updatedList[Math.floor(Math.random() * updatedList.length)];
+    const next = updatedList[Math.floor(Math.random() * updatedList.length)] || getWords()[0];
     setTimeout(() => {
       setCurrent(next);
       setFeedbackColor('');
@@ -3687,14 +3763,20 @@ export default function FlashcardGame() {
 
   const handleLevelChange = (lvl: '1000' | '3000' | 'c1') => {
     setLevel(lvl);
-    const newWords = lvl === '1000' ? popular1000 : lvl === '3000' ? popular3000 : c1words;
-    setRemaining(newWords);
-    setCurrent(newWords[0]);
-    setInput('');
-    setScore(0);
-    setFeedbackColor('');
-    setCorrectAnswer('');
   };
+
+  const handleDirectionChange = (dir: 'pl-en' | 'en-pl') => {
+    setDirection(dir);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0e0e1a] text-white flex flex-col items-center justify-center p-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
+        <p className="mt-4">Ładowanie postępów...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0e0e1a] text-white flex flex-col items-center justify-center p-4 space-y-6">
@@ -3702,17 +3784,38 @@ export default function FlashcardGame() {
 
       <div className="text-sm text-gray-400">Wybierz poziom trudności:</div>
       <div className="grid grid-cols-3 gap-2">
-        <Button onClick={() => handleLevelChange('1000')} className={`rounded-full px-4 py-2 text-sm transition-colors ${level === '1000' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}>1000 słów</Button>
-        <Button onClick={() => handleLevelChange('3000')} className={`rounded-full px-4 py-2 text-sm transition-colors ${level === '3000' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}>3000  słów</Button>
-        <Button onClick={() => handleLevelChange('c1')} className={`rounded-full px-4 py-2 text-sm transition-colors ${level === 'c1' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}>Poziom C1</Button>
+        <Button 
+          onClick={() => handleLevelChange('1000')} 
+          className={`rounded-full px-4 py-2 text-sm transition-colors ${level === '1000' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}
+        >
+          1000 słów
+        </Button>
+        <Button 
+          onClick={() => handleLevelChange('3000')} 
+          className={`rounded-full px-4 py-2 text-sm transition-colors ${level === '3000' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}
+        >
+          3000 słów
+        </Button>
+        <Button 
+          onClick={() => handleLevelChange('c1')} 
+          className={`rounded-full px-4 py-2 text-sm transition-colors ${level === 'c1' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}
+        >
+          Poziom C1
+        </Button>
       </div>
 
       <div className="text-sm text-gray-400">Wybierz kierunek tłumaczenia:</div>
       <div className="flex space-x-4">
-        <Button onClick={() => setDirection('pl-en')} className={`flex items-center space-x-2 rounded-full px-4 py-2 transition-colors ${direction === 'pl-en' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}>
+        <Button 
+          onClick={() => handleDirectionChange('pl-en')} 
+          className={`flex items-center space-x-2 rounded-full px-4 py-2 transition-colors ${direction === 'pl-en' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}
+        >
           <span>🇵🇱 Polski</span>
         </Button>
-        <Button onClick={() => setDirection('en-pl')} className={`flex items-center space-x-2 rounded-full px-4 py-2 transition-colors ${direction === 'en-pl' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}>
+        <Button 
+          onClick={() => handleDirectionChange('en-pl')} 
+          className={`flex items-center space-x-2 rounded-full px-4 py-2 transition-colors ${direction === 'en-pl' ? 'bg-blue-500 text-white hover:bg-yellow-400' : 'bg-white text-black hover:bg-yellow-400'}`}
+        >
           <span>🇬🇧 Angielski</span>
         </Button>
       </div>
@@ -3727,6 +3830,7 @@ export default function FlashcardGame() {
           placeholder="Wpisz tłumaczenie..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          autoFocus
         />
         <Button type="submit" className={`border border-white transition-colors duration-200 ${feedbackColor}`}>
           Sprawdź
@@ -3740,7 +3844,7 @@ export default function FlashcardGame() {
       )}
 
       <div className="text-sm text-gray-400">
-        Pozostało słów: {remaining.length} / {getWords().length} | Trafienia: {score}
+        Odgadnięte słowa: {score}
       </div>
 
       <Button onClick={resetGame} variant="outline" className="text-white">
