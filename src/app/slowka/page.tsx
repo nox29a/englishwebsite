@@ -3719,52 +3719,51 @@ export default function WordMatchGame() {
   };
 
   // Zapisz postępy
-  const saveProgress = async () => {
-    if (!userId) return;
+const saveProgress = async (
+  currentUsedIds: number[] = usedIds,
+  currentScore: number = score,
+  currentErrors: number = errors
+) => {
+  if (!userId) return;
 
-    const progressData = {
-      user_id: userId,
-      difficulty,
-      learned_ids: usedIds,
-      score,
-
-    };
-
-    try {
-      if (progressId) {
-        await supabase
-          .from('word_match_progress')
-          .update(progressData)
-          .eq('id', progressId);
-      } else {
-        const { data, error } = await supabase
-          .from('word_match_progress')
-          .insert(progressData)
-          .select()
-          .single();
-        if (data) setProgressId(data.id);
-      }
-    } catch (error) {
-      console.error("Error saving progress:", error);
-    }
+  const progressData = {
+    user_id: userId,
+    difficulty,
+    learned_ids: currentUsedIds,
+    score: currentScore,
+    errors: currentErrors,
+    time_spent: Math.floor((Date.now() - startTime) / 1000),
   };
+
+  try {
+    if (progressId) {
+      await supabase
+        .from('word_match_progress')
+        .update(progressData)
+        .eq('id', progressId);
+    } else {
+      const { data } = await supabase
+        .from('word_match_progress')
+        .insert(progressData)
+        .select()
+        .single();
+      if (data) setProgressId(data.id);
+    }
+  } catch (error) {
+    console.error("Error saving progress:", error);
+  }
+};
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (userId) loadProgress();
-  }, [userId, difficulty]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (userId && progressId) saveProgress();
-    }, 5000);
-    
-    return () => clearInterval(timer);
-  }, [userId, progressId, usedIds, score, errors, startTime]);
+useEffect(() => {
+  if (userId && progressId) {
+    saveProgress(usedIds, score, errors);
+  }
+}, [usedIds, score, errors]);
 
   const shuffleArray = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
 
@@ -3857,10 +3856,19 @@ const addNewPairs = (n: number, currentPlSlots = plSlots, currentEnSlots = enSlo
     setSelected(null);
     return;
   }
+  setScore((s) => {
+    const newScore = s + 1;
 
+    // Wywołaj zapis z nowym wynikiem i aktualnymi użytymi ID
+    setTimeout(() => {
+      saveProgress([...usedIds], newScore, errors);
+    }, 600); // trochę po usunięciu pary
+
+    return newScore;
+  });
   setCorrectHighlight({ plIndex, enIndex });
   setSelected(null);
-  setScore((s) => s + 1);
+
 
   // Po krótkim highlight -> usuń parę i (opcjonalnie) dodaj nowe z delayem
   setTimeout(() => {
@@ -3999,7 +4007,7 @@ const getButtonClass = (
     Czas gry: <strong>{gameTime}s</strong>
   </p>
   <p>
-    Nauczone słowa: <strong>{Math.max(0, usedIds.length - 5)}</strong>
+    Nauczone słowa: <strong>{Math.max(score)}</strong>
   </p>
   <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
     <div 
