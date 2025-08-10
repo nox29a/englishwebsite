@@ -1,5 +1,5 @@
 "use client";
-
+import { PieLabelRenderProps } from 'recharts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -46,7 +46,9 @@ export default function ChartContainer({ data, type }: { data: any[]; type: 'tim
             fill="#8884d8"
             dataKey="value"
             nameKey="name"
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            label={({ name, percent }: PieLabelRenderProps) =>
+  `${name}: ${percent !== undefined ? (percent * 100).toFixed(0) : '0'}%`
+}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
