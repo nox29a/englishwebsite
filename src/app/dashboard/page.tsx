@@ -4,15 +4,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import ChartContainer from "@/components/ui/Chart";
 
-// Dynamic imports for charts with SSR disabled
-const ChartContainer = dynamic(
-  () => import("@/components/ChartContainer"),
-  { 
-    ssr: false,
-    loading: () => <div className="h-64 flex items-center justify-center">Ładowanie wykresów...</div>
-  }
-);
+
 
 export default function DashboardPage() {
   const [userData, setUserData] = useState<any>(null);
