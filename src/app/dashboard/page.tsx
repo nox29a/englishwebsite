@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [progressData, setProgressData] = useState<any>(null);
   const [flashcardsData, setFlashcardsData] = useState<any>(null);
   const [wordMatchData, setWordMatchData] = useState<any>(null);
+  const [combinedProgress, setCombinedProgress] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,6 +60,26 @@ export default function DashboardPage() {
               time: Math.round(item.time_spent / 60)
             })).reverse() || []
           );
+
+          // Calculate combined progress
+          if (progress || flashcards || wordMatch) {
+            const combined = {
+              correct_answers: (progress?.correct_answers || 0) + 
+                            (flashcards?.reduce((sum: number, item: any) => sum + (item.correct_answers || 0), 0) || 0) +
+                            (wordMatch?.reduce((sum: number, item: any) => sum + (item.score|| 0), 0) || 0) +
+                            (progress?.correct_answers || 0),
+              total_answers: (progress?.total_answers || 0) + 
+                          (flashcards?.reduce((sum: number, item: any) => sum + (item.total_answers || 0), 0) || 0) +
+                            (wordMatch?.reduce((sum: number, item: any) => sum + (item.score || 0), 0) || 0) +
+                          (wordMatch?.reduce((sum: number, item: any) => sum + (item.errors || 0), 0) || 0) +
+                          (progress?.total_answers || 0),
+              time_spent: (progress?.time_spent || 0) +
+                         (flashcards?.reduce((sum: number, item: any) => sum + (item.time_spent || 0), 0) || 0) +
+                         (wordMatch?.reduce((sum: number, item: any) => sum + (item.time_spent || 0), 0) || 0) +
+                         (progress?.time_spent || 0)
+            };
+            setCombinedProgress(combined);
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -116,9 +137,9 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-
+        
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Overall Progress */}
           <StatCard 
             title="Ogólny postęp"
@@ -128,19 +149,19 @@ export default function DashboardPage() {
               </svg>
             }
           >
-            {progressData ? (
+            {combinedProgress ? (
               <div className="space-y-2">
-                <StatItem label="Poprawne odpowiedzi" value={progressData.correct_answers} />
-                <StatItem label="Łączne odpowiedzi" value={progressData.total_answers} />
+                <StatItem label="Poprawne odpowiedzi" value={combinedProgress.correct_answers} />
+                <StatItem label="Łączne odpowiedzi" value={combinedProgress.total_answers} />
                 <StatItem 
                   label="Dokładność" 
-                  value={`${progressData.total_answers > 0 
-                    ? Math.round((progressData.correct_answers / progressData.total_answers) * 100) 
+                  value={`${combinedProgress.total_answers > 0 
+                    ? Math.round((combinedProgress.correct_answers / combinedProgress.total_answers) * 100) 
                     : 0}%`} 
                 />
                 <StatItem 
                   label="Czas nauki" 
-                  value={`${Math.round((progressData.time_spent || 0) / 60)} minut`} 
+                  value={`${Math.round((combinedProgress.time_spent || 0) / 60)} minut`} 
                 />
               </div>
             ) : (
@@ -157,26 +178,26 @@ export default function DashboardPage() {
               </svg>
             }
           >
-{flashcardsData?.length > 0 ? (
-  <div className="space-y-3">
-    {flashcardsData.map((item: any, index: number) => (
-      <div 
-        key={`flashcard-${index}-${item.level}-${item.direction}`} // Unikalny klucz
-        className="border-b border-gray-100 dark:border-gray-800 pb-2 last:border-0"
-      >
-        <h4 className="font-medium text-gray-700 dark:text-gray-300">
-          {item.level} ({item.direction})
-        </h4>
-        <div className="flex justify-between text-sm text-gray-500 dark:text-gray-500">
-          <span>Pozostało: {item.remaining_ids?.length || 0}</span>
-          <span>Poprawne: {item.correct_answers}/{item.total_answers}</span>
-        </div>
-      </div>
-    ))}
-  </div>
-) : (
-  <p className="text-gray-500">Brak danych o fiszkach</p>
-)}
+            {flashcardsData?.length > 0 ? (
+              <div className="space-y-3">
+                {flashcardsData.map((item: any, index: number) => (
+                  <div 
+                    key={`flashcard-${index}-${item.level}-${item.direction}`}
+                    className="border-b border-gray-100 dark:border-gray-800 pb-2 last:border-0"
+                  >
+                    <h4 className="font-medium text-gray-700 dark:text-gray-300">
+                      {item.level} ({item.direction})
+                    </h4>
+                    <div className="flex justify-between text-sm text-gray-500 dark:text-gray-500">
+                      <span>Pozostało: {item.remaining_ids?.length || 0}</span>
+                      <span>Poprawne: {item.correct_answers}/{item.total_answers}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">Brak danych o fiszkach</p>
+            )}
           </StatCard>
 
           {/* Word Match Progress */}
@@ -188,28 +209,57 @@ export default function DashboardPage() {
               </svg>
             }
           >
-{wordMatchData?.length > 0 ? (
-  <div className="space-y-3">
-    {wordMatchData.map((item: any, index: number) => (
-      <div 
-        key={`wordmatch-${index}-${item.difficulty}`} // Unikalny klucz
-        className="border-b border-gray-100 dark:border-gray-800 pb-2 last:border-0"
-      >
-        <h4 className="font-medium text-gray-700 dark:text-gray-300">
-          Poziom: {item.difficulty}
-        </h4>
-        <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 dark:text-gray-500">
-          <span>Nauczone: {item.learned_ids?.length || 0}</span>
-          <span>Wynik: {item.score}</span>
-          <span>Błędy: {item.errors}</span>
-          <span>Czas: {Math.round(item.time_spent / 60)} min</span>
-        </div>
-      </div>
-    ))}
-  </div>
-) : (
-  <p className="text-gray-500">Brak danych o dopasowywaniu</p>
-)}
+            {wordMatchData?.length > 0 ? (
+              <div className="space-y-3">
+                {wordMatchData.map((item: any, index: number) => (
+                  <div 
+                    key={`wordmatch-${index}-${item.difficulty}`}
+                    className="border-b border-gray-100 dark:border-gray-800 pb-2 last:border-0"
+                  >
+                    <h4 className="font-medium text-gray-700 dark:text-gray-300">
+                      Poziom: {item.difficulty}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 dark:text-gray-500">
+                      <span>Nauczone: {item.learned_ids?.length || 0}</span>
+                      <span>Wynik: {item.score}</span>
+                      <span>Błędy: {item.errors}</span>
+                      <span>Czas: {Math.round(item.time_spent / 60)} min</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">Brak danych o dopasowywaniu</p>
+            )}
+          </StatCard>
+
+          {/* Irregular Verbs Progress - nowa zakładka */}
+          <StatCard 
+            title="Czasowniki nieregularne"
+            icon={
+              <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            }
+          >
+            {progressData ? (
+              <div className="space-y-2">
+                <StatItem label="Poprawne odpowiedzi" value={progressData.correct_answers || 0} />
+                <StatItem label="Łączne odpowiedzi" value={progressData.total_answers || 0} />
+                <StatItem 
+                  label="Dokładność" 
+                  value={`${progressData.total_answers > 0 
+                    ? Math.round((progressData.correct_answers / progressData.total_answers) * 100) 
+                    : 0}%`} 
+                />
+                <StatItem 
+                  label="Czas nauki" 
+                  value={`${Math.round((progressData.time_spent|| 0) / 60)} minut`} 
+                />
+              </div>
+            ) : (
+              <p className="text-gray-500">Brak danych</p>
+            )}
           </StatCard>
         </div>
 
@@ -233,54 +283,14 @@ export default function DashboardPage() {
             <div className="h-64">
               <ChartContainer 
                 data={[
-                  { name: 'Poprawne', value: progressData?.correct_answers || 0 },
-                  { name: 'Błędne', value: (progressData?.total_answers || 0) - (progressData?.correct_answers || 0) }
+                  { name: 'Poprawne', value: combinedProgress?.correct_answers || 0 },
+                  { name: 'Błędne', value: (combinedProgress?.total_answers || 0) - (combinedProgress?.correct_answers || 0) }
                 ]} 
                 type="accuracy" 
               />
             </div>
           </div>
         </div>
-
-        {/* Learned Words Section */}
-{/* {progressData?.remaining_verbs && (
-  <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow">
-    <div className="flex justify-between items-center mb-4">
-      <h3 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400">
-        Twoje postępy w nauce czasowników
-      </h3>
-      <span className="text-sm bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-3 py-1 rounded-full">
-        {progressData.remaining_verbs.length} czasowników
-      </span>
-    </div>
-    
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      {progressData.remaining_verbs.slice(0, 10).map((verb: any, index: number) => (
-        <div 
-          key={`verb-${index}-${verb.base}`}
-          className="bg-indigo-50 dark:bg-indigo-950 p-4 rounded-lg"
-        >
-          <h4 className="font-bold text-indigo-800 dark:text-indigo-200 mb-2">
-            {verb.base}
-          </h4>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div>Past:</div>
-            <div className="font-medium">{verb.past}</div>
-            <div>Participle:</div>
-            <div className="font-medium">{verb.participle}</div>
-            <div>Tłumaczenie:</div>
-            <div className="font-medium">{verb.translation}</div>
-          </div>
-        </div>
-      ))}
-      {progressData.remaining_verbs.length > 10 && (
-        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg flex items-center justify-center text-gray-500">
-          +{progressData.remaining_verbs.length - 10} więcej czasowników
-        </div>
-      )}
-    </div>
-  </div>
-)} */}
       </div>
     </div>
   );
