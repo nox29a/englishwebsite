@@ -51,10 +51,8 @@ export default function Home() {
       {/* Header */}
       <header className="w-full py-6 bg-white dark:bg-gray-900 shadow-md">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          {/* Lewa strona - logo lub pusta */}
+          {/* Lewa strona - przyciski */}
           <div></div>
-
-          {/* Prawa strona - przyciski i toggle motywu */}
           <div className="flex items-center space-x-4">
             {/* Przycisk Konto dla zalogowanych */}
             {user && (
@@ -130,9 +128,9 @@ export default function Home() {
               "Podręczna ściągawka z najważniejszych konstrukcji i czasów gramatycznych.",
           },
           {
-            href: "/brak",
+            href: "/game",
             icon: Layers,
-            title: "Powtórka mieszana",
+            title: "Rozmowa",
             description:
               "Różnorodne ćwiczenia łączące słownictwo, gramatykę i rozumienie ze słuchu.",
           },
