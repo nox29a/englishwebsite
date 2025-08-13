@@ -16,6 +16,24 @@ export default function DashboardPage() {
   const [combinedProgress, setCombinedProgress] = useState<any>(null);
   const [userAnswers, setUserAnswers] = useState<any[]>([]);
   const [streak, setStreak] = useState(0);
+  
+
+type ChartType = 'pie' | 'bar' | 'line' | 'accuracy';
+
+interface ChartData {
+  name: string;
+  value: number;
+}
+
+interface ChartProps {
+  data: ChartData[];
+  type: ChartType;
+}
+
+const ChartContainer = dynamic(
+  () => import("@/components/ui/Chart"),
+  { ssr: false }
+) as React.FC<ChartProps>;
 
 interface UserData {
   id: string;
@@ -77,36 +95,36 @@ interface TimeStat {
           );
 
           // Calculate streak
-          if (timeStats?.length > 0) {
-            let currentStreak = 0;
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            
-            // Check if user was active today or yesterday to start streak count
-            const hasToday = timeStats.some((item: any) => 
-              new Date(item.updated_at).toDateString() === today.toDateString()
-            );
-            const hasYesterday = timeStats.some((item: any) => 
-              new Date(item.updated_at).toDateString() === yesterday.toDateString()
-            );
-            
-            if (hasToday || hasYesterday) {
-              currentStreak = 1;
-              for (let i = 1; i < timeStats.length; i++) {
-                const prevDate = new Date(timeStats[i-1].updated_at);
-                const currDate = new Date(timeStats[i].updated_at);
-                const diffDays = Math.round((prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24));
-                
-                if (diffDays === 1) {
-                  currentStreak++;
-                } else if (diffDays > 1) {
-                  break;
-                }
-              }
-            }
-            setStreak(currentStreak);
-          }
+if (timeStats && timeStats.length > 0) {
+    let currentStreak = 0;
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // TypeScript teraz wie, że timeStats istnieje
+    const hasToday = timeStats.some((item) => 
+      new Date(item.updated_at).toDateString() === today.toDateString()
+    );
+    const hasYesterday = timeStats.some((item) => 
+      new Date(item.updated_at).toDateString() === yesterday.toDateString()
+    );
+    
+    if (hasToday || hasYesterday) {
+      currentStreak = 1;
+      for (let i = 1; i < timeStats.length; i++) {
+        const prevDate = new Date(timeStats[i-1].updated_at);
+        const currDate = new Date(timeStats[i].updated_at);
+        const diffDays = Math.round((prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          currentStreak++;
+        } else if (diffDays > 1) {
+          break;
+        }
+      }
+    }
+    setStreak(currentStreak);
+}
 
           // Calculate combined progress
           if (progress || flashcards || wordMatch) {
