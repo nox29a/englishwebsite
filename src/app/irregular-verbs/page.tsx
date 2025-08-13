@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,6 +110,9 @@ const verbs = [
   { base: "write", past: "wrote", participle: "written", translation: "pisać" }
 ];
 
+
+
+
 export default function IrregularVerbsTrainer() {
   const getRandomVerb = (list: typeof verbs) =>
     list[Math.floor(Math.random() * list.length)];
@@ -128,7 +131,10 @@ export default function IrregularVerbsTrainer() {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [darkMode, setDarkMode] = useState(true);
   const [progressId, setProgressId] = useState<string | null>(null);
-
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [timeSpent, setTimeSpent] = useState<number>(0);
+  const [sessionTime, setSessionTime] = useState<number>(0);
+  const timerRef = useRef<{ current: number | null }>({ current: null });
 
   const loadUserData = async () => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -136,7 +142,9 @@ export default function IrregularVerbsTrainer() {
     if (authError || !user) {
       console.error('Authentication error:', authError);
       return;
-    }}
+    }
+  };
+
   // Ładowanie postępów
   useEffect(() => {
     loadUserData();
@@ -146,7 +154,7 @@ export default function IrregularVerbsTrainer() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-        // Pobieranie danych z tabeli profiles
+    // Pobieranie danych z tabeli profiles
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('first_name')
@@ -168,6 +176,7 @@ export default function IrregularVerbsTrainer() {
       setRemainingVerbs(data.remaining_verbs || [...verbs]);
       setCorrectAnswers(data.correct_answers || 0);
       setTotalAnswers(data.total_answers || 0);
+      setTimeSpent(data.time_spent || 0);
       
       if (data.remaining_verbs && data.remaining_verbs.length > 0) {
         setCurrentVerb(getRandomVerb(data.remaining_verbs));
@@ -185,6 +194,7 @@ export default function IrregularVerbsTrainer() {
       remaining_verbs: remainingVerbs,
       correct_answers: correctAnswers,
       total_answers: totalAnswers,
+      time_spent: timeSpent + sessionTime,
       updated_at: new Date().toISOString()
     };
 
@@ -210,13 +220,25 @@ export default function IrregularVerbsTrainer() {
     loadProgress();
   }, []);
 
+  // Timer do śledzenia czasu sesji
+useEffect(() => {
+  const timerId = window.setTimeout(() => {
+    saveProgress();
+  }, 1000);
+
+  return () => {
+    window.clearTimeout(timerId);
+  };
+}, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
+
+  // Autozapis co sekundę
   useEffect(() => {
     const timer = setTimeout(() => {
       saveProgress();
     }, 1000);
     
     return () => clearTimeout(timer);
-  }, [remainingVerbs, correctAnswers, totalAnswers]);
+  }, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
 
   const resetTrainer = async () => {
     const freshVerbs = [...verbs];
@@ -231,6 +253,8 @@ export default function IrregularVerbsTrainer() {
     setAnsweredCorrectly(false);
     setTotalAnswers(0);
     setCorrectAnswers(0);
+    setSessionTime(0);
+    setTimeSpent(0);
 
     await saveProgress();
   };
@@ -294,17 +318,23 @@ export default function IrregularVerbsTrainer() {
     return Math.round((correctAnswers / totalAnswers) * 100);
   };
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const accuracy = getAccuracy();
   const accuracyColor = accuracy >= 80 ? "text-green-600" : "text-red-600";
+  const totalTimeSpent = timeSpent + sessionTime;
 
   return (
-<div
+    <div
       className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"} max-w-3xl mx-auto mt-10 p-4 rounded shadow-md`}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-2 md:gap-0">
-        {/* Lewa strona - pusta, aby zachować równowagę */}
         <div className="text-left">
           {firstName && (
             <p className={`${darkMode ? "text-gray-300" : "text-gray-700"} text-sm md:text-base`}>
@@ -313,10 +343,12 @@ export default function IrregularVerbsTrainer() {
           )}
         </div>
         
-        {/* Prawa strona - statystyki */}
         <div className={`text-center md:text-right text-sm md:text-base ${accuracyColor}`}>
           <p>Poprawne: <strong>{correctAnswers}</strong></p>
           <p>Pozostało: <strong>{remainingVerbs.length} z {verbs.length}</strong></p>
+          <p className={`${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+            Czas: <strong>{formatTime(totalTimeSpent)}</strong>
+          </p>
         </div>
       </div>
 

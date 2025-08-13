@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { User } from '@supabase/supabase-js';
+import { supabase } from "@/lib/supabaseClient";
+
 
 import {
 
@@ -13,6 +15,16 @@ import {
 export default function Home() {
 
   const [user, setUser] = useState<User | null>(null);
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+      }
+    };
+
+    getUser();
+  }, []);  
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
@@ -69,32 +81,32 @@ export default function Home() {
       </div>
 
       {/* Features Section */}
-      <section className="py-16 px-4 max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12">Dlaczego warto uczyć się z nami?</h2>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <FeatureCard 
-            icon="💬"
-            title="100+ scenariuszy rozmów"
-            description="Praktyczne dialogi w różnych sytuacjach życiowych"
-          />
-          <FeatureCard 
-            icon="📚"
-            title="Personalizowane fiszki"
-            description="System powtórek dopasowany do Twojego tempa nauki"
-          />
-          <FeatureCard 
-            icon="🎤"
-            title="Korekta wymowy"
-            description="Natychmiastowa analiza i poprawa Twojej wymowy"
-          />
-          <FeatureCard 
-            icon="📈"
-            title="Śledzenie postępów"
-            description="Monitoruj swoje osiągnięcia i motywuj się"
-          />
-        </div>
-      </section>
+<section className="py-16 px-4 max-w-6xl mx-auto">
+  <h2 className="text-3xl font-bold text-center mb-12">Dlaczego warto uczyć się z nami?</h2>
+  
+  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <FeatureCard 
+      icon="🤖"
+      title="Rozmowy z AI"
+      description="Konwersacje z inteligentnym asystentem dostosowane do Twojego poziomu"
+    />
+    <FeatureCard 
+      icon="📚"
+      title="Personalizowane lekcje"
+      description="Materły dopasowane do Twoich celów i zainteresowań"
+    />
+    <FeatureCard 
+      icon="⚡"
+      title="Natychmiastowa informacja zwrotna"
+      description="Błyskawiczna korekta błędów i sugestie poprawy"
+    />
+    <FeatureCard 
+      icon="📈"
+      title="Śledzenie postępów"
+      description="Monitoruj swoje osiągnięcia i motywuj się do dalszej nauki"
+    />
+  </div>
+</section>
 
       {/* Existing Features Showcase */}
       <section className="py-16 bg-gray-800 px-4">
@@ -231,7 +243,7 @@ export default function Home() {
             <ul className="space-y-2">
               <li><Link href="/about" className="hover:text-blue-400">O nas</Link></li>
               <li><Link href="/pricing" className="hover:text-blue-400">Cennik</Link></li>
-              <li><Link href="/blog" className="hover:text-blue-400">Blog</Link></li>
+              <li><Link href="/regulamin" className="hover:text-blue-400">Regulamin</Link></li>
               <li><Link href="/contact" className="hover:text-blue-400">Kontakt</Link></li>
             </ul>
           </div>
@@ -282,7 +294,7 @@ function PricingCard({ name, price, features, cta, featured }: {
   featured: boolean 
 }) {
   return (
-    <div className={`relative ${featured ? 'border-2 border-blue-500' : 'border border-gray-700'} bg-gray-800 rounded-lg p-6 hover:bg-gray-700 transition`}>
+    <div className={`relative ${featured ? 'border-2 border-blue-500' : 'border border-gray-700'} bg-gray-800 rounded-lg p-6 hover:bg-gray-600 transition`}>
       {featured && (
         <div className="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 text-sm font-bold rounded-bl-lg">
           Najpopularniejszy
@@ -305,7 +317,7 @@ function PricingCard({ name, price, features, cta, featured }: {
       </ul>
       <Link 
         href={price === "0" ? "/signup" : "/signup?plan=" + name.toLowerCase()} 
-        className={`block text-center py-3 px-4 rounded-lg font-bold ${featured ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'}`}
+        className={`block text-center py-3 px-4 rounded-lg font-bold ${featured ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-700 hover:bg-gray-500 text-white'}`}
       >
         {cta}
       </Link>
@@ -316,7 +328,7 @@ function PricingCard({ name, price, features, cta, featured }: {
 // Component for testimonials
 function Testimonial({ quote, author }: { quote: string, author: string }) {
   return (
-    <div className="bg-gray-800 p-6 rounded-lg shadow-sm hover:bg-gray-700 transition">
+    <div className="bg-gray-700 p-6 rounded-lg shadow-sm hover:bg-gray-700 transition">
       <svg className="w-8 h-8 text-yellow-400 mb-4" fill="currentColor" viewBox="0 0 20 20">
         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
       </svg>

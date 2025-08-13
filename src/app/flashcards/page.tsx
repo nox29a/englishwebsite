@@ -3646,6 +3646,8 @@ export default function FlashcardGame() {
   const [feedbackColor, setFeedbackColor] = useState<string>('');
   const [correctAnswer, setCorrectAnswer] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [totalTimeSpent, setTotalTimeSpent] = useState<number>(0);
 
   // Pobierz postępy z bazy danych
   const loadProgress = async () => {
@@ -3671,6 +3673,7 @@ export default function FlashcardGame() {
       setRemaining(getWords());
       setCurrent(getWords()[0]);
       setScore(0);
+      setTotalTimeSpent(0);
     } else {
       // Przywróć zapisane postępy
       const remainingWords = getWords().filter(word => 
@@ -3679,18 +3682,27 @@ export default function FlashcardGame() {
       setRemaining(remainingWords);
       setCurrent(remainingWords[0] || getWords()[0]);
       setScore(data.correct_answers);
+      setTotalTimeSpent(data.time_spend || 0);
     }
+    setStartTime(new Date()); // Rozpocznij mierzenie czasu
     setLoading(false);
   };
 
   // Zapisz postępy do bazy danych
   const saveProgress = async () => {
+    if (!startTime) return;
+    
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
       console.error('Authentication error:', authError);
       return;
     }
+
+    // Oblicz czas spędzony od ostatniego zapisu
+    const currentTime = new Date();
+    const timeSpentSinceLastSave = Math.floor((currentTime.getTime() - startTime.getTime()) / 1000); // w sekundach
+    const newTotalTimeSpent = totalTimeSpent + timeSpentSinceLastSave;
 
     const progressData = {
       user_id: user.id,
@@ -3699,6 +3711,7 @@ export default function FlashcardGame() {
       remaining_ids: remaining.map(word => word.id),
       correct_answers: score,
       total_answers: score + (getWords().length - remaining.length),
+      time_spend: newTotalTimeSpent,
       updated_at: new Date().toISOString()
     };
 
@@ -3708,11 +3721,21 @@ export default function FlashcardGame() {
 
     if (error) {
       console.error('Error saving progress:', error);
+    } else {
+      setTotalTimeSpent(newTotalTimeSpent);
+      setStartTime(new Date()); // Zresetuj czas rozpoczęcia
     }
   };
 
   useEffect(() => {
     loadProgress();
+
+    // Zapisz czas przy odmontowaniu komponentu
+    return () => {
+      if (startTime) {
+        saveProgress().catch(console.error);
+      }
+    };
   }, [level, direction]);
 
   useEffect(() => {
@@ -3759,6 +3782,8 @@ export default function FlashcardGame() {
     setScore(0);
     setFeedbackColor('');
     setCorrectAnswer('');
+    setTotalTimeSpent(0);
+    setStartTime(new Date());
   };
 
   const handleLevelChange = (lvl: '1000' | '3000' | 'c1') => {
@@ -3845,6 +3870,10 @@ export default function FlashcardGame() {
 
       <div className="text-sm text-gray-400">
         Odgadnięte słowa: {score}
+      </div>
+
+      <div className="text-sm text-gray-400">
+        Czas nauki: {Math.floor(totalTimeSpent / 60)} minut
       </div>
 
       <Button onClick={resetGame} variant="outline" className="text-white">
