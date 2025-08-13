@@ -23,12 +23,15 @@ export default function GamePage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [score, setScore] = useState(0);
+  
   const [selectedModel, setSelectedModel] = useState('deepseek/deepseek-chat-v3-0324:free');
+  const [selectedModel2, setSelectedModel2] = useState('deepseek/deepseek-chat-v3-0324:free');
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [showScenarios, setShowScenarios] = useState(true);
+  const [corrections, setCorrections] = useState<string[]>([]);
   const supabase = createClientComponentClient();
 
-const scenarios: Scenario[] = [
+  const scenarios: Scenario[] = [
   {
     id: 'travel',
     name: 'Travel Guide',
@@ -95,20 +98,19 @@ const scenarios: Scenario[] = [
 
 
 
-
-  const startScenario = (scenario: Scenario) => {
+const startScenario = (scenario: Scenario) => {
     setSelectedScenario(scenario);
     setShowScenarios(false);
-    setMessages([{ 
-      text: `${scenario.start_message}`, 
-      sender: 'npc' 
+    setMessages([{
+      text: `${scenario.start_message}`,
+      sender: 'npc'
     }]);
+    setCorrections([]);
   };
 
-  const sendMessage = async () => {
+const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
-    // Add user message
     const userMessage = { text: input, sender: 'player' as const };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
@@ -116,7 +118,6 @@ const scenarios: Scenario[] = [
     setIsLoading(true);
 
     try {
-      // Save message to Supabase
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
@@ -128,32 +129,56 @@ const scenarios: Scenario[] = [
           });
       }
 
-      // Get AI response
+      // 1️⃣ Odpowiedź NPC
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: newMessages,
           model: selectedModel,
-          systemPrompt: selectedScenario?.systemPrompt || 'You are a friendly English tutor for B2 level students.'
-        }),
+          scenario: selectedScenario?.id,
+          mode: 'npc'
+        })
       });
 
       const { reply } = await response.json();
-      
-      // Add AI response with animation
       setMessages(prev => [...prev, { text: reply, sender: 'npc' }]);
       setScore(prev => prev + 5);
 
+      // 2️⃣ Korekta błędów językowych
+      const correctionResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: newMessages,
+          model: 'gpt-4o-mini',
+          mode: 'correction'
+        })
+      });
+
+      const { reply: correctionReply, status: correctionStatus } = await correctionResponse.json();
+      
+      // Sprawdzamy status korekty (0 = wszystko poprawne)
+      if (correctionStatus !== 0 && correctionReply.trim() !== input.trim()) {
+        setCorrections(prev => [...prev, correctionReply]);
+      } else {
+        setCorrections([]);
+      }
+
     } catch (error) {
-      setMessages(prev => [...prev, { 
-        text: "⚠️ The tutor is unavailable right now. Please try again later.", 
-        sender: 'npc' 
+      setMessages(prev => [...prev, {
+        text: "⚠️ The tutor is unavailable right now. Please try again later.",
+        sender: 'npc'
       }]);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // W renderze zmieniamy warunek wyświetlania poprawki:
+
+  // W renderze pozostawiamy tę samą logikę wyświetlania, ale teraz czerwony dymek nie pojawi się,
+  // jeśli korekcja jest identyczna z wiadomością użytkownika
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-indigo-950 text-white">
@@ -161,17 +186,13 @@ const scenarios: Scenario[] = [
       <header className="sticky top-0 z-10 bg-gray-900 backdrop-blur-md p-4 shadow-md">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">English Tutor</h1>
-          <div className="flex items-center space-x-4">
-
-
-          </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto p-4 flex flex-col h-[calc(100vh-140px)]">
         {/* Scenario Selector */}
         {showScenarios && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-6 bg-indigo-800/50 p-6 rounded-xl backdrop-blur-sm"
@@ -191,54 +212,60 @@ const scenarios: Scenario[] = [
                 </motion.div>
               ))}
             </div>
-
           </motion.div>
         )}
 
         {/* Chat Container */}
         <div className="flex-1 overflow-y-auto mb-4 space-y-3 p-2">
           {messages.map((msg, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className={`flex ${msg.sender === 'npc' ? 'justify-start' : 'justify-end'}`}
-            >
-              <div className={`max-w-[85%] p-3 rounded-lg ${
-                msg.sender === 'npc' 
-                  ? 'bg-indigo-700/80 rounded-tl-none' 
-                  : 'bg-indigo-600/90 rounded-br-none'
-              }`}>
-                {msg.text}
-              </div>
-            </motion.div>
+            <div key={i} className="space-y-1">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className={`flex ${msg.sender === 'npc' ? 'justify-start' : 'justify-end'}`}
+              >
+                <div className={`max-w-[85%] p-3 rounded-lg relative ${
+                  msg.sender === 'npc'
+                    ? 'bg-indigo-700/80 rounded-tl-none'
+                    : corrections.length > 0 && i === messages.length - 2
+                      ? 'bg-red-600/70 rounded-br-none border border-red-400/50'
+                      : 'bg-green-600/70 rounded-br-none border border-green-400/50'
+                }`}>
+                  {msg.text}
+                </div>
+              </motion.div>
+              
+              {/* Boks z poprawkami pojawia się tylko po odpowiedzi ucznia i tylko jeśli są błędy */}
+
+  {msg.sender === 'player' && corrections.length > 0 && i === messages.length - 2 && (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      className="flex justify-end"
+    >
+      <div className="max-w-[85%] bg-red-900/30 p-3 rounded-lg text-sm rounded-tr-none">
+        <div className="font-bold text-red-300 mb-1">Corrections:</div>
+        <div dangerouslySetInnerHTML={{ __html: corrections[corrections.length - 1] }} />
+      </div>
+    </motion.div>
+  )}
+            </div>
           ))}
 
           {isLoading && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex justify-start"
+              className="flex justify-end"
             >
-              <div className="bg-indigo-700/80 rounded-lg rounded-tl-none p-3">
-                <div className="flex space-x-2">
-                  {[...Array(3)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      animate={{ 
-                        y: [0, -5, 0],
-                        opacity: [0.6, 1, 0.6]
-                      }}
-                      transition={{ 
-                        repeat: Infinity, 
-                        duration: 1.5,
-                        delay: i * 0.2
-                      }}
-                      className="w-2 h-2 bg-indigo-300 rounded-full"
-                    />
-                  ))}
-                </div>
+              <div className="bg-indigo-700/80 rounded-lg rounded-tl-none p-3 flex items-center">
+                <svg className="w-5 h-5 text-indigo-300 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="ml-2">
+                </span>
               </div>
             </motion.div>
           )}
@@ -261,7 +288,12 @@ const scenarios: Scenario[] = [
               disabled={!input.trim() || isLoading || !selectedScenario}
               className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? '...' : 'Send'}
+              {isLoading ? (
+                <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : 'Send'}
             </button>
           </div>
           {!selectedScenario && (
