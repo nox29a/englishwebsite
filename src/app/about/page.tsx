@@ -1,6 +1,9 @@
+import Navbar from "@/components/Navbar";
 // pages/o-nas.tsx
 export default function ONas() {
   return (
+          <>
+          <Navbar />
     <main className="min-h-screen bg-gradient-to-b from-[#1a1446] to-[#0d0a23] text-white px-6 py-12">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-4xl font-bold mb-8 text-center">O nas</h1>
@@ -25,5 +28,6 @@ export default function ONas() {
         </div>
       </div>
     </main>
+    </>
   );
 }

@@ -1,6 +1,9 @@
 // pages/regulamin.tsx
+import Navbar from "@/components/Navbar";
 export default function Regulamin() {
   return (
+          <>
+          <Navbar />
     <main className="min-h-screen bg-gradient-to-b from-[#1a1446] to-[#0d0a23] text-white px-6 py-12">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-8 text-center">Regulamin</h1>
@@ -20,5 +23,6 @@ export default function Regulamin() {
         </div>
       </div>
     </main>
+    </>
   );
 }

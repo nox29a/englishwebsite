@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
+import Navbar from "@/components/Navbar";
 //test
 
 
@@ -329,6 +330,8 @@ useEffect(() => {
   const totalTimeSpent = timeSpent + sessionTime;
 
   return (
+          <>
+          <Navbar />
     <div
       className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"} max-w-3xl mx-auto mt-10 p-4 rounded shadow-md`}
       onKeyDown={handleKeyDown}
@@ -460,5 +463,6 @@ useEffect(() => {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

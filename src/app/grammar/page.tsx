@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-
+import Navbar from "@/components/Navbar";
 const times = [
   {
     name: "Present Simple",
@@ -121,6 +121,8 @@ const extraSections = [
 
 export default function SciagaPage() {
   return (
+          <>
+          <Navbar />
     <div className="min-h-screen bg-gray-950 text-white p-6">
       <h1 className="text-3xl md:text-4xl text-indigo-300 font-bold text-center mb-2">
         Ściąga z angielskiego 📘
@@ -193,5 +195,6 @@ export default function SciagaPage() {
         ))}
       </div>
     </div>
+    </>
   );
 }

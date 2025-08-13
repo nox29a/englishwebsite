@@ -1,11 +1,14 @@
 // pages/kontakt.tsx
 "use client"
+import Navbar from "@/components/Navbar";
 import { useState } from "react";
 
 export default function Kontakt() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
 
   return (
+          <>
+          <Navbar />
     <main className="min-h-screen bg-gradient-to-b from-[#1a1446] to-[#0d0a23] text-white px-6 py-12">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold mb-6 text-center">Skontaktuj się z nami</h1>
@@ -43,5 +46,6 @@ export default function Kontakt() {
         </form>
       </div>
     </main>
+    </>
   );
 }

@@ -1,4 +1,5 @@
 'use client';
+import Navbar from '@/components/Navbar';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -181,6 +182,8 @@ const sendMessage = async () => {
   // jeśli korekcja jest identyczna z wiadomością użytkownika
 
   return (
+          <>
+          <Navbar />
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-indigo-950 text-white">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-gray-900 backdrop-blur-md p-4 shadow-md">
@@ -249,7 +252,7 @@ const sendMessage = async () => {
         <div dangerouslySetInnerHTML={{ __html: corrections[corrections.length - 1] }} />
       </div>
     </motion.div>
-  )}
+  )}  
             </div>
           ))}
 
@@ -304,5 +307,6 @@ const sendMessage = async () => {
         </div>
       </main>
     </div>
+    </>
   );
 }

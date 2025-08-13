@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { User } from '@supabase/supabase-js';
 import { supabase } from "@/lib/supabaseClient";
-
+import Navbar from "@/components/Navbar";
 
 import {
 
@@ -27,6 +27,8 @@ export default function Home() {
   }, []);  
 
   return (
+          <>
+          <Navbar />
     <div className="min-h-screen bg-gray-900 text-gray-100">
 
  <header className="w-full py-6 bg-white dark:bg-gray-900 shadow-md">
@@ -261,6 +263,7 @@ export default function Home() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
 

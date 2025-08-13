@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Navbar from "@/components/Navbar";
 
 // Typy
 
@@ -3940,6 +3941,8 @@ const getButtonClass = (
   const gameTime = Math.floor((now - startTime) / 1000);
 
   return (
+          <>
+          <Navbar />
     <div className="min-h-screen bg-gray-900 p-6 flex flex-col items-center text-white">
       <h1 className="text-2xl font-bold mb-6">Gra w dopasowywanie słów</h1>
 
@@ -4025,5 +4028,6 @@ const getButtonClass = (
         Zagraj ponownie
       </button>
     </div>
+    </>
   );
 }

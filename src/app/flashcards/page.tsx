@@ -4,7 +4,7 @@ import { useState, useEffect} from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
-
+import Navbar from '@/components/Navbar';
 
 const popular1000 = [
   { "id": 1, "pl": "umiejętność", "en": "ability" },
@@ -3804,6 +3804,8 @@ export default function FlashcardGame() {
   }
 
   return (
+          <>
+          <Navbar />
     <div className="min-h-screen bg-[#0e0e1a] text-white flex flex-col items-center justify-center p-4 space-y-6">
       <h1 className="text-3xl font-bold text-yellow-400">FISZKI</h1>
 
@@ -3880,5 +3882,6 @@ export default function FlashcardGame() {
         Reset
       </Button>
     </div>
+    </>
   );
 }

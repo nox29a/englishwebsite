@@ -1,5 +1,5 @@
 "use client";
-
+import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -7,6 +7,8 @@ export default function VerifyEmailPage() {
   const router = useRouter();
 
   return (
+          <>
+          <Navbar />
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-xl">
         <h2 className="text-3xl font-bold text-center text-indigo-600 mb-6">
@@ -48,5 +50,6 @@ export default function VerifyEmailPage() {
         </p>
       </div>
     </div>
+    </>
   );
 }

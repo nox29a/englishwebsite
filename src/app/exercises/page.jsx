@@ -2,6 +2,7 @@
 import React, { useState, useEffect} from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
+import Navbar from '@/components/Navbar';
 
 const tasks = [
   // === Łatwy ===
@@ -633,6 +634,8 @@ export default function ZadaniaPage() {
       : shuffledTasks.filter((task) => task.level === activeLevel);
 
   return (
+          <>
+      <Navbar />
     <div
       className={`min-h-screen p-6 transition-colors duration-500 ${
         darkMode ? "bg-gray-950 text-white" : "bg-white text-gray-900"
@@ -752,5 +755,6 @@ export default function ZadaniaPage() {
         })}
       </div>
     </div>
+    </>
   );
 }

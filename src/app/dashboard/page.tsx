@@ -1,5 +1,5 @@
 "use client";
-
+import Navbar from "@/components/Navbar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import dynamic from "next/dynamic";
@@ -176,6 +176,8 @@ if (timeStats && timeStats.length > 0) {
   };
 
   return (
+          <>
+          <Navbar />
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header with streak */}
@@ -602,6 +604,7 @@ if (timeStats && timeStats.length > 0) {
         )}
       </div>
     </div>
+    </>
   );
 }
 
