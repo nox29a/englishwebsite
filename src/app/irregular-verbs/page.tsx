@@ -7,109 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
-//test
-
-
-
-const verbs = [
-  { base: "arise", past: "arose", participle: "arisen", translation: "powstawać" },
-  { base: "awake", past: "awoke", participle: "awoken", translation: "budzić się" },
-  { base: "be", past: "was/were", participle: "been", translation: "być" },
-  { base: "bear", past: "bore", participle: "born/borne", translation: "znosić" },
-  { base: "beat", past: "beat", participle: "beaten", translation: "bić" },
-  { base: "become", past: "became", participle: "become", translation: "stawać się" },
-  { base: "begin", past: "began", participle: "begun", translation: "zaczynać" },
-  { base: "bend", past: "bent", participle: "bent", translation: "zginać" },
-  { base: "bet", past: "bet", participle: "bet", translation: "zakładać się" },
-  { base: "bind", past: "bound", participle: "bound", translation: "wiązać" },
-  { base: "bite", past: "bit", participle: "bitten", translation: "gryźć" },
-  { base: "bleed", past: "bled", participle: "bled", translation: "krwawić" },
-  { base: "blow", past: "blew", participle: "blown", translation: "wiać" },
-  { base: "break", past: "broke", participle: "broken", translation: "łamać" },
-  { base: "bring", past: "brought", participle: "brought", translation: "przynosić" },
-  { base: "build", past: "built", participle: "built", translation: "budować" },
-  { base: "burn", past: "burnt/burned", participle: "burnt/burned", translation: "palić się" },
-  { base: "buy", past: "bought", participle: "bought", translation: "kupować" },
-  { base: "catch", past: "caught", participle: "caught", translation: "łapać" },
-  { base: "choose", past: "chose", participle: "chosen", translation: "wybierać" },
-  { base: "come", past: "came", participle: "come", translation: "przychodzić" },
-  { base: "cost", past: "cost", participle: "cost", translation: "kosztować" },
-  { base: "cut", past: "cut", participle: "cut", translation: "ciąć" },
-  { base: "deal", past: "dealt", participle: "dealt", translation: "radzić sobie" },
-  { base: "dig", past: "dug", participle: "dug", translation: "kopać" },
-  { base: "do", past: "did", participle: "done", translation: "robić" },
-  { base: "draw", past: "drew", participle: "drawn", translation: "rysować" },
-  { base: "drink", past: "drank", participle: "drunk", translation: "pić" },
-  { base: "drive", past: "drove", participle: "driven", translation: "prowadzić (samochód)" },
-  { base: "eat", past: "ate", participle: "eaten", translation: "jeść" },
-  { base: "fall", past: "fell", participle: "fallen", translation: "upadać" },
-  { base: "feed", past: "fed", participle: "fed", translation: "karmić" },
-  { base: "feel", past: "felt", participle: "felt", translation: "czuć" },
-  { base: "fight", past: "fought", participle: "fought", translation: "walczyć" },
-  { base: "find", past: "found", participle: "found", translation: "znajdować" },
-  { base: "fly", past: "flew", participle: "flown", translation: "latać" },
-  { base: "forget", past: "forgot", participle: "forgotten", translation: "zapominać" },
-  { base: "forgive", past: "forgave", participle: "forgiven", translation: "wybaczać" },
-  { base: "freeze", past: "froze", participle: "frozen", translation: "zamarzać" },
-  { base: "get", past: "got", participle: "got/gotten", translation: "dostawać" },
-  { base: "give", past: "gave", participle: "given", translation: "dawać" },
-  { base: "go", past: "went", participle: "gone", translation: "iść" },
-  { base: "grow", past: "grew", participle: "grown", translation: "rosnąć" },
-  { base: "hang", past: "hung", participle: "hung", translation: "wieszać" },
-  { base: "have", past: "had", participle: "had", translation: "mieć" },
-  { base: "hear", past: "heard", participle: "heard", translation: "słyszeć" },
-  { base: "hide", past: "hid", participle: "hidden", translation: "chować" },
-  { base: "hit", past: "hit", participle: "hit", translation: "uderzać" },
-  { base: "hold", past: "held", participle: "held", translation: "trzymać" },
-  { base: "hurt", past: "hurt", participle: "hurt", translation: "ranić" },
-  { base: "keep", past: "kept", participle: "kept", translation: "trzymać" },
-  { base: "know", past: "knew", participle: "known", translation: "wiedzieć" },
-  { base: "lay", past: "laid", participle: "laid", translation: "kłaść" },
-  { base: "lead", past: "led", participle: "led", translation: "prowadzić" },
-  { base: "leave", past: "left", participle: "left", translation: "opuszczać" },
-  { base: "lend", past: "lent", participle: "lent", translation: "pożyczać" },
-  { base: "let", past: "let", participle: "let", translation: "pozwalać" },
-  { base: "lie", past: "lay", participle: "lain", translation: "leżeć" },
-  { base: "lose", past: "lost", participle: "lost", translation: "gubić" },
-  { base: "make", past: "made", participle: "made", translation: "robić, tworzyć" },
-  { base: "mean", past: "meant", participle: "meant", translation: "znaczyć" },
-  { base: "meet", past: "met", participle: "met", translation: "spotykać" },
-  { base: "pay", past: "paid", participle: "paid", translation: "płacić" },
-  { base: "put", past: "put", participle: "put", translation: "kłaść" },
-  { base: "read", past: "read", participle: "read", translation: "czytać" },
-  { base: "ride", past: "rode", participle: "ridden", translation: "jeździć" },
-  { base: "ring", past: "rang", participle: "rung", translation: "dzwonić" },
-  { base: "rise", past: "rose", participle: "risen", translation: "wschodzić" },
-  { base: "run", past: "ran", participle: "run", translation: "biegać" },
-  { base: "say", past: "said", participle: "said", translation: "mówić" },
-  { base: "see", past: "saw", participle: "seen", translation: "widzieć" },
-  { base: "sell", past: "sold", participle: "sold", translation: "sprzedawać" },
-  { base: "send", past: "sent", participle: "sent", translation: "wysyłać" },
-  { base: "set", past: "set", participle: "set", translation: "ustawiać" },
-  { base: "shake", past: "shook", participle: "shaken", translation: "trząść" },
-  { base: "shine", past: "shone", participle: "shone", translation: "świecić" },
-  { base: "shoot", past: "shot", participle: "shot", translation: "strzelać" },
-  { base: "show", past: "showed", participle: "shown", translation: "pokazywać" },
-  { base: "shut", past: "shut", participle: "shut", translation: "zamykać" },
-  { base: "sing", past: "sang", participle: "sung", translation: "śpiewać" },
-  { base: "sit", past: "sat", participle: "sat", translation: "siedzieć" },
-  { base: "sleep", past: "slept", participle: "slept", translation: "spać" },
-  { base: "speak", past: "spoke", participle: "spoken", translation: "mówić" },
-  { base: "spend", past: "spent", participle: "spent", translation: "wydawać" },
-  { base: "stand", past: "stood", participle: "stood", translation: "stać" },
-  { base: "steal", past: "stole", participle: "stolen", translation: "kraść" },
-  { base: "swim", past: "swam", participle: "swum", translation: "pływać" },
-  { base: "take", past: "took", participle: "taken", translation: "brać" },
-  { base: "teach", past: "taught", participle: "taught", translation: "uczyć (kogoś)" },
-  { base: "tell", past: "told", participle: "told", translation: "mówić (komuś)" },
-  { base: "think", past: "thought", participle: "thought", translation: "myśleć" },
-  { base: "throw", past: "threw", participle: "thrown", translation: "rzucać" },
-  { base: "understand", past: "understood", participle: "understood", translation: "rozumieć" },
-  { base: "wake", past: "woke", participle: "woken", translation: "budzić się" },
-  { base: "wear", past: "wore", participle: "worn", translation: "nosić (ubranie)" },
-  { base: "win", past: "won", participle: "won", translation: "wygrywać" },
-  { base: "write", past: "wrote", participle: "written", translation: "pisać" }
-];
+import { verbs } from "@/components/words/irreagular_verbs";
 
 
 
@@ -135,7 +33,9 @@ export default function IrregularVerbsTrainer() {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [timeSpent, setTimeSpent] = useState<number>(0);
   const [sessionTime, setSessionTime] = useState<number>(0);
-  const timerRef = useRef<{ current: number | null }>({ current: null });
+const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+
 
   const loadUserData = async () => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -147,80 +47,95 @@ export default function IrregularVerbsTrainer() {
   };
 
   // Ładowanie postępów
-  useEffect(() => {
-    loadUserData();
-  }, []);
 
-  const loadProgress = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
 
-    // Pobieranie danych z tabeli profiles
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('first_name')
-      .eq('id', user.id)
-      .single();
+const loadProgress = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-    if (!profileError && profileData) {
-      setFirstName(profileData.first_name);
-    }
+  // Pobieranie danych z profiles
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('first_name')
+    .eq('id', user.id)
+    .single();
 
-    const { data, error } = await supabase
-      .from('progress')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
+  if (!profileError && profileData) {
+    setFirstName(profileData.first_name);
+  }
 
-    if (data) {
-      setProgressId(data.id);
-      setRemainingVerbs(data.remaining_verbs || [...verbs]);
-      setCorrectAnswers(data.correct_answers || 0);
-      setTotalAnswers(data.total_answers || 0);
-      setTimeSpent(data.time_spent || 0);
-      
-      if (data.remaining_verbs && data.remaining_verbs.length > 0) {
-        setCurrentVerb(getRandomVerb(data.remaining_verbs));
-      }
-    }
-  };
+  // Pobieranie postępów
+  const { data, error } = await supabase
+    .from('irregular_progress')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if (data) {
+    setProgressId(data.id);
+    const remainingVerbObjects = verbs.filter(verb => 
+      data.remaining_verbs.includes(verb.index)
+    );
+    
+    const verbsToUse = remainingVerbObjects.length > 0 ? remainingVerbObjects : [...verbs];
+    setRemainingVerbs(verbsToUse);
+    setCurrentVerb(getRandomVerb(verbsToUse)); // Ustaw currentVerb dopiero po załadowaniu
+    setCorrectAnswers(data.correct_answers || 0);
+    setTotalAnswers(data.total_answers || 0);
+    setTimeSpent(data.time_spent || 0);
+  } else {
+    // Jeśli nie ma zapisanych postępów, użyj pełnej listy
+    setCurrentVerb(getRandomVerb(verbs));
+  }
+};
 
   // Zapisywanie postępów
-  const saveProgress = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+const saveProgress = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-    const progressData = {
-      user_id: user.id,
-      remaining_verbs: remainingVerbs,
-      correct_answers: correctAnswers,
-      total_answers: totalAnswers,
-      time_spent: timeSpent + sessionTime,
-      updated_at: new Date().toISOString()
-    };
+  // Najpierw sprawdź czy istnieje jakikolwiek wpis dla tego użytkownika
+  const { data: existingData } = await supabase
+    .from('irregular_progress')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
 
-    if (progressId) {
-      await supabase
-        .from('progress')
-        .update(progressData)
-        .eq('id', progressId);
-    } else {
-      const { data, error } = await supabase
-        .from('progress')
-        .insert(progressData)
-        .select()
-        .single();
-      
-      if (data) {
-        setProgressId(data.id);
-      }
-    }
+  const progressData = {
+    user_id: user.id,
+    remaining_verbs: remainingVerbs.map(verb => verb.index),
+    correct_answers: correctAnswers,
+    total_answers: totalAnswers,
+    time_spent: timeSpent + sessionTime,
+    updated_at: new Date().toISOString()
   };
 
-  useEffect(() => {
-    loadProgress();
-  }, []);
+  if (existingData) {
+    await supabase
+      .from('irregular_progress')
+      .update(progressData)
+      .eq('id', existingData.id);
+    setProgressId(existingData.id);
+  } else {
+    const { data, error } = await supabase
+      .from('irregular_progress')
+      .insert(progressData)
+      .select()
+      .single();
+    
+    if (data) {
+      setProgressId(data.id);
+    }
+  }
+};
 
+useEffect(() => {
+  const loadData = async () => {
+    await loadUserData();
+    await loadProgress();
+  };
+  loadData();
+}, []);
   // Timer do śledzenia czasu sesji
 useEffect(() => {
   const timerId = window.setTimeout(() => {
@@ -233,14 +148,13 @@ useEffect(() => {
 }, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
 
   // Autozapis co sekundę
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      saveProgress();
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
-
+useEffect(() => {
+  const timer = setTimeout(() => {
+    saveProgress();
+  }, 5000); // Zwiększ interwał do 5 sekund
+  
+  return () => clearTimeout(timer);
+}, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
   const resetTrainer = async () => {
     const freshVerbs = [...verbs];
     const randomVerb = getRandomVerb(freshVerbs);
