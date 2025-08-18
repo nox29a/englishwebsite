@@ -1,15 +1,15 @@
 export interface Easy {
-  index: number;
+  id: number;
   pl: string;
   en: string;
 }
 export interface Medium {
-  index: number;
+  id: number;
   pl: string;
   en: string;
 }
 export interface Hard {
-  index: number;
+  id: number;
   pl: string;
   en: string;
 }
