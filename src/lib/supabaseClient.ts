@@ -37,3 +37,4 @@ export const createWordMatchProgress = async (progressData: any) => {
     .select()
     .single();
 };
+

@@ -36,26 +36,7 @@ export default function Home() {
           {/* Lewa strona - przyciski */}
           <div></div>
           <div className="flex items-center space-x-4">
-            {/* Przycisk Konto dla zalogowanych */}
-            {user && (
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 bg-indigo-50 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-xl hover:bg-indigo-100 dark:hover:bg-gray-700 transition"
-              >
-                <UserIcon className="w-5 h-5" />
-                <span>Konto</span>
-              </Link>
-            )}
 
-            {/* Przycisk Zaloguj się dla niezalogowanych */}
-            {!user && (
-              <Link
-                href="/login"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition"
-              >
-                Zaloguj się
-              </Link>
-            )}
 
 
           </div>

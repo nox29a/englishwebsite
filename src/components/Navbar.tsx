@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react"; // ikony
+import { User } from '@supabase/supabase-js';
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Navbar() {
   const [path, setPath] = useState("");
@@ -10,6 +12,18 @@ export default function Navbar() {
   useEffect(() => {
     setPath(window.location.pathname);
   }, []);
+
+    const [user, setUser] = useState<User | null>(null);
+    useEffect(() => {
+      const getUser = async () => {
+        const { data, error } = await supabase.auth.getUser();
+        if (data?.user) {
+          setUser(data.user);
+        }
+      };
+  
+      getUser();
+    }, []);  
 
   const navLinks = [
     { href: "/", label: "Strona główna" },
@@ -47,14 +61,30 @@ export default function Navbar() {
         </div>
 
         {/* Konto desktop */}
-        <div className="hidden md:block">
-          <Link
-            href="/dashboard"
+
+
+            {/* Przycisk Konto dla zalogowanych */}
+            {user && (
+              <Link
+                href="/dashboard"
             className="bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition"
-          >
-            Konto
-          </Link>
-        </div>
+              >
+          
+                <span>Konto</span>
+              </Link>
+            )}
+
+            {/* Przycisk Zaloguj się dla niezalogowanych */}
+            {!user && (
+              <Link
+                href="/login"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition"
+              >
+                Zaloguj się
+              </Link>
+            )}
+
+
 
         {/* Hamburger mobile */}
         <button

@@ -56,6 +56,19 @@ interface TimeStat {
   // Dodaj inne pola które zwraca Supabase
 }
 
+
+
+const handleLogout = async () => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    // Optional: redirect to login page after logout
+    window.location.href = '/';
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+};
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -199,6 +212,12 @@ if (timeStats && timeStats.length > 0) {
             <Link href="/settings" className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
               Ustawienia
             </Link>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition"
+            >
+              Wyloguj
+            </button>
           </nav>
         </div>
 
