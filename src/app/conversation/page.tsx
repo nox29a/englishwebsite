@@ -3,6 +3,10 @@ import Navbar from '@/components/Navbar';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Mic } from "lucide-react"; // 🎤 ikona mikrofonu
+import { Button } from "@/components/ui/button";
+
+
 
 type Message = {
   text: string;
@@ -17,20 +21,50 @@ type Scenario = {
   systemPrompt: string;
 };
 
+type UserProfile = {
+  id: string;
+  user_type: 'basic' | 'premium';
+};
+
 export default function GamePage() {
   const [messages, setMessages] = useState<Message[]>([
-    { text: "Welcome to English Tutor AI! Choose a scenario to begin.", sender: 'npc' }
+    { text: "Wybierz scenariusz, aby zacząć rozmowę", sender: 'npc' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [score, setScore] = useState(0);
-  
-  const [selectedModel, setSelectedModel] = useState('deepseek/deepseek-chat-v3-0324:free');
-  const [selectedModel2, setSelectedModel2] = useState('deepseek/deepseek-chat-v3-0324:free');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [showScenarios, setShowScenarios] = useState(true);
-  const [corrections, setCorrections] = useState<string[]>([]);
+  const [corrections, setCorrections] = useState<Record<number, string>>({});
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [messageCount, setMessageCount] = useState(0);
+   const [isCheckingLimit, setIsCheckingLimit] = useState(true);
+  
   const supabase = createClientComponentClient();
+
+ const startRecognition = (setter: (val: string) => void) => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Twoja przeglądarka nie obsługuje rozpoznawania mowy.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.start();
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setter(transcript);
+    };
+  };
+
 
   const scenarios: Scenario[] = [
   {
@@ -97,20 +131,69 @@ export default function GamePage() {
   }
 ];
 
+ useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        console.log('Fetching user profile...');
+        const { data: { user } } = await supabase.auth.getUser();
+        console.log('Auth user:', user);
+        
+        if (user) {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('id, user_type')
+            .eq('id', user.id)
+            .single();
+          
+          console.log('Profile data:', profile, 'Error:', error);
+          
+          if (!error && profile) {
+            setUserProfile(profile);
+          } else {
+            // Jeśli nie ma profilu, ustaw domyślnie basic
+            setUserProfile({ id: user.id, user_type: 'basic' });
+          }
+        } else {
+          // Dla niezalogowanych użytkowników
+          setUserProfile({ id: 'anonymous', user_type: 'basic' });
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        setUserProfile({ id: 'error', user_type: 'basic' });
+      } finally {
+        setIsCheckingLimit(false);
+      }
+    };
 
+    fetchUserProfile();
+  }, [supabase]);
 
-const startScenario = (scenario: Scenario) => {
+  const startScenario = (scenario: Scenario) => {
     setSelectedScenario(scenario);
     setShowScenarios(false);
     setMessages([{
       text: `${scenario.start_message}`,
       sender: 'npc'
     }]);
-    setCorrections([]);
+    setCorrections({});
+    setMessageCount(0);
   };
 
-const sendMessage = async () => {
+  const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
+
+    console.log('Sending message, current count:', messageCount, 'User type:', userProfile?.user_type);
+
+    // Sprawdź limit wiadomości dla użytkowników basic
+    if (userProfile?.user_type === 'basic' && messageCount >= 3) {
+      console.log('Message limit reached!');
+      setMessages(prev => [...prev, {
+        text: "🚀 Upgrade to Premium for unlimited messages! Contact support to unlock full access.",
+        sender: 'npc'
+      }]);
+      setInput('');
+      return;
+    }
 
     const userMessage = { text: input, sender: 'player' as const };
     const newMessages = [...messages, userMessage];
@@ -118,9 +201,16 @@ const sendMessage = async () => {
     setInput('');
     setIsLoading(true);
 
+    // Zwiększ licznik PRZED wysłaniem, aby uniknąć race condition
+    setMessageCount(prev => {
+      const newCount = prev + 1;
+      console.log('Increasing message count to:', newCount);
+      return newCount;
+    });
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      if (user && user.id !== 'anonymous' && user.id !== 'error') {
         await supabase
           .from('conversations')
           .insert({
@@ -142,6 +232,8 @@ const sendMessage = async () => {
         })
       });
 
+      if (!response.ok) throw new Error('API response not OK');
+
       const { reply } = await response.json();
       setMessages(prev => [...prev, { text: reply, sender: 'npc' }]);
       setScore(prev => prev + 5);
@@ -157,156 +249,219 @@ const sendMessage = async () => {
         })
       });
 
-      const { reply: correctionReply, status: correctionStatus } = await correctionResponse.json();
-      
-      // Sprawdzamy status korekty (0 = wszystko poprawne)
-      if (correctionStatus !== 0 && correctionReply.trim() !== input.trim()) {
-        setCorrections(prev => [...prev, correctionReply]);
-      } else {
-        setCorrections([]);
+      if (correctionResponse.ok) {
+        const { reply: correctionReply, status: correctionStatus } = await correctionResponse.json();
+        
+        const userMessageIndex = newMessages.length - 1;
+
+        const hasErrors = correctionStatus !== 0 && 
+                         correctionReply.trim() !== '' && 
+                         correctionReply.trim() !== input.trim();
+
+        if (hasErrors) {
+          setCorrections(prev => ({ ...prev, [userMessageIndex]: correctionReply }));
+        } else {
+          setCorrections(prev => {
+            const newCorrections = { ...prev };
+            delete newCorrections[userMessageIndex];
+            return newCorrections;
+          });
+        }
       }
 
     } catch (error) {
+      console.error('Error sending message:', error);
       setMessages(prev => [...prev, {
         text: "⚠️ The tutor is unavailable right now. Please try again later.",
         sender: 'npc'
       }]);
+      // Cofnij licznik w przypadku błędu
+      setMessageCount(prev => prev - 1);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // W renderze zmieniamy warunek wyświetlania poprawki:
+  // Sprawdź czy użytkownik osiągnął limit
+  const hasReachedLimit = userProfile?.user_type === 'basic' && messageCount >= 3;
+  const showMessageInfo = userProfile?.user_type === 'basic' && messageCount > 0;
 
-  // W renderze pozostawiamy tę samą logikę wyświetlania, ale teraz czerwony dymek nie pojawi się,
-  // jeśli korekcja jest identyczna z wiadomością użytkownika
+  if (isCheckingLimit) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 to-indigo-950 text-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p>Loading...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
-          <>
-          <Navbar />
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-indigo-950 text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-gray-900 backdrop-blur-md p-4 shadow-md">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">English Tutor</h1>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto p-4 flex flex-col h-[calc(100vh-140px)]">
-        {/* Scenario Selector */}
-        {showScenarios && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 bg-indigo-800/50 p-6 rounded-xl backdrop-blur-sm"
-          >
-            <h2 className="text-xl font-semibold mb-4">Choose Learning Scenario</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {scenarios.map(scenario => (
-                <motion.div
-                  key={scenario.id}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="bg-indigo-700/50 hover:bg-indigo-600/70 p-4 rounded-lg cursor-pointer border border-indigo-600/30"
-                  onClick={() => startScenario(scenario)}
-                >
-                  <h3 className="font-bold text-lg">{scenario.name}</h3>
-                  <p className="text-indigo-200 text-sm mt-2">{scenario.description}</p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Chat Container */}
-        <div className="flex-1 overflow-y-auto mb-4 space-y-3 p-2">
-          {messages.map((msg, i) => (
-            <div key={i} className="space-y-1">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className={`flex ${msg.sender === 'npc' ? 'justify-start' : 'justify-end'}`}
-              >
-                <div className={`max-w-[85%] p-3 rounded-lg relative ${
-                  msg.sender === 'npc'
-                    ? 'bg-indigo-700/80 rounded-tl-none'
-                    : corrections.length > 0 && i === messages.length - 2
-                      ? 'bg-red-600/70 rounded-br-none border border-red-400/50'
-                      : 'bg-green-600/70 rounded-br-none border border-green-400/50'
-                }`}>
-                  {msg.text}
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-indigo-950 text-white">
+        {/* Header */}
+        <header className="sticky top-0 z-10 bg-gray-900 backdrop-blur-md p-4 shadow-md">
+          <div className="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 className="text-2xl font-bold">English Tutor</h1>
+            <div className="flex items-center gap-3">
+              {showMessageInfo && (
+                <div className="bg-yellow-600/50 px-3 py-1 rounded-lg text-sm">
+                  {messageCount}/3 messages
                 </div>
-              </motion.div>
-              
-              {/* Boks z poprawkami pojawia się tylko po odpowiedzi ucznia i tylko jeśli są błędy */}
-
-  {msg.sender === 'player' && corrections.length > 0 && i === messages.length - 2 && (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      className="flex justify-end"
-    >
-      <div className="max-w-[85%] bg-red-900/30 p-3 rounded-lg text-sm rounded-tr-none">
-        <div className="font-bold text-red-300 mb-1">Corrections:</div>
-        <div dangerouslySetInnerHTML={{ __html: corrections[corrections.length - 1] }} />
-      </div>
-    </motion.div>
-  )}  
+              )}
+              {userProfile?.user_type === 'premium' && (
+                <div className="bg-purple-600/50 px-3 py-1 rounded-lg text-sm">
+                  ⭐ Premium
+                </div>
+              )}
+              {userProfile?.user_type === 'basic' && (
+                <div className="bg-blue-600/50 px-3 py-1 rounded-lg text-sm">
+                  Basic
+                </div>
+              )}
             </div>
-          ))}
+          </div>
+        </header>
 
-          {isLoading && (
+        <main className="max-w-6xl mx-auto p-4 flex flex-col h-[calc(100vh-140px)]">
+          {/* Scenario Selector */}
+          {showScenarios && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-end"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 bg-indigo-800/50 p-6 rounded-xl backdrop-blur-sm"
             >
-              <div className="bg-indigo-700/80 rounded-lg rounded-tl-none p-3 flex items-center">
-                <svg className="w-5 h-5 text-indigo-300 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span className="ml-2">
-                </span>
+              <h2 className="text-xl font-semibold mb-4">Choose Learning Scenario</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {scenarios.map(scenario => (
+                  <motion.div
+                    key={scenario.id}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-indigo-700/50 hover:bg-indigo-600/70 p-4 rounded-lg cursor-pointer border border-indigo-600/30"
+                    onClick={() => startScenario(scenario)}
+                  >
+                    <h3 className="font-bold text-lg">{scenario.name}</h3>
+                    <p className="text-indigo-200 text-sm mt-2">{scenario.description}</p>
+                  </motion.div>
+                ))}
               </div>
             </motion.div>
           )}
-        </div>
 
-        {/* Input Area */}
-        <div className="bg-indigo-800/50 backdrop-blur-sm p-4 rounded-xl border border-indigo-700/30">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder={selectedScenario ? "Type your message in English..." : "Select a scenario to begin"}
-              className="flex-1 p-3 rounded-lg bg-indigo-900/80 border border-indigo-700/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-              disabled={!selectedScenario || isLoading}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim() || isLoading || !selectedScenario}
-              className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLoading ? (
-                <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : 'Send'}
-            </button>
+          {/* Chat Container */}
+          <div className="flex-1 overflow-y-auto mb-4 space-y-3 p-2">
+            {messages.map((msg, i) => {
+              const hasCorrection = msg.sender === 'player' && corrections[i] && corrections[i].trim() !== '';
+              
+              return (
+                <div key={i} className="space-y-1">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className={`flex ${msg.sender === 'npc' ? 'justify-start' : 'justify-end'}`}
+                  >
+                    <div className={`max-w-[85%] p-3 rounded-lg relative ${
+                      msg.sender === 'npc'
+                        ? 'bg-indigo-700/80 rounded-tl-none'
+                        : hasCorrection
+                          ? 'bg-red-600/70 rounded-br-none border border-red-400/50'
+                          : 'bg-green-600/70 rounded-br-none border border-green-400/50'
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </motion.div>
+                  
+                  {hasCorrection && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="flex justify-end"
+                    >
+                      <div className="max-w-[85%] bg-red-900/30 p-3 rounded-lg text-sm rounded-tr-none">
+                        <div className="font-bold text-red-300 mb-1">Corrections:</div>
+                        <div dangerouslySetInnerHTML={{ __html: corrections[i] }} />
+                      </div>
+                    </motion.div>
+                  )}  
+                </div>
+              );
+            })}
           </div>
-          {!selectedScenario && (
-            <p className="text-yellow-200 text-sm mt-2 text-center">
-              Please select a learning scenario first
-            </p>
-          )}
-        </div>
-      </main>
-    </div>
+
+          {/* Input Area */}
+          <div className="bg-indigo-800/50 backdrop-blur-sm p-4 rounded-xl border border-indigo-700/30">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !hasReachedLimit && sendMessage()}
+                placeholder={
+                  !selectedScenario ? "Select a scenario to begin" :
+                  hasReachedLimit ? 
+                    "Upgrade to Premium for more messages" : 
+                    "Type your message in English..."
+                }
+                className="flex-1 p-3 rounded-lg bg-indigo-900/80 border border-indigo-700/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                disabled={
+                  !selectedScenario || 
+                  isLoading || 
+                  hasReachedLimit
+                }
+              />
+              <button
+                onClick={sendMessage}
+                disabled={
+                  !input.trim() || 
+                  isLoading || 
+                  !selectedScenario || 
+                  hasReachedLimit
+                }
+                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLoading ? (
+                  <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : 'Send'}
+              </button>
+                            <button
+                className='bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                onClick={() => startRecognition(setInput)}
+              >
+                <Mic />
+              </button>
+            </div>
+            
+            {!selectedScenario && (
+              <p className="text-yellow-200 text-sm mt-2 text-center">
+                Rozmowa z agentem AI
+              </p>
+            )}
+            
+            {hasReachedLimit && (
+              <div className="text-center mt-3 p-3 bg-yellow-600/30 rounded-lg">
+                <p className="text-yellow-200 font-semibold">Koniec kredytów dla wersji podstawowej</p>
+                <p className="text-yellow-200 text-sm">Ulepsz profil, aby odzyskać dostęp</p>
+              </div>
+            )}
+            
+            {showMessageInfo && !hasReachedLimit && (
+              <p className="text-yellow-200 text-sm mt-2 text-center">
+                Darmowe wiadomości: {3 - messageCount}
+              </p>
+            )}
+          </div>
+        </main>
+      </div>
     </>
   );
 }

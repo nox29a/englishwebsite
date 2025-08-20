@@ -5,6 +5,9 @@ import { Menu, X } from "lucide-react"; // ikony
 import { User } from '@supabase/supabase-js';
 import { supabase } from "@/lib/supabaseClient";
 
+
+
+
 export default function Navbar() {
   const [path, setPath] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -30,7 +33,7 @@ export default function Navbar() {
     { href: "/flashcards", label: "Fiszki" },
     { href: "/vocabulary", label: "Trener słówek" },
     { href: "/conversation", label: "Rozmowa" },
-    { href: "/grammar", label: "Zadania gramatyczne" },
+    { href: "/exercises", label: "Zadania gramatyczne" },
     { href: "/irregular-verbs", label: "Czasowniki nieregularne" },
   ];
 
@@ -59,6 +62,7 @@ export default function Navbar() {
             </Link>
           ))}
         </div>
+
 
         {/* Konto desktop */}
 

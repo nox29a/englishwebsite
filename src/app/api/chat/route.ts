@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 Highlight each incorrect part in <span style="color:red;">...</span> and show the correct form in parentheses right after it.
 Do not rewrite the whole text unless needed.
 Keep all correct parts unchanged.
-Return only HTML, no extra explanation outside the text. If there is no mistakes return 0`
+Return only HTML, no extra explanation outside the text. If there is no mistakes return empty message`
   };
 
   let finalMessages: any[] = [];
@@ -51,7 +51,7 @@ Return only HTML, no extra explanation outside the text. If there is no mistakes
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: model || "deepseek/deepseek-r1:free",
+        model: model || "gpt-4o-mini",
         messages: finalMessages,
         temperature: mode === 'correction' ? 0 : 0.7,
         max_tokens: mode === 'correction' ? 200 : 30,

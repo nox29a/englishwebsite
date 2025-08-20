@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
 import { verbs } from "@/components/words/irreagular_verbs";
-
-
-
+import { useStreak } from "../hooks/useStreak";
+import { Mic } from "lucide-react";
 
 export default function IrregularVerbsTrainer() {
   const getRandomVerb = (list: typeof verbs) =>
     list[Math.floor(Math.random() * list.length)];
+  const { markToday } = useStreak();
 
   const [remainingVerbs, setRemainingVerbs] = useState([...verbs]);
   const [currentVerb, setCurrentVerb] = useState(getRandomVerb(verbs));
@@ -33,128 +32,160 @@ export default function IrregularVerbsTrainer() {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [timeSpent, setTimeSpent] = useState<number>(0);
   const [sessionTime, setSessionTime] = useState<number>(0);
-const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadUserData = async () => {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
     if (authError || !user) {
-      console.error('Authentication error:', authError);
+      console.error("Authentication error:", authError);
       return;
     }
   };
 
-  // Ładowanie postępów
+    const startRecognition = (setter: (val: string) => void) => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
+    if (!SpeechRecognition) {
+      alert("Twoja przeglądarka nie obsługuje rozpoznawania mowy.");
+      return;
+    }
 
-const loadProgress = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
-  // Pobieranie danych z profiles
-  const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('first_name')
-    .eq('id', user.id)
-    .single();
+    recognition.start();
 
-  if (!profileError && profileData) {
-    setFirstName(profileData.first_name);
-  }
-
-  // Pobieranie postępów
-  const { data, error } = await supabase
-    .from('irregular_progress')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-
-  if (data) {
-    setProgressId(data.id);
-    const remainingVerbObjects = verbs.filter(verb => 
-      data.remaining_verbs.includes(verb.index)
-    );
-    
-    const verbsToUse = remainingVerbObjects.length > 0 ? remainingVerbObjects : [...verbs];
-    setRemainingVerbs(verbsToUse);
-    setCurrentVerb(getRandomVerb(verbsToUse)); // Ustaw currentVerb dopiero po załadowaniu
-    setCorrectAnswers(data.correct_answers || 0);
-    setTotalAnswers(data.total_answers || 0);
-    setTimeSpent(data.time_spent || 0);
-  } else {
-    // Jeśli nie ma zapisanych postępów, użyj pełnej listy
-    setCurrentVerb(getRandomVerb(verbs));
-  }
-};
-
-  // Zapisywanie postępów
-const saveProgress = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  // Najpierw sprawdź czy istnieje jakikolwiek wpis dla tego użytkownika
-  const { data: existingData } = await supabase
-    .from('irregular_progress')
-    .select('id')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  const progressData = {
-    user_id: user.id,
-    remaining_verbs: remainingVerbs.map(verb => verb.index),
-    correct_answers: correctAnswers,
-    total_answers: totalAnswers,
-    time_spent: timeSpent + sessionTime,
-    updated_at: new Date().toISOString()
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setter(transcript);
+    };
   };
 
-  if (existingData) {
-    await supabase
-      .from('irregular_progress')
-      .update(progressData)
-      .eq('id', existingData.id);
-    setProgressId(existingData.id);
-  } else {
-    const { data, error } = await supabase
-      .from('irregular_progress')
-      .insert(progressData)
-      .select()
+  const loadProgress = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("first_name")
+      .eq("id", user.id)
       .single();
-    
+
+    if (!profileError && profileData) {
+      setFirstName(profileData.first_name);
+    }
+
+    const { data, error } = await supabase
+      .from("irregular_progress")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
     if (data) {
       setProgressId(data.id);
+      const remainingVerbObjects = verbs.filter((verb) =>
+        data.remaining_verbs.includes(verb.index)
+      );
+
+      const verbsToUse =
+        remainingVerbObjects.length > 0 ? remainingVerbObjects : [...verbs];
+      setRemainingVerbs(verbsToUse);
+      setCurrentVerb(getRandomVerb(verbsToUse));
+      setCorrectAnswers(data.correct_answers || 0);
+      setTotalAnswers(data.total_answers || 0);
+      setTimeSpent(data.time_spent || 0);
+    } else {
+      setCurrentVerb(getRandomVerb(verbs));
     }
+  };
+
+  async function onLessonCompleted() {
+    await markToday();
   }
-};
 
-useEffect(() => {
-  const loadData = async () => {
-    await loadUserData();
-    await loadProgress();
+  const saveProgress = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: existingData } = await supabase
+      .from("irregular_progress")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const progressData = {
+      user_id: user.id,
+      remaining_verbs: remainingVerbs.map((verb) => verb.index),
+      correct_answers: correctAnswers,
+      total_answers: totalAnswers,
+      time_spent: timeSpent + sessionTime,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (existingData) {
+      await supabase
+        .from("irregular_progress")
+        .update(progressData)
+        .eq("id", existingData.id);
+      setProgressId(existingData.id);
+    } else {
+      const { data, error } = await supabase
+        .from("irregular_progress")
+        .insert(progressData)
+        .select()
+        .single();
+
+      if (data) {
+        setProgressId(data.id);
+      }
+    }
   };
-  loadData();
-}, []);
-  // Timer do śledzenia czasu sesji
-useEffect(() => {
-  const timerId = window.setTimeout(() => {
-    saveProgress();
-  }, 1000);
 
-  return () => {
-    window.clearTimeout(timerId);
-  };
-}, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
+  useEffect(() => {
+    const loadData = async () => {
+      await loadUserData();
+      await loadProgress();
+    };
+    loadData();
+  }, []);
 
-  // Autozapis co sekundę
-useEffect(() => {
-  const timer = setTimeout(() => {
-    saveProgress();
-  }, 5000); // Zwiększ interwał do 5 sekund
-  
-  return () => clearTimeout(timer);
-}, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
+    useEffect(() => {
+    const interval = setInterval(() => {
+      setSessionTime((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const timerId = window.setTimeout(() => {
+      saveProgress();
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
+
+ useEffect(() => {
+    const interval = setInterval(() => {
+      saveProgress();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
+
   const resetTrainer = async () => {
     const freshVerbs = [...verbs];
     const randomVerb = getRandomVerb(freshVerbs);
@@ -175,10 +206,13 @@ useEffect(() => {
   };
 
   const checkAnswers = () => {
-    const isBaseCorrect = inputBase.trim().toLowerCase() === currentVerb.base.toLowerCase();
-    const isPastCorrect = inputPast.trim().toLowerCase() === currentVerb.past.toLowerCase();
+    const isBaseCorrect =
+      inputBase.trim().toLowerCase() === currentVerb.base.toLowerCase();
+    const isPastCorrect =
+      inputPast.trim().toLowerCase() === currentVerb.past.toLowerCase();
     const isParticipleCorrect =
-      inputParticiple.trim().toLowerCase() === currentVerb.participle.toLowerCase();
+      inputParticiple.trim().toLowerCase() ===
+      currentVerb.participle.toLowerCase();
 
     setTotalAnswers((prev) => prev + 1);
 
@@ -209,14 +243,16 @@ useEffect(() => {
     setResult("");
     setShowAnswer(false);
     setAnsweredCorrectly(false);
-    
+
     setTimeout(() => {
       baseInputRef.current?.focus();
     }, 0);
   };
 
+  // 🔑 Obsługa klawiatury
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       if (showAnswer || answeredCorrectly) {
         nextVerb();
       } else {
@@ -226,6 +262,7 @@ useEffect(() => {
       e.preventDefault();
       setShowAnswer(true);
     }
+    // ⚠️ nie przechwytujemy Taba — zostaje domyślne przechodzenie
   };
 
   const getAccuracy = () => {
@@ -236,147 +273,204 @@ useEffect(() => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
-  const accuracy = getAccuracy();
-  const accuracyColor = accuracy >= 80 ? "text-green-600" : "text-red-600";
   const totalTimeSpent = timeSpent + sessionTime;
 
   return (
-          <>
-          <Navbar />
-    <div
-      className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"} max-w-3xl mx-auto mt-10 p-4 rounded shadow-md`}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-    >
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-2 md:gap-0">
-        <div className="text-left">
-          {firstName && (
-            <p className={`${darkMode ? "text-gray-300" : "text-gray-700"} text-sm md:text-base`}>
-              Cześć, <strong>{firstName}</strong>!
+    <>
+      <Navbar />
+      <div
+        className={`${
+          darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"
+        } max-w-3xl mx-auto mt-10 p-4 rounded shadow-md`}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+      >
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-2 md:gap-0">
+          <div className="text-left">
+            {firstName && (
+              <p
+                className={`${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                } text-sm md:text-base`}
+              >
+                Cześć, <strong>{firstName}</strong>!
+              </p>
+            )}
+          </div>
+
+          <div
+            className={`text-center md:text-right text-sm md:text-base text-white`}
+          >
+            <p>
+              Poprawne: <strong>{correctAnswers}</strong>
             </p>
-          )}
+            <p>
+              Pozostało:{" "}
+              <strong>
+                {remainingVerbs.length} z {verbs.length}
+              </strong>
+            </p>
+            <p
+              className={`${
+                darkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
+              Czas: <strong>{formatTime(totalTimeSpent)}</strong>
+            </p>
+          </div>
         </div>
-        
-        <div className={`text-center md:text-right text-sm md:text-base ${accuracyColor}`}>
-          <p>Poprawne: <strong>{correctAnswers}</strong></p>
-          <p>Pozostało: <strong>{remainingVerbs.length} z {verbs.length}</strong></p>
-          <p className={`${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-            Czas: <strong>{formatTime(totalTimeSpent)}</strong>
-          </p>
-        </div>
-      </div>
 
-      <Card className={`${darkMode ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"} shadow-xl`}>
-        <CardContent className="space-y-4">
-          <h2 className={`text-xl font-semibold text-center md:text-left ${darkMode ? "text-blue-400" : "text-blue-600"}`}>
-            Tłumaczenie:{" "}
-            <span>{currentVerb.translation}</span>
-          </h2>
+        <Card
+          className={`${
+            darkMode ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"
+          } shadow-xl`}
+        >
+          <CardContent className="space-y-4">
+            <h2
+              className={`text-xl font-semibold text-center md:text-left ${
+                darkMode ? "text-blue-400" : "text-blue-600"
+              }`}
+            >
+              Tłumaczenie: <span>{currentVerb.translation}</span>
+            </h2>
 
-          <div className="space-y-4">
-            <div>
-              <label className={`${darkMode ? "text-gray-300" : "text-gray-700"} block mb-1`}>Base:</label>
-              <input
+            <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              
+              <Input
                 ref={baseInputRef}
                 value={inputBase}
                 onChange={(e) => setInputBase(e.target.value)}
-                className={`${darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-900"} w-full border rounded px-2 py-1`}
+                placeholder="Base"
               />
+              <Button
+                size="icon"
+                onClick={() => startRecognition(setInputBase)}
+                tabIndex={-1}
+              >
+                <Mic />
+              </Button>
             </div>
-            <div>
-              <label className={`${darkMode ? "text-gray-300" : "text-gray-700"} block mb-1`}>Past Simple:</label>
+              <div>
+
+                           <div className="flex items-center gap-2">
+                           
               <Input
                 value={inputPast}
                 onChange={(e) => setInputPast(e.target.value)}
-                className={`${darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-900"} w-full`}
+                placeholder="Past Simple"
+                
               />
+              <Button
+                size="icon"
+                onClick={() => startRecognition(setInputPast)}
+                tabIndex={-1}
+              >
+                <Mic />
+              </Button>
             </div>
-            <div>
-              <label className={`${darkMode ? "text-gray-300" : "text-gray-700"} block mb-1`}>
-                Past Participle:
-              </label>
+            <div className="mt-5"></div>
+            <div className="flex items-center gap-2">
+              
               <Input
                 value={inputParticiple}
                 onChange={(e) => setInputParticiple(e.target.value)}
-                className={`${darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-900"} w-full`}
+                placeholder="Past Participle"
+                
               />
+              <Button
+                size="icon"
+                onClick={() => startRecognition(setInputParticiple)}
+                tabIndex={-1}
+              >
+                <Mic />
+              </Button>
             </div>
-          </div>
+            </div></div>
 
-          <div className="flex flex-col sm:flex-row sm:justify-start sm:gap-2 gap-2">
-            <Button
-              onClick={() => {
-                if (showAnswer || answeredCorrectly) {
+            <div className="flex flex-col sm:flex-row sm:justify-start sm:gap-2 gap-2">
+              <Button
+                onClick={() => {
+                  if (showAnswer || answeredCorrectly) nextVerb();
+                  else checkAnswers();
+
+                  markToday().catch(console.error);
+                }}
+                className="w-full sm:w-auto"
+              >
+                Sprawdź
+              </Button>
+
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (!answeredCorrectly && !showAnswer) {
+                    setTotalAnswers((prev) => prev + 1);
+                  }
                   nextVerb();
-                } else {
-                  checkAnswers();
-                }
-              }}
-              className="w-full sm:w-auto"
-            >
-              Sprawdź
-            </Button>
+                }}
+                className="w-full sm:w-auto"
+              >
+                Następne
+              </Button>
 
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (!answeredCorrectly && !showAnswer) {
-                  setTotalAnswers((prev) => prev + 1);
-                }
-                nextVerb();
-              }}
-              className="w-full sm:w-auto"
-            >
-              Następne
-            </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!showAnswer && !answeredCorrectly) {
+                    setTotalAnswers((prev) => prev + 1);
+                  }
+                  setShowAnswer(true);
+                }}
+                className="w-full sm:w-auto"
+              >
+                Pokaż odpowiedź
+              </Button>
 
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (!showAnswer && !answeredCorrectly) {
-                  setTotalAnswers((prev) => prev + 1);
-                }
-                setShowAnswer(true);
-              }}
-              className="w-full sm:w-auto"
-            >
-              Pokaż odpowiedź
-            </Button>
-
-            <Button
-              variant="destructive"
-              onClick={resetTrainer}
-              className="w-full sm:w-auto"
-            >
-              Resetuj
-            </Button>
-          </div>
-
-          {result && (
-            <p className={`text-lg font-medium text-center md:text-left ${darkMode ? "text-green-400" : "text-green-700"}`}>
-              {result}
-            </p>
-          )}
-
-          {showAnswer && (
-            <div className={`${darkMode ? "text-gray-300" : "text-gray-700"} text-sm text-center md:text-left`}>
-              <p>
-                Base: <strong>{currentVerb.base}</strong>
-              </p>
-              <p>
-                Past: <strong>{currentVerb.past}</strong>
-              </p>
-              <p>
-                Participle: <strong>{currentVerb.participle}</strong>
-              </p>
+              <Button
+                variant="destructive"
+                onClick={resetTrainer}
+                className="w-full sm:w-auto"
+              >
+                Resetuj
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+
+            {result && (
+              <p
+                className={`text-lg font-medium text-center md:text-left ${
+                  darkMode ? "text-green-400" : "text-green-700"
+                }`}
+              >
+                {result}
+              </p>
+            )}
+
+            {showAnswer && (
+              <div
+                className={`${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                } text-sm text-center md:text-left`}
+              >
+                <p>
+                  Base: <strong>{currentVerb.base}</strong>
+                </p>
+                <p>
+                  Past: <strong>{currentVerb.past}</strong>
+                </p>
+                <p>
+                  Participle: <strong>{currentVerb.participle}</strong>
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </>
   );
 }

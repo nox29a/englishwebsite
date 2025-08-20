@@ -197,7 +197,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-6">Gotów zacząć swoją przygodę z angielskim?</h2>
           <p className="text-xl mb-8">Dołącz do nas i zobacz różnicę już po pierwszej lekcji!</p>
           <Link 
-            href="/signup" 
+            href="/register" 
             className="bg-white text-blue-900 px-8 py-3 rounded-lg font-bold hover:bg-gray-100 transition inline-block"
           >
             Zarejestruj się teraz
