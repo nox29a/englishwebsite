@@ -133,6 +133,25 @@ export default function Home() {
               href="/irregular-verbs"
               color="bg-indigo-900"
             />
+                        <ToolCard 
+              title="Testy"
+              description="Sprawdź swoją wiedzę zalenie od poziomu"
+              href="/test"
+              color="bg-amber-900"
+            />
+                        <ToolCard 
+              title="Karty słówek"
+              description="Ćwicz nowe słówka i zapamiętuj je skutecznie."
+              href="/cards"
+              color="bg-cyan-900"
+            />
+                                    <ToolCard 
+              title="Statystyki"
+              description="Śledź postępy"
+              href="/statistics"
+              color="bg-pink-900"
+            />
+            
           </div>
         </div>
       </section>
@@ -320,7 +339,7 @@ function PricingCard({ name, price, features, cta, featured }: {
         ))}
       </ul>
       <Link 
-        href={price === "0" ? "/signup" : "/signup?plan=" + name.toLowerCase()} 
+        href={price === "0" ? "/register" : "/signup?plan=" + name.toLowerCase()} 
         className={`block text-center py-3 px-4 rounded-lg font-bold ${featured ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-700 hover:bg-gray-500 text-white'}`}
       >
         {cta}

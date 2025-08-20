@@ -505,14 +505,14 @@ const mostProductiveDays = activityByDayFiltered
                       Ogólny postęp zadań
                     </h4>
                     <div className="flex justify-between text-sm text-gray-500 dark:text-gray-500">
-                      <span>Poprawne: {tasksProgressData.correct_answers}/40</span>
+                      <span>Poprawne: {tasksProgressData.correct_answers}/320</span>
                       <span>Ukończone: {combinedProgress?.completed_tasks || 0}</span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 mt-1">
                       <div 
                         className="bg-indigo-600 h-1.5 rounded-full" 
                         style={{ 
-                          width: `${tasksProgressData.total_attempts > 0 ? Math.round((tasksProgressData.correct_answers / 40) * 100) : 0}%` 
+                          width: `${tasksProgressData.total_attempts > 0 ? Math.round((tasksProgressData.correct_answers / 320) * 100) : 0}%` 
                         }}
                       />
                     </div>

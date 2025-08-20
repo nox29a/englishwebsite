@@ -2,6 +2,7 @@
 // pages/index.tsx
 import { useState, useEffect } from 'react';
 import { easy, medium, hard } from '@/components/words/flashcards_words';
+import Navbar from "@/components/Navbar";
 
 interface Flashcard {
   en: string;
@@ -65,6 +66,8 @@ export default function Flashcards() {
   };
 
   return (
+    <>
+    <Navbar />
     <div className="min-h-screen bg-gray-900 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-center text-blue-400 mb-10">Fiszki do nauki angielskiego</h1>
@@ -181,5 +184,6 @@ export default function Flashcards() {
         }
       `}</style>
     </div>
+    </>
   );
 }

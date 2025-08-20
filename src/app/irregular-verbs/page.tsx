@@ -7,13 +7,13 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
 import { verbs } from "@/components/words/irreagular_verbs";
-import { useStreak } from "../hooks/useStreak";
+
 import { Mic } from "lucide-react";
 
 export default function IrregularVerbsTrainer() {
   const getRandomVerb = (list: typeof verbs) =>
     list[Math.floor(Math.random() * list.length)];
-  const { markToday } = useStreak();
+
 
   const [remainingVerbs, setRemainingVerbs] = useState([...verbs]);
   const [currentVerb, setCurrentVerb] = useState(getRandomVerb(verbs));
@@ -108,9 +108,7 @@ export default function IrregularVerbsTrainer() {
     }
   };
 
-  async function onLessonCompleted() {
-    await markToday();
-  }
+
 
   const saveProgress = async () => {
     const {
@@ -399,7 +397,7 @@ export default function IrregularVerbsTrainer() {
                   if (showAnswer || answeredCorrectly) nextVerb();
                   else checkAnswers();
 
-                  markToday().catch(console.error);
+                 
                 }}
                 className="w-full sm:w-auto"
               >

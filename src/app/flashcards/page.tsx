@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
-import { useStreak } from "@/app/hooks/useStreak";
+
 
 import { easy } from "@/components/words/flashcards_words";
 import { medium } from "@/components/words/flashcards_words";
@@ -24,7 +24,7 @@ export default function FlashcardGame() {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [totalTimeSpent, setTotalTimeSpent] = useState<number>(0);
 
-  const { streak, markToday } = useStreak();
+
 
   // --- Speech recognition ---
   const recognitionRef = useRef<any>(null);
@@ -347,7 +347,7 @@ export default function FlashcardGame() {
           <Button
             onClick={startListening}
             disabled={isListening}
-            className="bg-red-500 hover:bg-red-600 text-white rounded-full px-4 py-2"
+            className="bg-gray-500 hover:bg-red-600 text-white rounded-full px-4 py-2"
           >
             🎤 {isListening ? "Słucham..." : "Mów"}
           </Button>

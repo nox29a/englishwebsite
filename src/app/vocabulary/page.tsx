@@ -69,7 +69,7 @@ export default function WordMatchGame() {
     };
     fetchUser();
   }, []);
-
+  
     // Ładuj postępy
   const loadProgress = async () => {
     if (!userId) return;
@@ -150,9 +150,15 @@ const addNewPairs = (n: number, currentPlSlots = plSlots, currentEnSlots = enSlo
   const slotsToFill = Math.min(emptyPlSlots.length, emptyEnSlots.length, n);
   if (slotsToFill <= 0) return;
 
-  // Używamy funkcjonalnego setUsedIds, żeby bezpiecznie dobrać kandydatów
+  // Get the current words based on difficulty
+  const currentWords = difficulty === "easy" ? easy : difficulty === "medium" ? medium : hard;
+  
+  // Use functional update to ensure we have the latest usedIds
   setUsedIds((prevUsed) => {
-    const candidates = shuffleArray(words.filter((w) => !prevUsed.includes(w.id))).slice(0, slotsToFill);
+    const candidates = shuffleArray(
+      currentWords.filter((w) => !prevUsed.includes(w.id))
+    ).slice(0, slotsToFill);
+    
     if (candidates.length === 0) return prevUsed;
 
     const newUsed = [...prevUsed];
@@ -166,7 +172,7 @@ const addNewPairs = (n: number, currentPlSlots = plSlots, currentEnSlots = enSlo
       newUsed.push(word.id);
     }
 
-    // Zaktualizuj stany na podstawie kopii
+    // Update states based on copies
     setPlSlots(plCopy);
     setEnSlots(enCopy);
 
@@ -178,27 +184,36 @@ const addNewPairs = (n: number, currentPlSlots = plSlots, currentEnSlots = enSlo
     resetGame();
   }, [difficulty]);
 
-  const resetGame = () => {
-    setUsedIds([]);
-    setPlSlots(Array(SLOT_COUNT).fill({ id: null, word: null }));
-    setEnSlots(Array(SLOT_COUNT).fill({ id: null, word: null }));
-    setSelected(null);
-    setCorrectHighlight(null);
-    setError(null);
-    setScore(0);
-    setErrors(0);
-    setStartTime(Date.now());
+const resetGame = () => {
+  const emptySlots = Array(SLOT_COUNT).fill({ id: null, word: null });
 
-    setWords(
-      difficulty === "easy"
-        ? easy
-        : difficulty === "medium"
-        ? medium
-        : hard
-    );
+  setUsedIds([]);
+  setPlSlots(emptySlots);
+  setEnSlots(emptySlots);
+  setSelected(null);
+  setCorrectHighlight(null);
+  setError(null);
+  setScore(0);
+  setErrors(0);
+  setStartTime(Date.now());
 
-    setTimeout(() => addNewPairs(SLOT_COUNT), 100);
-  };
+  const newWords =
+    difficulty === "easy" ? easy :
+    difficulty === "medium" ? medium :
+    hard;
+  setWords(newWords);
+
+  // Dodajemy nowe pary na czystej planszy
+  addNewPairs(SLOT_COUNT, emptySlots, emptySlots);
+};
+
+
+
+  useEffect(() => {
+  if (userId) {
+    loadProgress();
+  }
+}, [userId, difficulty]);
 
   const handleClick = (side: "pl" | "en", slotIndex: number) => {
     const slots = side === "pl" ? plSlots : enSlots;
