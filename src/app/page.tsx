@@ -64,32 +64,32 @@ export default function Home() {
       </div>
 
       {/* Features Section */}
-<section className="py-16 px-4 max-w-6xl mx-auto">
-  <h2 className="text-3xl font-bold text-center mb-12">Dlaczego warto uczyć się z nami?</h2>
-  
-  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-    <FeatureCard 
-      icon="🤖"
-      title="Rozmowy z AI"
-      description="Konwersacje z inteligentnym asystentem dostosowane do Twojego poziomu"
-    />
-    <FeatureCard 
-      icon="📚"
-      title="Personalizowane lekcje"
-      description="Materły dopasowane do Twoich celów i zainteresowań"
-    />
-    <FeatureCard 
-      icon="⚡"
-      title="Natychmiastowa informacja zwrotna"
-      description="Błyskawiczna korekta błędów i sugestie poprawy"
-    />
-    <FeatureCard 
-      icon="📈"
-      title="Śledzenie postępów"
-      description="Monitoruj swoje osiągnięcia i motywuj się do dalszej nauki"
-    />
-  </div>
-</section>
+ <section className="py-16 px-4 max-w-6xl mx-auto">
+      <h2 className="text-3xl font-bold text-center mb-12">Dlaczego warto uczyć się z nami?</h2>
+      
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <FeatureCard 
+          icon="🤖"
+          title="Rozmowy z AI"
+          description="Konwersacje z inteligentnym asystentem dostosowane do Twojego poziomu"
+        />
+        <FeatureCard 
+          icon="📚"
+          title="Personalizowane lekcje"
+          description="Materiały dopasowane do Twoich celów i zainteresowań"
+        />
+        <FeatureCard 
+          icon="⚡"
+          title="Natychmiastowa informacja zwrotna"
+          description="Błyskawiczna korekta błędów i sugestie poprawy"
+        />
+        <FeatureCard 
+          icon="📈"
+          title="Śledzenie postępów"
+          description="Monitoruj swoje osiągnięcia i motywuj się do dalszej nauki"
+        />
+      </div>
+    </section>
 
       {/* Existing Features Showcase */}
       <section className="py-16 bg-gray-800 px-4">
@@ -251,10 +251,30 @@ export default function Home() {
 // Component for feature cards
 function FeatureCard({ icon, title, description }: { icon: string, title: string, description: string }) {
   return (
-    <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition hover:bg-gray-700">
-      <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-xl font-bold mb-2">{title}</h3>
-      <p className="text-gray-400">{description}</p>
+    <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 overflow-hidden group">
+      {/* Ciągły efekt połysku - wolniejszy i bardziej rozmyty */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 -left-40 w-32 h-full bg-white opacity-[0.03] transform -skew-x-12 animate-shimmer-slow blur-md"></div>
+      </div>
+      
+      {/* Dodatkowy efekt przy najechaniu - subtelniejszy */}
+      <div className="absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+        <div className="absolute top-0 -left-40 w-32 h-full bg-white opacity-[0.08] transform -skew-x-12 group-hover:animate-shimmer-slow blur-xl"></div>
+      </div>
+      
+      <div className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-500">{icon}</div>
+      <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
+      <p className="text-gray-300">{description}</p>
+      
+      <style jsx>{`
+        @keyframes shimmer-slow {
+          0% { left: -40%; }
+          100% { left: 140%; }
+        }
+        .animate-shimmer-slow {
+          animation: shimmer-slow 6s infinite ease-in-out;
+        }
+      `}</style>
     </div>
   );
 }

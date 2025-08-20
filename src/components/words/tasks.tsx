@@ -1632,6 +1632,966 @@ explanation: "Reported Speech – Present Simple do Past Simple."
     options: ["will start", "started", "will have started", "starts"],
     answer: "will have started",
     explanation: "Future Perfect – akcja zakończona przed momentem w przyszłości."
+  },
+  
+  {
+    id: 201,
+    level: "Łatwy",
+    question: "My brother ____ basketball on Saturdays.",
+    options: ["play", "plays", "played", "playing"],
+    answer: "plays",
+    explanation: "Present Simple dla nawyku ('on Saturdays') w 3. os. lp. (my brother) wymaga końcówki -s."
+  },
+  {
+    id: 202,
+    level: "Łatwy",
+    question: "Be quiet! The baby ____.",
+    options: ["sleeps", "slept", "is sleeping", "sleep"],
+    answer: "is sleeping",
+    explanation: "Okrzyk 'Be quiet!' wskazuje na teraźniejszość. Present Continuous (is sleeping) opisuje czynność w tej chwili."
+  },
+  {
+    id: 203,
+    level: "Łatwy",
+    question: "I ____ a student.",
+    options: ["am", "is", "are", "be"],
+    answer: "am",
+    explanation: "Czasownik 'be' w Present Simple dla pierwszej osoby liczby pojedynczej (I) to 'am'."
+  },
+  {
+    id: 204,
+    level: "Łatwy",
+    question: "They ____ their grandparents every weekend.",
+    options: ["visit", "visits", "visited", "visiting"],
+    answer: "visit",
+    explanation: "'Every weekend' wskazuje na Present Simple. Podmiot w liczbie mnogiej (They) - czasownik bez końcówki."
+  },
+  {
+    id: 205,
+    level: "Łatwy",
+    question: "She ____ a book right now.",
+    options: ["read", "reads", "is reading", "readed"],
+    answer: "is reading",
+    explanation: "'Right now' to wyrażenie czasu dla Present Continuous. She + is + czasownik z -ing."
+  },
+  {
+    id: 206,
+    level: "Średni",
+    question: "I ____ my keys. I can't find them anywhere.",
+    options: ["lose", "lost", "have lost", "am losing"],
+    answer: "have lost",
+    explanation: "Skutek w teraźniejszości (I can't find them) wynika z czynności w przeszłości - Present Perfect."
+  },
+  {
+    id: 207,
+    level: "Średni",
+    question: "While I ____ dinner, the phone rang.",
+    options: ["cooked", "was cooking", "cook", "had cooked"],
+    answer: "was cooking",
+    explanation: "Past Continuous (was cooking) opisuje dłuższą czynność przerwaną przez krótszą (the phone rang) w Past Simple."
+  },
+  {
+    id: 208,
+    level: "Średni",
+    question: "She ____ in this company for five years.",
+    options: ["works", "worked", "has worked", "is working"],
+    answer: "has worked",
+    explanation: "'For five years' wskazuje na okres ciągły aż do teraz - Present Perfect."
+  },
+  {
+    id: 209,
+    level: "Średni",
+    question: "By the time we arrived, the film ____.",
+    options: ["already started", "had already started", "has already started", "was already starting"],
+    answer: "had already started",
+    explanation: "Past Perfect (had started) opisuje czynność wcześniejszą niż inna przeszła (we arrived)."
+  },
+  {
+    id: 210,
+    level: "Średni",
+    question: "This is the best pizza I ____.",
+    options: ["ever ate", "have ever eaten", "ever eat", "had ever eaten"],
+    answer: "have ever eaten",
+    explanation: "Present Perfect (have eaten) z 'ever' jest używane przy superlatywach dla podkreślenia doświadczenia życiowego."
+  },
+  {
+    id: 211,
+    level: "Średni",
+    question: "They ____ to Japan twice.",
+    options: ["were", "have been", "had been", "are"],
+    answer: "have been",
+    explanation: "Określenie liczby razy ('twice') związane z czyimś doświadczeniem życiowym wymaga Present Perfect."
+  },
+  {
+    id: 212,
+    level: "Średni",
+    question: "I ____ to the new restaurant last night.",
+    options: ["have gone", "went", "was going", "had gone"],
+    answer: "went",
+    explanation: "Określony czas w przeszłości ('last night') wymaga Past Simple."
+  },
+  {
+    id: 213,
+    level: "Średni",
+    question: "He was tired because he ____ all day.",
+    options: ["has worked", "worked", "had been working", "was working"],
+    answer: "had been working",
+    explanation: "Past Perfect Continuous podkreśla długotrwałość czynności, która miała wpływ na stan w przeszłości (was tired)."
+  },
+  {
+    id: 214,
+    level: "Średni",
+    question: "How long ____ waiting?",
+    options: ["have you been", "are you", "were you", "had you been"],
+    answer: "have you been",
+    explanation: "Pytanie o długość trwającej do teraz czynności wymaga Present Perfect Continuous."
+  },
+  {
+    id: 215,
+    level: "Średni",
+    question: "The train ____ at 8 PM tomorrow.",
+    options: ["leaves", "is leaving", "will leave", "will be leaving"],
+    answer: "leaves",
+    explanation: "Present Simple jest używany dla rozkładów jazdy i harmonogramów, nawet mówiąc o przyszłości."
+  },
+  {
+    id: 216,
+    level: "Trudny",
+    question: "If I ____ about the traffic, I would have left earlier.",
+    options: ["knew", "had known", "have known", "would know"],
+    answer: "had known",
+    explanation: "Trzeci tryb warunkowy (Third Conditional) dla nierealnej przeszłości: if + Past Perfect, would have + past participle."
+  },
+  {
+    id: 217,
+    level: "Trudny",
+    question: "By next month, she ____ here for a decade.",
+    options: ["will work", "will have worked", "will be working", "works"],
+    answer: "will have worked",
+    explanation: "Future Perfect opisuje czynność, która zakończy się przed określonym momentem w przyszłości ('by next month')."
+  },
+  {
+    id: 218,
+    level: "Trudny",
+    question: "I wish I ____ more time for my hobbies.",
+    options: ["have", "had", "would have", "had had"],
+    answer: "had",
+    explanation: "Wyrażanie życzenia odnoszącego się do teraźniejszości za pomocą 'wish' wymaga Past Simple."
+  },
+  {
+    id: 219,
+    level: "Trudny",
+    question: "The report ____ by the end of the day.",
+    options: ["will have been completed", "will be completed", "is completed", "will complete"],
+    answer: "will have been completed",
+    explanation: "Future Perfect Passive - czynność *zostanie zakończona* (strona bierna) do określonego przyszłego momentu."
+  },
+  {
+    id: 220,
+    level: "Trudny",
+    question: "He insisted that she ____ the truth.",
+    options: ["tells", "told", "tell", "had told"],
+    answer: "tell",
+    explanation: "Po czasownikach takich jak 'insist', 'demand', 'suggest' używamy bezokolicznika (base form) w mowie zależnej."
+  },
+  {
+    id: 221,
+    level: "Trudny",
+    question: "No sooner ____ home than it started to rain.",
+    options: ["I had left", "had I left", "I left", "did I leave"],
+    answer: "had I left",
+    explanation: "Konstrukcja 'No sooner... than' wymaga inwersji (had I left) i czasu Past Perfect dla pierwszej czynności."
+  },
+  {
+    id: 222,
+    level: "Trudny",
+    question: "If only I ____ his advice back then.",
+    options: ["took", "had taken", "would take", "take"],
+    answer: "had taken",
+    explanation: "'If only' wyraża silne żal lub pragnienie dotyczące przeszłości i wymaga Past Perfect."
+  },
+  {
+    id: 223,
+    level: "Trudny",
+    question: "Not until later ____ the full extent of the damage.",
+    options: ["she realized", "did she realize", "had she realized", "she had realized"],
+    answer: "did she realize",
+    explanation: "Inwersja (did she realize) jest wymagana, gdy zdanie zaczyna się od wyrażenia przeczącego jak 'Not until'."
+  },
+  {
+    id: 224,
+    level: "Trudny",
+    question: "The proposal ____ by the committee right now.",
+    options: ["is considered", "is being considered", "has been considered", "was considered"],
+    answer: "is being considered",
+    explanation: "Present Continuous Passive opisuje czynność będącą w trakcie wykonywania (right now) w stronie biernej."
+  },
+  {
+    id: 225,
+    level: "Trudny",
+    question: "Had I known, I ____ differently.",
+    options: ["would act", "would have acted", "acted", "had acted"],
+    answer: "would have acted",
+    explanation: "Inwersyjna forma trzeciego trybu warunkowego bez 'if': Had + podmiot + past participle, podmiot + would have + past participle."
+  },
+  {
+    id: 226,
+    level: "Łatwy",
+    question: "Water ____ at 100 degrees Celsius.",
+    options: ["boils", "is boiling", "boil", "boiled"],
+    answer: "boils",
+    explanation: "Present Simple jest używany do wyrażania faktów naukowych i ogólnych prawd."
+  },
+  {
+    id: 227,
+    level: "Łatwy",
+    question: "We ____ to the cinema last Friday.",
+    options: ["go", "went", "have gone", "are going"],
+    answer: "went",
+    explanation: "Określony czas w przeszłości ('last Friday') wymaga Past Simple."
+  },
+  {
+    id: 228,
+    level: "Łatwy",
+    question: "Look at those clouds! It ____.",
+    options: ["will rain", "is going to rain", "rains", "rained"],
+    answer: "is going to rain",
+    explanation: "Forma 'be going to' jest używana do przewidywania przyszłości opartego na obecnych, widocznych oznakach (chmury)."
+  },
+  {
+    id: 229,
+    level: "Łatwy",
+    question: "My father ____ in a hospital.",
+    options: ["work", "works", "is working", "worked"],
+    answer: "works",
+    explanation: "Present Simple do opisu stałej sytuacji lub pracy."
+  },
+  {
+    id: 230,
+    level: "Łatwy",
+    question: "I can't talk now, I ____ my homework.",
+    options: ["do", "am doing", "did", "have done"],
+    answer: "am doing",
+    explanation: "Czynność odbywająca się w momencie mówienia (I can't talk now) wymaga Present Continuous."
+  },
+  {
+    id: 231,
+    level: "Średni",
+    question: "By 2030, scientists ____ a cure for many diseases.",
+    options: ["will find", "will have found", "are finding", "find"],
+    answer: "will have found",
+    explanation: "Future Perfect - czynność zostanie ukończona przed określonym momentem w przyszłości ('By 2030')."
+  },
+  {
+    id: 232,
+    level: "Średni",
+    question: "I ____ to Italy before last year's trip.",
+    options: ["have never been", "had never been", "never was", "was never"],
+    answer: "had never been",
+    explanation: "Past Perfect opisuje doświadczenie lub stan przed innym momentem w przeszłości ('last year's trip')."
+  },
+  {
+    id: 233,
+    level: "Średni",
+    question: "This time next week, we ____ on a beach.",
+    options: ["will lie", "will be lying", "will have lain", "are lying"],
+    answer: "will be lying",
+    explanation: "Future Continuous opisuje czynność, która będzie trwała w określonym przyszłym momencie ('This time next week')."
+  },
+  {
+    id: 234,
+    level: "Średni",
+    question: "The room ____ when I entered.",
+    options: ["was cleaned", "had been cleaned", "has been cleaned", "cleaned"],
+    answer: "had been cleaned",
+    explanation: "Past Perfect Passive - czynność *została wykonana* (strona bierna) przed inną przeszłą czynnością (I entered)."
+  },
+  {
+    id: 235,
+    level: "Średni",
+    question: "She promised she ____ me as soon as she could.",
+    options: ["will call", "would call", "called", "calls"],
+    answer: "would call",
+    explanation: "Mowa zależna (reported speech) - obietnica o przyszłości w przeszłości wymaga użycia 'would'."
+  },
+  {
+    id: 236,
+    level: "Średni",
+    question: "I ____ my phone. Can I use yours?",
+    options: ["lose", "lost", "have lost", "am losing"],
+    answer: "have lost",
+    explanation: "Present Perfect wyraża czynność w przeszłości, która ma bezpośredni skutek w teraźniejszości (Can I use yours?)."
+  },
+  {
+    id: 237,
+    level: "Średni",
+    question: "He ____ for three hours before he finally finished.",
+    options: ["has been working", "had been working", "was working", "worked"],
+    answer: "had been working",
+    explanation: "Past Perfect Continuous podkreśla długość trwania czynności, która miała miejsce przed inną przeszłą czynnością."
+  },
+  {
+    id: 238,
+    level: "Średni",
+    question: "The conference ____ place in Berlin next year.",
+    options: ["takes", "is taking", "will take", "will be taking"],
+    answer: "will take",
+    explanation: "Future Simple dla oficjalnych ogłoszeń i zaplanowanych przyszłych wydarzeń."
+  },
+  {
+    id: 239,
+    level: "Średni",
+    question: "I ____ to the doctor if I were you.",
+    options: ["will go", "would go", "go", "went"],
+    answer: "would go",
+    explanation: "Drugi tryb warunkowy (Second Conditional) do udzielania rad - If I were you, I would..."
+  },
+  {
+    id: 240,
+    level: "Średni",
+    question: "The bridge ____ built next year.",
+    options: ["is", "will", "will be", "is being"],
+    answer: "will be",
+    explanation: "Future Simple Passive do opisu przyszłych planów w stronie biernej."
+  },
+  {
+    id: 241,
+    level: "Trudny",
+    question: "____ he more careful, the accident wouldn't have happened.",
+    options: ["Had", "Would", "If had", "Were"],
+    answer: "Had",
+    explanation: "Inwersyjna forma trzeciego trybu warunkowego: Had + podmiot + past participle... (zamiast If he had been...)"
+  },
+  {
+    id: 242,
+    level: "Trudny",
+    question: "It's high time you ____ a decision.",
+    options: ["make", "made", "have made", "will make"],
+    answer: "made",
+    explanation: "Konstrukcja 'It's (high) time + podmiot + Past Simple' wyraża, że coś powinno się już stać."
+  },
+  {
+    id: 243,
+    level: "Trudny",
+    question: "The minister is believed ____ tomorrow.",
+    options: ["to resign", "to be resigning", "to have resigned", "resigning"],
+    answer: "to resign",
+    explanation: "Strona bierna z bezokolicznikiem (passive with infinitive) dla przyszłych wydarzeń: is believed + to + infinitive."
+  },
+  {
+    id: 244,
+    level: "Trudny",
+    question: "Not a single word ____ since the argument.",
+    options: ["has been spoken", "was spoken", "spoke", "had spoken"],
+    answer: "has been spoken",
+    explanation: "Present Perfect Passive podkreśla stan obecny będący wynikiem przeszłej czynności (od kłótni panuje milczenie)."
+  },
+  {
+    id: 245,
+    level: "Trudny",
+    question: "I'd rather you ____ me the truth.",
+    options: ["tell", "told", "had told", "would tell"],
+    answer: "told",
+    explanation: "Po 'I'd rather' (wolałbym) odnoszącym się do teraźniejszości lub przyszłości używamy Past Simple."
+  },
+  {
+    id: 246,
+    level: "Trudny",
+    question: "The painting ____ to be worth millions.",
+    options: ["is thought", "thought", "thinks", "has thought"],
+    answer: "is thought",
+    explanation: "Strona bierna (is thought) jest używana do wyrażania ogólnych opinii lub przekonań."
+  },
+  {
+    id: 247,
+    level: "Trudny",
+    question: "So successful ____ that they expanded the business.",
+    options: ["the venture was", "was the venture", "had the venture been", "the venture had been"],
+    answer: "was the venture",
+    explanation: "Inwersja (was the venture) jest wymagana, gdy zdanie zaczyna się od 'So + adjective/adverb'."
+  },
+  {
+    id: 248,
+    level: "Trudny",
+    question: "Under no circumstances ____ access to this file.",
+    options: ["should you grant", "you should grant", "grant you should", "you grant should"],
+    answer: "should you grant",
+    explanation: "Inwersja (should you grant) jest wymagana, gdy zdanie zaczyna się od wyrażenia przeczącego 'Under no circumstances'."
+  },
+  {
+    id: 249,
+    level: "Trudny",
+    question: "He acts as if he ____ everything.",
+    options: ["knows", "knew", "had known", "has known"],
+    answer: "knew",
+    explanation: "Po 'as if' do opisania nierealnej lub mało prawdopodobnej sytuacji w teraźniejszości używamy Past Simple."
+  },
+  {
+    id: 250,
+    level: "Trudny",
+    question: "The manuscript is known ____ in the 15th century.",
+    options: ["to be written", "to have been written", "to write", "to have written"],
+    answer: "to have been written",
+    explanation: "Strona bierna z bezokolicznikiem perfect (passive with perfect infinitive) dla czynności przeszłych: is known + to have been + past participle."
+  },
+  {
+    id: 251,
+    level: "Łatwy",
+    question: "Birds ____ south for the winter.",
+    options: ["fly", "flies", "flew", "are flying"],
+    answer: "fly",
+    explanation: "Present Simple do opisania corocznych migracji i powtarzających się zjawisk przyrody."
+  },
+  {
+    id: 252,
+    level: "Łatwy",
+    question: "She ____ her teeth twice a day.",
+    options: ["brush", "brushes", "brushed", "is brushing"],
+    answer: "brushes",
+    explanation: "Present Simple dla rutyny i nawyków ('twice a day') z końcówką -es dla 3.os.l.poj."
+  },
+  {
+    id: 253,
+    level: "Łatwy",
+    question: "The sun ____ in the east.",
+    options: ["rise", "rises", "rose", "is rising"],
+    answer: "rises",
+    explanation: "Present Simple dla niezmiennych faktów i praw przyrody."
+  },
+  {
+    id: 254,
+    level: "Łatwy",
+    question: "I ____ a letter to my friend yesterday.",
+    options: ["write", "wrote", "have written", "am writing"],
+    answer: "wrote",
+    explanation: "Określony czas w przeszłości ('yesterday') wymaga Past Simple."
+  },
+  {
+    id: 255,
+    level: "Łatwy",
+    question: "They ____ TV when I called.",
+    options: ["watch", "watched", "were watching", "are watching"],
+    answer: "were watching",
+    explanation: "Past Continuous opisuje czynność trwającą w tle, gdy nastąpiła inna, krótsza czynność (I called)."
+  },
+  {
+    id: 256,
+    level: "Średni",
+    question: "I ____ already ____ that movie three times.",
+    options: ["have / seen", "had / seen", "was / seeing", "did / see"],
+    answer: "have / seen",
+    explanation: "Present Perfect z 'already' i określeniem liczby razy ('three times') dla podkreślenia doświadczenia."
+  },
+  {
+    id: 257,
+    level: "Średni",
+    question: "She ____ for the company since she graduated.",
+    options: ["works", "worked", "has been working", "is working"],
+    answer: "has been working",
+    explanation: "Present Perfect Continuous podkreśla ciągłość czynności rozpoczętej w przeszłości i trwającej do teraz ('since she graduated')."
+  },
+  {
+    id: 258,
+    level: "Średni",
+    question: "The meeting ____ by the time we got there.",
+    options: ["had already ended", "already ended", "has already ended", "was already ending"],
+    answer: "had already ended",
+    explanation: "Past Perfect opisuje czynność, która zakończyła się przed innym momentem w przeszłości (we got there)."
+  },
+  {
+    id: 259,
+    level: "Średni",
+    question: "If it ____ tomorrow, we will cancel the picnic.",
+    options: ["rains", "will rain", "rained", "is raining"],
+    answer: "rains",
+    explanation: "Pierwszy tryb warunkowy (First Conditional) dla realnej przyszłości: If + Present Simple, will + infinitive."
+  },
+  {
+    id: 260,
+    level: "Średni",
+    question: "The new park ____ next month.",
+    options: ["opens", "is opened", "will open", "will be opened"],
+    answer: "opens",
+    explanation: "Present Simple jest używany dla oficjalnych, zaplanowanych przyszłych wydarzeń, takich jak otwarcia."
+  },
+  {
+    id: 261,
+    level: "Łatwy",
+    question: "Cats ____ milk.",
+    options: ["love", "loves", "loved", "loving"],
+    answer: "love",
+    explanation: "Present Simple dla ogólnych prawd i charakterystycznych zachowań. Podmiot w liczbie mnogiej - czasownik bez końcówki."
+  },
+  {
+    id: 262,
+    level: "Łatwy",
+    question: "I ____ to music every evening.",
+    options: ["listen", "listens", "listened", "am listening"],
+    answer: "listen",
+    explanation: "'Every evening' wskazuje na nawyk - Present Simple. 'I' → czasownik w podstawowej formie."
+  },
+  {
+    id: 263,
+    level: "Łatwy",
+    question: "The children ____ in the park right now.",
+    options: ["play", "plays", "are playing", "played"],
+    answer: "are playing",
+    explanation: "'Right now' wskazuje na czynność w trakcie wykonywania - Present Continuous. 'Children' → liczba mnoga → 'are playing'."
+  },
+  {
+    id: 264,
+    level: "Łatwy",
+    question: "She ____ breakfast at 8 AM every day.",
+    options: ["have", "has", "had", "having"],
+    answer: "has",
+    explanation: "Present Simple dla rutyny ('every day'). 3. osoba liczby pojedynczej (she) wymaga końcówki -s."
+  },
+  {
+    id: 265,
+    level: "Łatwy",
+    question: "We ____ to the zoo last Sunday.",
+    options: ["go", "went", "have gone", "are going"],
+    answer: "went",
+    explanation: "Określony czas w przeszłości ('last Sunday') wymaga Past Simple."
+  },
+  {
+    id: 266,
+    level: "Średni",
+    question: "By this time next year, I ____ university.",
+    options: ["will finish", "will have finished", "finish", "am finishing"],
+    answer: "will have finished",
+    explanation: "Future Perfect - czynność zostanie ukończona przed określonym przyszłym momentem ('by this time next year')."
+  },
+  {
+    id: 267,
+    level: "Średni",
+    question: "He ____ for two hours before she arrived.",
+    options: ["has waited", "had been waiting", "was waiting", "waited"],
+    answer: "had been waiting",
+    explanation: "Past Perfect Continuous podkreśla długość trwania czynności, która miała miejsce przed innym momentem w przeszłości."
+  },
+  {
+    id: 268,
+    level: "Średni",
+    question: "If I ____ you, I would accept the offer.",
+    options: ["am", "was", "were", "have been"],
+    answer: "were",
+    explanation: "Drugi tryb warunkowy - dla nierealnych sytuacji w teraźniejszości używamy 'were' dla wszystkich osób."
+  },
+  {
+    id: 269,
+    level: "Średni",
+    question: "The book ____ by millions of people worldwide.",
+    options: ["reads", "is read", "has read", "read"],
+    answer: "is read",
+    explanation: "Present Simple Passive - opisuje ogólny, powtarzający się fakt w stronie biernej."
+  },
+  {
+    id: 270,
+    level: "Średni",
+    question: "They ____ each other since childhood.",
+    options: ["know", "have known", "knew", "had known"],
+    answer: "have known",
+    explanation: "'Since childhood' wskazuje na okres ciągły aż do teraz - Present Perfect."
+  },
+  {
+    id: 271,
+    level: "Średni",
+    question: "The cake ____ by the time we arrived at the party.",
+    options: ["was already eaten", "had already been eaten", "has already been eaten", "already ate"],
+    answer: "had already been eaten",
+    explanation: "Past Perfect Passive - czynność została zakończona (strona bierna) przed innym momentem w przeszłości."
+  },
+  {
+    id: 272,
+    level: "Średni",
+    question: "I ____ to Paris three times so far.",
+    options: ["was", "have been", "had been", "am"],
+    answer: "have been",
+    explanation: "'So far' i określenie liczby razy ('three times') wymaga Present Perfect."
+  },
+  {
+    id: 273,
+    level: "Średni",
+    question: "She ____ when the doorbell rang.",
+    options: ["slept", "was sleeping", "had slept", "is sleeping"],
+    answer: "was sleeping",
+    explanation: "Past Continuous opisuje czynność trwającą w tle, gdy nastąpiła nagła, krótsza czynność."
+  },
+  {
+    id: 274,
+    level: "Średni",
+    question: "The decision ____ by the committee tomorrow.",
+    options: ["is made", "will be made", "makes", "has been made"],
+    answer: "will be made",
+    explanation: "Future Simple Passive - opisuje przyszłą czynność w stronie biernej."
+  },
+  {
+    id: 275,
+    level: "Średni",
+    question: "If it ____ sunny tomorrow, we'll go to the beach.",
+    options: ["is", "will be", "was", "would be"],
+    answer: "is",
+    explanation: "Pierwszy tryb warunkowy - warunek w Present Simple, wynik w Future Simple."
+  },
+  {
+    id: 276,
+    level: "Trudny",
+    question: "____ I known about the problem, I would have helped.",
+    options: ["Have", "Had", "Would", "Did"],
+    answer: "Had",
+    explanation: "Inwersyjna forma trzeciego trybu warunkowego: Had + podmiot + past participle... (zamiast If I had known...)"
+  },
+  {
+    id: 277,
+    level: "Trudny",
+    question: "Not only ____ late, but he also forgot the documents.",
+    options: ["did he arrive", "he arrived", "arrived he", "had he arrived"],
+    answer: "did he arrive",
+    explanation: "Inwersja (did he arrive) jest wymagana, gdy zdanie zaczyna się od 'Not only'."
+  },
+  {
+    id: 278,
+    level: "Trudny",
+    question: "The project ____ by the end of this week.",
+    options: ["will have been completed", "will complete", "is completing", "completes"],
+    answer: "will have been completed",
+    explanation: "Future Perfect Passive - czynność zostanie zakończona (strona bierna) do określonego przyszłego momentu."
+  },
+  {
+    id: 279,
+    level: "Trudny",
+    question: "I'd sooner you ____ me the truth now.",
+    options: ["tell", "told", "had told", "would tell"],
+    answer: "told",
+    explanation: "Po 'I'd sooner' (wolałbym) odnoszącym się do teraźniejszości lub przyszłości używamy Past Simple."
+  },
+  {
+    id: 280,
+    level: "Trudny",
+    question: "Such ____ the weather that we stayed indoors.",
+    options: ["was", "is", "had been", "would be"],
+    answer: "was",
+    explanation: "Inwersja (Such was the weather...) jest używana dla podkreślenia i dramatyzmu w opisie sytuacji."
+  },
+  {
+    id: 281,
+    level: "Trudny",
+    question: "The suspect is alleged ____ the crime.",
+    options: ["to commit", "to have committed", "committing", "committed"],
+    answer: "to have committed",
+    explanation: "Strona bierna z bezokolicznikiem perfect - dla czynności przeszłych: is alleged + to have + past participle."
+  },
+  {
+    id: 282,
+    level: "Trudny",
+    question: "Were I in your position, I ____ differently.",
+    options: ["will act", "would act", "acted", "had acted"],
+    answer: "would act",
+    explanation: "Inwersyjna forma drugiego trybu warunkowego: Were + podmiot..., podmiot + would + infinitive."
+  },
+  {
+    id: 283,
+    level: "Trudny",
+    question: "Little ____ how important that decision would be.",
+    options: ["did he know", "he knew", "had he known", "he knows"],
+    answer: "did he know",
+    explanation: "Inwersja (did he know) jest wymagana, gdy zdanie zaczyna się od przeczących określeń jak 'Little'."
+  },
+  {
+    id: 284,
+    level: "Trudny",
+    question: "The documents ____ by the time the audit begins.",
+    options: ["will have been prepared", "will prepare", "are prepared", "prepare"],
+    answer: "will have been prepared",
+    explanation: "Future Perfect Passive - przygotowanie dokumentów zostanie zakończone przed rozpoczęciem audytu."
+  },
+  {
+    id: 285,
+    level: "Trudny",
+    question: "So ridiculous ____ that nobody believed it.",
+    options: ["the story was", "was the story", "had the story been", "the story had been"],
+    answer: "was the story",
+    explanation: "Inwersja (was the story) jest wymagana, gdy zdanie zaczyna się od 'So + adjective'."
+  },
+  {
+    id: 286,
+    level: "Łatwy",
+    question: "My sister ____ medicine at university.",
+    options: ["study", "studies", "studied", "is studying"],
+    answer: "studies",
+    explanation: "Present Simple dla opisu stałej sytuacji (kierunek studiów). 3. osoba liczby pojedynczej + końcówka -es."
+  },
+  {
+    id: 287,
+    level: "Łatwy",
+    question: "They ____ to school by bus.",
+    options: ["go", "goes", "went", "are going"],
+    answer: "go",
+    explanation: "Present Simple dla stałego sposobu przemieszczania się. Podmiot mnogi → czasownik bez końcówki."
+  },
+  {
+    id: 288,
+    level: "Łatwy",
+    question: "I ____ a wonderful dream last night.",
+    options: ["have", "had", "has", "am having"],
+    answer: "had",
+    explanation: "Określony czas w przeszłości ('last night') wymaga Past Simple."
+  },
+  {
+    id: 289,
+    level: "Łatwy",
+    question: "The teacher ____ the lesson at the moment.",
+    options: ["explain", "explains", "is explaining", "explained"],
+    answer: "is explaining",
+    explanation: "'At the moment' wskazuje na Present Continuous. 'The teacher' → 3.os.l.poj. → 'is explaining'."
+  },
+  {
+    id: 290,
+    level: "Łatwy",
+    question: "We ____ our grandparents every Christmas.",
+    options: ["visit", "visits", "visited", "are visiting"],
+    answer: "visit",
+    explanation: "Present Simple dla corocznych tradycji i rytuałów. Podmiot mnogi → czasownik bez końcówki."
+  },
+  {
+    id: 291,
+    level: "Średni",
+    question: "By the time he arrived, we ____ waiting for over an hour.",
+    options: ["have been", "had been", "were", "are"],
+    answer: "had been",
+    explanation: "Past Perfect Continuous - podkreśla długość oczekiwania, które trwało przed jego przybyciem."
+  },
+  {
+    id: 292,
+    level: "Średni",
+    question: "The new law ____ effect next month.",
+    options: ["takes", "will take", "is taking", "has taken"],
+    answer: "takes",
+    explanation: "Present Simple dla oficjalnych, zaplanowanych przyszłych wydarzeń (wejście w życie ustawy)."
+  },
+  {
+    id: 293,
+    level: "Średni",
+    question: "I wish I ____ play the piano.",
+    options: ["can", "could", "have been able to", "will be able to"],
+    answer: "could",
+    explanation: "Wyrażanie życzenia odnoszącego się do teraźniejszości za pomocą 'wish' wymaga Past Simple."
+  },
+  {
+    id: 294,
+    level: "Średni",
+    question: "The bridge ____ for over 50 years.",
+    options: ["stands", "has stood", "stood", "is standing"],
+    answer: "has stood",
+    explanation: "Present Perfect dla stanu, który trwa od przeszłości do teraz ('for over 50 years')."
+  },
+  {
+    id: 295,
+    level: "Średni",
+    question: "If you heat ice, it ____.",
+    options: ["melts", "melt", "will melt", "is melting"],
+    answer: "melts",
+    explanation: "Present Simple dla opisu niezmiennych praw fizycznych i przyrodniczych."
+  },
+  {
+    id: 296,
+    level: "Średni",
+    question: "She ____ the company since its foundation.",
+    options: ["manages", "managed", "has managed", "is managing"],
+    answer: "has managed",
+    explanation: "'Since its foundation' wskazuje na okres od konkretnego momentu w przeszłości do teraz - Present Perfect."
+  },
+  {
+    id: 297,
+    level: "Średni",
+    question: "The letter ____ yesterday.",
+    options: ["is delivered", "was delivered", "delivered", "has been delivered"],
+    answer: "was delivered",
+    explanation: "Past Simple Passive - czynność została wykonana w określonej przeszłości ('yesterday')."
+  },
+  {
+    id: 298,
+    level: "Średni",
+    question: "They ____ married for 25 years next month.",
+    options: ["are", "have been", "will have been", "were"],
+    answer: "will have been",
+    explanation: "Future Perfect - stan, który będzie trwał określoną ilość czasu do konkretnego momentu w przyszłości."
+  },
+  {
+    id: 299,
+    level: "Średni",
+    question: "I ____ to the dentist twice this year.",
+    options: ["went", "have been", "had been", "am going"],
+    answer: "have been",
+    explanation: "'This year' (które jeszcze się nie skończyło) wymaga Present Perfect."
+  },
+  {
+    id: 300,
+    level: "Średni",
+    question: "The train ____ at 9:45 every morning.",
+    options: ["leaves", "is leaving", "will leave", "left"],
+    answer: "leaves",
+    explanation: "Present Simple dla rozkładów jazdy i stałych harmonogramów."
+  },
+  {
+    id: 301,
+    level: "Trudny",
+    question: "____ we to miss the flight, there would be another one tomorrow.",
+    options: ["Were", "Should", "Had", "Would"],
+    answer: "Were",
+    explanation: "Inwersyjna forma drugiego trybu warunkowego: Were + podmiot + to + infinitive..."
+  },
+  {
+    id: 302,
+    level: "Trudny",
+    question: "Nowhere ____ such beautiful beaches as in the Caribbean.",
+    options: ["you can find", "can you find", "you found", "found you"],
+    answer: "can you find",
+    explanation: "Inwersja (can you find) jest wymagana, gdy zdanie zaczyna się od przeczących określeń miejsca ('Nowhere')."
+  },
+  {
+    id: 303,
+    level: "Trudny",
+    question: "The manuscript is thought ____ in the 12th century.",
+    options: ["to be written", "to have been written", "writing", "written"],
+    answer: "to have been written",
+    explanation: "Strona bierna z bezokolicznikiem perfect - dla czynności przeszłych: is thought + to have been + past participle."
+  },
+  {
+    id: 304,
+    level: "Trudny",
+    question: "Had she studied harder, she ____ the exam.",
+    options: ["would pass", "would have passed", "passed", "had passed"],
+    answer: "would have passed",
+    explanation: "Inwersyjna forma trzeciego trybu warunkowego: Had + podmiot + past participle, podmiot + would have + past participle."
+  },
+  {
+    id: 305,
+    level: "Trudny",
+    question: "So intense ____ that we had to stop the match.",
+    options: ["was the rain", "the rain was", "had the rain been", "the rain had been"],
+    answer: "was the rain",
+    explanation: "Inwersja (was the rain) jest wymagana, gdy zdanie zaczyna się od 'So + adjective'."
+  },
+  {
+    id: 306,
+    level: "Trudny",
+    question: "The president is expected ____ a statement later today.",
+    options: ["to make", "making", "make", "to have made"],
+    answer: "to make",
+    explanation: "Strona bierna z bezokolicznikiem (passive with infinitive) dla przyszłych wydarzeń: is expected + to + infinitive."
+  },
+  {
+    id: 307,
+    level: "Trudny",
+    question: "Never before ____ such a spectacular performance.",
+    options: ["I have seen", "have I seen", "I saw", "did I see"],
+    answer: "have I seen",
+    explanation: "Inwersja (have I seen) jest wymagana, gdy zdanie zaczyna się od 'Never'."
+  },
+  {
+    id: 308,
+    level: "Trudny",
+    question: "The contract ____ by both parties by next Friday.",
+    options: ["will have been signed", "will be signed", "is signed", "signs"],
+    answer: "will have been signed",
+    explanation: "Future Perfect Passive - podpisanie kontraktu zostanie zakończone do określonego przyszłego terminu."
+  },
+  {
+    id: 309,
+    level: "Trudny",
+    question: "Not until he apologized ____ him again.",
+    options: ["I spoke to", "did I speak to", "I had spoken to", "had I spoken to"],
+    answer: "did I speak to",
+    explanation: "Inwersja (did I speak) jest wymagana, gdy zdanie zaczyna się od 'Not until'."
+  },
+  {
+    id: 310,
+    level: "Trudny",
+    question: "The phenomenon ____ fully understood.",
+    options: ["is not yet", "has not yet been", "not yet is", "yet has not been"],
+    answer: "has not yet been",
+    explanation: "Present Perfect Passive z 'yet' - opisuje czynność, która nie została jeszcze zakończona do teraz."
+  },
+  {
+    id: 311,
+    level: "Łatwy",
+    question: "Fish ____ in water.",
+    options: ["live", "lives", "lived", "are living"],
+    answer: "live",
+    explanation: "Present Simple dla podstawowych faktów biologicznych. Podmiot mnogi → czasownik bez końcówki."
+  },
+  {
+    id: 312,
+    level: "Łatwy",
+    question: "He ____ to work by car.",
+    options: ["go", "goes", "went", "is going"],
+    answer: "goes",
+    explanation: "Present Simple dla stałego sposobu przemieszczania się. 3. osoba liczby pojedynczej + końcówka -es."
+  },
+  {
+    id: 313,
+    level: "Łatwy",
+    question: "We ____ a great time at the party yesterday.",
+    options: ["have", "had", "has", "are having"],
+    answer: "had",
+    explanation: "Określony czas w przeszłości ('yesterday') wymaga Past Simple."
+  },
+  {
+    id: 314,
+    level: "Łatwy",
+    question: "The students ____ for their exam right now.",
+    options: ["study", "studies", "are studying", "studied"],
+    answer: "are studying",
+    explanation: "'Right now' wskazuje na Present Continuous. 'The students' → liczba mnoga → 'are studying'."
+  },
+  {
+    id: 315,
+    level: "Łatwy",
+    question: "She ____ English very well.",
+    options: ["speak", "speaks", "spoke", "is speaking"],
+    answer: "speaks",
+    explanation: "Present Simple dla opisu stałych umiejętności. 3. osoba liczby pojedynczej + końcówka -s."
+  },
+  {
+    id: 316,
+    level: "Średni",
+    question: "By 2050, most cars ____ electric.",
+    options: ["will be", "are", "have been", "were"],
+    answer: "will be",
+    explanation: "Future Simple dla przewidywań i prognoz na przyszłość."
+  },
+  {
+    id: 317,
+    level: "Średni",
+    question: "I ____ here since I was a child.",
+    options: ["live", "lived", "have lived", "am living"],
+    answer: "have lived",
+    explanation: "'Since I was a child' wskazuje na okres od przeszłości do teraz - Present Perfect."
+  },
+  {
+    id: 318,
+    level: "Średni",
+    question: "The movie ____ when we entered the cinema.",
+    options: ["started", "had already started", "has started", "starts"],
+    answer: "had already started",
+    explanation: "Past Perfect - czynność rozpoczęła się przed naszym wejściem do kina."
+  },
+  {
+    id: 319,
+    level: "Średni",
+    question: "If I ____ enough money, I would buy a new car.",
+    options: ["have", "had", "would have", "has"],
+    answer: "had",
+    explanation: "Drugi tryb warunkowy - nierealna sytuacja w teraźniejszości wymaga Past Simple po 'if'."
+  },
+  {
+    id: 320,
+    level: "Średni",
+    question: "The problem ____ by our best engineers at the moment.",
+    options: ["is being solved", "is solved", "solves", "has been solved"],
+    answer: "is being solved",
+    explanation: "Present Continuous Passive - problem jest aktualnie rozwiązywany (czynność w toku)."
   }
-
 ]
