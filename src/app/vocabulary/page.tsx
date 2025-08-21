@@ -259,12 +259,12 @@ const handleClick = (side: "pl" | "en", slotIndex: number) => {
         try {
           await saveAttempt(userId, {
             type: "word-match",
-            id: correctWordId!,
+            id: correctWordId,
             isCorrect: true,
             difficulty,
             timeTaken,
           });
-          await addPoints(userId, 10);
+          await addPoints(userId, 1);
         } catch (error) {
           console.error("Error saving attempt:", error);
         }

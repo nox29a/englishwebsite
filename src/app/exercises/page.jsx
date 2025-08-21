@@ -181,7 +181,7 @@ export default function ZadaniaPage() {
       });
 
       if (isCorrect) {
-        await addPoints(userId, 10);
+        await addPoints(userId, 3);
       }
     }
   };

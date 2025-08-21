@@ -5,28 +5,42 @@ import { Menu, X } from "lucide-react"; // ikony
 import { User } from '@supabase/supabase-js';
 import { supabase } from "@/lib/supabaseClient";
 
-
-
+interface Profile {
+  id: string;
+  user_type: string;
+}
 
 export default function Navbar() {
   const [path, setPath] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [userType, setUserType] = useState<string>("basic");
 
   useEffect(() => {
     setPath(window.location.pathname);
   }, []);
 
-    const [user, setUser] = useState<User | null>(null);
-    useEffect(() => {
-      const getUser = async () => {
-        const { data, error } = await supabase.auth.getUser();
-        if (data?.user) {
-          setUser(data.user);
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+        
+        // Pobierz profil użytkownika
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileData && !profileError) {
+          setUserType(profileData.user_type);
         }
-      };
-  
-      getUser();
-    }, []);  
+      }
+    };
+
+    getUser();
+  }, []);  
 
   const navLinks = [
     { href: "/", label: "Strona główna" },
@@ -63,32 +77,29 @@ export default function Navbar() {
           ))}
         </div>
 
-
         {/* Konto desktop */}
+        {user && (
+          <Link
+            href="/dashboard"
+            className={`px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition ${
+              userType === "premium" 
+                ? "bg-gradient-to-r from-yellow-500 to-yellow-600" 
+                : "bg-gradient-to-r from-indigo-500 to-purple-600"
+            }`}
+          >
+            <span>Konto</span>
+          </Link>
+        )}
 
-
-            {/* Przycisk Konto dla zalogowanych */}
-            {user && (
-              <Link
-                href="/dashboard"
+        {/* Przycisk Zaloguj się dla niezalogowanych */}
+        {!user && (
+          <Link
+            href="/login"
             className="bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition"
-              >
-          
-                <span>Konto</span>
-              </Link>
-            )}
-
-            {/* Przycisk Zaloguj się dla niezalogowanych */}
-            {!user && (
-              <Link
-                href="/login"
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition"
-              >
-                Zaloguj się
-              </Link>
-            )}
-
-
+          >
+            Zaloguj się
+          </Link>
+        )}
 
         {/* Hamburger mobile */}
         <button
@@ -117,11 +128,15 @@ export default function Navbar() {
             </Link>
           ))}
           <Link
-            href="/login"
-            className="block text-center bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition"
+            href={user ? "/dashboard" : "/login"}
+            className={`block text-center px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition ${
+              userType === "premium" 
+                ? "bg-gradient-to-r from-yellow-500 to-yellow-600" 
+                : "bg-gradient-to-r from-indigo-500 to-purple-600"
+            }`}
             onClick={() => setMobileOpen(false)}
           >
-            Konto
+            {user ? "Konto" : "Zaloguj się"}
           </Link>
         </div>
       )}

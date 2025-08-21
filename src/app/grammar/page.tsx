@@ -125,7 +125,7 @@ export default function SciagaPage() {
           <Navbar />
     <div className="min-h-screen bg-gray-950 text-white p-6">
       <h1 className="text-3xl md:text-4xl text-indigo-300 font-bold text-center mb-2">
-        Ściąga z angielskiego 📘
+        Ściąga z angielskiego
       </h1>
       <h2 className="text-xl md:text-2xl text-indigo-400 text-center mb-10">
         Czasy

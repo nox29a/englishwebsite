@@ -29,7 +29,7 @@ export default function Pricing() {
         "Priorytetowe wsparcie"
       ],
       cta: "Wybierz Premium",
-      href: "/register" 
+      href: "/premium" 
     }
   ]
 
@@ -64,9 +64,12 @@ export default function Pricing() {
                 </div>
                 <div className="mt-8">
                   <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-xl">
-       <a href={plan.href}>
-    {plan.cta}
-  </a>
+<Link href={plan.href}>
+{plan.cta}
+</Link>
+       
+    
+
                   </Button>
                 </div>
               </CardContent>

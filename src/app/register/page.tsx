@@ -194,7 +194,7 @@ export default function RegisterPage() {
         <p className="text-sm text-center text-gray-600 dark:text-gray-400 mt-4">
           Masz już konto?{" "}
           <a href="/login" className="text-indigo-600 underline hover:text-indigo-800 dark:hover:text-indigo-400">
-            Zaloguj s
+            Zaloguj się
           </a>
         </p>
       </div>

@@ -238,7 +238,7 @@ const checkAnswers = async () => {
 
     // Jeśli odpowiedź poprawna, dodaj punkty
     if (isCorrect) {
-      await addPoints(user.id, 10);
+      await addPoints(user.id, 4);
     }
   }
 

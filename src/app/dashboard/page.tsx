@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import ChartContainer from "@/components/ui/Chart";
-import StreakBadge from "@/components/streakBadge";
+
 
 export default function DashboardPage() {
   const [userData, setUserData] = useState<any>(null);
@@ -350,7 +350,7 @@ const mostProductiveDays = activityByDayFiltered
               )}
             </div>
             <nav className="flex gap-4">
-              <Link href="/learn" className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition">
+              <Link href="/" className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition">
                 Kontynuuj naukę
               </Link>
               <Link href="/settings" className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
@@ -384,7 +384,7 @@ const mostProductiveDays = activityByDayFiltered
                     </p>
                   )}
                 </div>
-                <StreakBadge />
+            
                 
                 <div className="grid grid-cols-4 gap-4 text-center">
                   <div>
@@ -522,156 +522,10 @@ const mostProductiveDays = activityByDayFiltered
                 <p className="text-gray-500">Brak danych o zadaniach</p>
               )}
             </StatCard>
-
-            {/* Recent Activity */}
-   </div>
-
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Heatmap Activity Calendar */}
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow">
-              <h3 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-4">
-                Twoja mapa aktywności (ostatnie 3 miesiące)
-              </h3>
-              
-              <div className="overflow-x-auto">
-                <div className="inline-block min-w-full">
-                  {/* Calendar - ostatnie 91 dni (3 miesiące) */}
-                  <div className="grid grid-flow-col grid-rows-7 gap-1">
-                    {activityMapData.map((item, dayIndex) => {
-                      const colors = [
-                        'bg-gray-100 dark:bg-gray-800',
-                        'bg-indigo-200 dark:bg-indigo-900',
-                        'bg-indigo-400 dark:bg-indigo-700',
-                        'bg-indigo-600 dark:bg-indigo-500'
-                      ];
-                      
-                      return (
-                        <div 
-                          key={dayIndex}
-                          className={`w-3 h-3 rounded-sm ${colors[item.activityLevel]} 
-                            hover:scale-125 transition-transform cursor-pointer`}
-                          title={`${item.date.toLocaleDateString('pl-PL')}: ${item.timeSpent > 0 ? `${item.timeSpent} minut nauki` : 'Brak aktywności'}`}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Legend */}
-              <div className="flex items-center justify-end mt-4 space-x-4">
-                <div className="flex items-center">
-                  <span className="text-xs mr-2 text-gray-500 dark:text-gray-400">Mniej</span>
-                  {[0, 1, 2, 3].map((level) => (
-                    <div 
-                      key={level}
-                      className={`w-3 h-3 rounded-sm ${[
-                        'bg-gray-100 dark:bg-gray-800',
-                        'bg-indigo-200 dark:bg-indigo-900',
-                        'bg-indigo-400 dark:bg-indigo-700',
-                        'bg-indigo-600 dark:bg-indigo-500'
-                      ][level]}`}
-                    />
-                  ))}
-                  <span className="text-xs ml-2 text-gray-500 dark:text-gray-400">Więcej</span>
-                </div>
-              </div>
-              
-              {/* Summary stats */}
-              <div className="grid grid-cols-3 gap-4 mt-6">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                    {timeData.length}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Dni z nauką</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                    {Math.max(...timeData.map((d: any) => d.time), 0)}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Rekord minut</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                    {timeData.reduce((sum: number, day: any) => sum + day.time, 0)}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Łącznie minut</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Activity by Day of Week */}
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow">
-  <h3 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-4">
-    Aktywność w ciągu tygodnia
-  </h3>
-  {activityByDayFiltered.length > 0 ? (
-    <>
-      <div className="h-64">
-        <ChartContainer 
-          data={activityByDayFiltered} 
-          type="bar" 
-        />
-      </div>
-      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-        <p>Twoje najbardziej produktywne dni to: {mostProductiveDays}</p>
-      </div>
-    </>
-  ) : (
-    <div className="h-64 flex items-center justify-center">
-      <p className="text-gray-500 dark:text-gray-400 text-center">
-        Brak danych o aktywności w ciągu tygodnia
-      </p>
-    </div>
-  )}
 </div>
-          </div>
 
           {/* Additional Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Accuracy Chart */}
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow">
-              <h3 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-4">
-                Dokładność odpowiedzi
-              </h3>
-              <div className="h-64">
-                <ChartContainer 
-                  data={[
-                    { name: 'Poprawne', value: combinedProgress?.correct_answers || 0 },
-                    { name: 'Błędne', value: (combinedProgress?.total_answers || 0) - (combinedProgress?.correct_answers || 0) }
-                  ]} 
-                  type="pie" 
-                />
-              </div>
-              <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                {combinedProgress?.total_answers > 0 && (
-                  <p>Twoja dokładność to {Math.round((combinedProgress.correct_answers / combinedProgress.total_answers) * 100)}%</p>
-                )}
-              </div>
-            </div>
 
-            {/* Time Spent Trend */}
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow">
-              <h3 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-4">
-                Trend czasu nauki (ostatnie 30 dni)
-              </h3>
-              <div className="h-64">
-                <ChartContainer 
-                  data={timeData.map((item: any) => ({
-                    name: item.date,
-                    value: item.time
-                  }))} 
-                  type="line" 
-                />
-              </div>
-              <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                {timeData.length > 0 && (
-                  <p>Średnio {Math.round(timeData.reduce((sum: number, day: any) => sum + day.time, 0) / timeData.length)} minut dziennie</p>
-                )}
-              </div>
-            </div>
-          </div>
 
           {/* Additional Stats Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

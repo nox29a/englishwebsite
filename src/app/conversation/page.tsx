@@ -215,39 +215,59 @@ const scenarios: Scenario[] = [
 
 ];
 useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        console.log('Fetching user profile...');
-        const { data: { user } } = await supabase.auth.getUser();
-        console.log('Auth user:', user);
-        
-        if (user) {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('id, user_type')
-            .eq('id', user.id)
-            .single();
-          
-          console.log('Profile data:', profile, 'Error:', error);
-          
-          if (!error && profile) {
-            setUserProfile(profile);
-          } else {
-            setUserProfile({ id: user.id, user_type: 'basic' });
-          }
-        } else {
-          setUserProfile({ id: 'anonymous', user_type: 'basic' });
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-        setUserProfile({ id: 'error', user_type: 'basic' });
-      } finally {
+  const fetchUserProfile = async () => {
+    try {
+      console.log('Fetching user profile...');
+      
+      // Użyj tej samej metody co w Navbar - bez createClientComponentClient
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error:', authError);
         setIsCheckingLimit(false);
+        return;
       }
-    };
+      
+      console.log('Auth user:', user);
+      
+      if (user) {
+        // Dodaj logowanie do konsoli aby zobaczyć co zwraca zapytanie
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('id, user_type')
+          .eq('id', user.id)
+          .single();
+        
+        console.log('Profile data:', profile, 'Error:', error);
+        
+        if (error) {
+          console.error('Profile fetch error:', error);
+          setUserProfile({ id: user.id, user_type: 'basic' });
+        } else if (profile) {
+          // Normalizuj user_type do małych liter
+          const normalizedUserType = profile.user_type?.toLowerCase() === 'premium' 
+            ? 'premium' 
+            : 'basic';
+          
+          console.log('Normalized user type:', normalizedUserType);
+          
+          setUserProfile({ 
+            id: profile.id, 
+            user_type: normalizedUserType 
+          });
+        }
+      } else {
+        setUserProfile(null);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setIsCheckingLimit(false);
+    }
+  };
 
-    fetchUserProfile();
-  }, [supabase]);
+  fetchUserProfile();
+}, [supabase]);
 
   const startScenario = (scenario: Scenario) => {
     setSelectedScenario(scenario);
