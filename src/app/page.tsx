@@ -147,7 +147,7 @@ export default function Home() {
             />
                                     <ToolCard 
               title="Statystyki"
-              description="Śledź postępy i rywalizuj w rankingu"
+              description="Śledź postępy"
               href="/stats"
               color="bg-pink-900"
             />
