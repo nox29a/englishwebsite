@@ -386,7 +386,7 @@ useEffect(() => {
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-indigo-950 text-white">
         <header className="sticky top-0 z-10 bg-gray-900 backdrop-blur-md p-4 shadow-md">
           <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold">English Tutor</h1>
+            <h1 className="text-2xl font-bold">Rozmowa z Agentem AI</h1>
             <div className="flex items-center gap-3">
               {showMessageInfo && (
                 <div className="bg-yellow-600/50 px-3 py-1 rounded-lg text-sm">
