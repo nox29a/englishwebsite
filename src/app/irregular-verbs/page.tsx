@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
 import { verbs } from "@/components/words/irreagular_verbs";
-
+import { saveAttempt } from "../utils/saveAttempt";
+import { addPoints } from "../utils/addPoints";
 import { Mic } from "lucide-react";
 
 export default function IrregularVerbsTrainer() {
@@ -33,6 +34,10 @@ export default function IrregularVerbsTrainer() {
   const [timeSpent, setTimeSpent] = useState<number>(0);
   const [sessionTime, setSessionTime] = useState<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+
+//zapisywanie sesji
+
 
   const loadUserData = async () => {
     const {
@@ -108,7 +113,7 @@ export default function IrregularVerbsTrainer() {
     }
   };
 
-
+  
 
   const saveProgress = async () => {
     const {
@@ -203,29 +208,52 @@ export default function IrregularVerbsTrainer() {
     await saveProgress();
   };
 
-  const checkAnswers = () => {
-    const isBaseCorrect =
-      inputBase.trim().toLowerCase() === currentVerb.base.toLowerCase();
-    const isPastCorrect =
-      inputPast.trim().toLowerCase() === currentVerb.past.toLowerCase();
-    const isParticipleCorrect =
-      inputParticiple.trim().toLowerCase() ===
-      currentVerb.participle.toLowerCase();
+const checkAnswers = async () => {
+  const isBaseCorrect =
+    inputBase.trim().toLowerCase() === currentVerb.base.toLowerCase();
+  const isPastCorrect =
+    inputPast.trim().toLowerCase() === currentVerb.past.toLowerCase();
+  const isParticipleCorrect =
+    inputParticiple.trim().toLowerCase() ===
+    currentVerb.participle.toLowerCase();
 
-    setTotalAnswers((prev) => prev + 1);
+  const isCorrect = isBaseCorrect && isPastCorrect && isParticipleCorrect;
+  
+  // Zapisz czas odpowiedzi
+  const timeTaken = sessionTime; // lub inny sposób mierzenia czasu odpowiedzi
 
-    if (isBaseCorrect && isPastCorrect && isParticipleCorrect) {
-      setResult("✅ Wszystko poprawnie!");
-      setCorrectAnswers((prev) => prev + 1);
-      setAnsweredCorrectly(true);
+  setTotalAnswers((prev) => prev + 1);
 
-      setRemainingVerbs((prev) =>
-        prev.filter((v) => v.base !== currentVerb.base)
-      );
-    } else {
-      setResult("❌ Błąd. Spróbuj ponownie lub pokaż odpowiedź.");
+  // Pobierz użytkownika
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (user) {
+    // Zapisz próbę
+    await saveAttempt(user.id, {
+      type: "irregular_verb",
+      id: currentVerb.index.toString(), // lub inne unikalne ID czasownika
+      isCorrect,
+      timeTaken,
+    });
+
+    // Jeśli odpowiedź poprawna, dodaj punkty
+    if (isCorrect) {
+      await addPoints(user.id, 10);
     }
-  };
+  }
+
+  if (isCorrect) {
+    setResult("✅ Wszystko poprawnie!");
+    setCorrectAnswers((prev) => prev + 1);
+    setAnsweredCorrectly(true);
+
+    setRemainingVerbs((prev) =>
+      prev.filter((v) => v.base !== currentVerb.base)
+    );
+  } else {
+    setResult("❌ Błąd. Spróbuj ponownie lub pokaż odpowiedź.");
+  }
+};
 
   const nextVerb = () => {
     if (remainingVerbs.length === 0) {
