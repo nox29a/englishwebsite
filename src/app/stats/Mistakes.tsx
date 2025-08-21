@@ -17,6 +17,7 @@ interface Word {
   id: number;
   pl: string;
   en: string;
+  difficulty?: string; // Dodano pole do przechowywania poziomu trudności
 }
 
 // Dane słówek
@@ -24,8 +25,13 @@ import { easy } from '@/components/words/flashcards_words';
 import { medium } from '@/components/words/flashcards_words';
 import { hard } from '@/components/words/flashcards_words';
 
+// Dodanie poziomu trudności do każdego słowa
+const easyWithDifficulty: Word[] = easy.map(word => ({ ...word, difficulty: 'easy' }));
+const mediumWithDifficulty: Word[] = medium.map(word => ({ ...word, difficulty: 'medium' }));
+const hardWithDifficulty: Word[] = hard.map(word => ({ ...word, difficulty: 'hard' }));
+
 // Połącz wszystkie słowniki w jeden
-const allWords: Word[] = [...easy, ...medium, ...hard];
+const allWords: Word[] = [...easyWithDifficulty, ...mediumWithDifficulty, ...hardWithDifficulty];
 
 // Komponent główny
 export default function ErrorStatistics() {
@@ -63,10 +69,18 @@ export default function ErrorStatistics() {
           setErrorAttempts(data);
           
           // Znajdź słowa, które odpowiadają błędnym odpowiedziom
-          const errorWordIds = [...new Set(data.map(attempt => attempt.question_id))];
-          const wordsWithErrors = allWords.filter(word => 
-            errorWordIds.includes(word.id.toString())
-          );
+          const wordsWithErrors: Word[] = [];
+          
+          data.forEach(attempt => {
+            // Znajdź słowo na podstawie ID i poziomu trudności
+            const word = allWords.find(w => 
+              w.id.toString() === attempt.question_id && w.difficulty === attempt.difficulty
+            );
+            
+            if (word && !wordsWithErrors.some(w => w.id === word.id && w.difficulty === word.difficulty)) {
+              wordsWithErrors.push(word);
+            }
+          });
           
           setErrorWords(wordsWithErrors);
         }
@@ -78,26 +92,19 @@ export default function ErrorStatistics() {
     };
     
     fetchErrorStatistics();
-  }, [selectedDifficulty]); // Dodano zależność od selectedDifficulty
+  }, [selectedDifficulty]);
 
   // Filtrowanie słów według trudności
   const filteredWords = selectedDifficulty === 'all' 
     ? errorWords 
-    : errorWords.filter(word => {
-        // Znajdź próby dla tego słowa
-        const attemptsForWord = errorAttempts.filter(attempt => 
-          attempt.question_id === word.id.toString() && attempt.difficulty === selectedDifficulty
-        );
-        
-        return attemptsForWord.length > 0;
-      });
+    : errorWords.filter(word => word.difficulty === selectedDifficulty);
 
   // Filtrowanie według czasu
   const furtherFilteredWords = timeFilter === 'all' 
     ? filteredWords 
     : filteredWords.filter(word => {
         const attemptsForWord = errorAttempts.filter(attempt => 
-          attempt.question_id === word.id.toString()
+          attempt.question_id === word.id.toString() && attempt.difficulty === word.difficulty
         );
         
         // Sprawdź czy którakolwiek próba mieści się w wybranym przedziale czasowym
@@ -124,6 +131,16 @@ export default function ErrorStatistics() {
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  // Funkcja do tłumaczenia poziomu trudności
+  const translateDifficulty = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return 'Łatwy';
+      case 'medium': return 'Średni';
+      case 'hard': return 'Trudny';
+      default: return difficulty;
+    }
   };
 
   if (loading) {
@@ -216,23 +233,15 @@ export default function ErrorStatistics() {
               <tbody className="bg-indigo-800/20 divide-y divide-indigo-700/30">
                 {furtherFilteredWords.map((word) => {
                   const attemptsForWord = errorAttempts.filter(attempt => 
-                    attempt.question_id === word.id.toString()
+                    attempt.question_id === word.id.toString() && attempt.difficulty === word.difficulty
                   );
                   
                   const lastErrorDate = attemptsForWord.length > 0 
                     ? new Date(attemptsForWord[0].created_at) 
                     : null;
                   
-                  const difficultyCounts = attemptsForWord.reduce((acc, attempt) => {
-                    acc[attempt.difficulty] = (acc[attempt.difficulty] || 0) + 1;
-                    return acc;
-                  }, {} as Record<string, number>);
-                  
-                  const mostCommonDifficulty = Object.keys(difficultyCounts).reduce((a, b) => 
-                    difficultyCounts[a] > difficultyCounts[b] ? a : b, Object.keys(difficultyCounts)[0] || '');
-                  
                   return (
-                    <tr key={word.id} className="hover:bg-indigo-700/30 transition-colors">
+                    <tr key={`${word.id}-${word.difficulty}`} className="hover:bg-indigo-700/30 transition-colors">
                       <td className="py-2 pl-3 pr-1 whitespace-nowrap text-sm font-medium text-white">
                         {word.en}
                       </td>
@@ -241,11 +250,11 @@ export default function ErrorStatistics() {
                       </td>
                       <td className="px-1 py-2 whitespace-nowrap text-sm">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                          mostCommonDifficulty === 'easy' ? 'bg-green-800/40 text-green-300' :
-                          mostCommonDifficulty === 'medium' ? 'bg-yellow-800/40 text-yellow-300' :
+                          word.difficulty === 'easy' ? 'bg-green-800/40 text-green-300' :
+                          word.difficulty === 'medium' ? 'bg-yellow-800/40 text-yellow-300' :
                           'bg-red-800/40 text-red-300'
                         }`}>
-                          {mostCommonDifficulty || '-'}
+                          {translateDifficulty(word.difficulty || '')}
                         </span>
                       </td>
                       <td className="px-1 py-2 whitespace-nowrap text-xs text-indigo-200">
