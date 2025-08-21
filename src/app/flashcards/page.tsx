@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
-
+import { addPoints } from "../utils/addPoints";
+import { saveAttempt } from "../utils/saveAttempt";
 
 import { easy } from "@/components/words/flashcards_words";
 import { medium } from "@/components/words/flashcards_words";
@@ -23,8 +24,6 @@ export default function FlashcardGame() {
   const [loading, setLoading] = useState(true);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [totalTimeSpent, setTotalTimeSpent] = useState<number>(0);
-
-
 
   // --- Speech recognition ---
   const recognitionRef = useRef<any>(null);
@@ -194,7 +193,7 @@ export default function FlashcardGame() {
   }, [remaining, score]);
 
   // --- GAME LOGIC ---
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const wordToCheck =
@@ -206,10 +205,31 @@ export default function FlashcardGame() {
         : wordToCheck.pl.toLowerCase().trim();
 
     const userAnswer = input.trim().toLowerCase();
+    const isCorrect = userAnswer === correct;
+    const timeTaken = startTime ? Math.floor((new Date().getTime() - startTime.getTime()) / 1000) : 0;
+    
+    // Pobierz aktualnego użytkownika
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      // Zapisz próbę
+      await saveAttempt(user.id, {
+        type: "flashcards",
+        id: wordToCheck.id,
+        isCorrect,
+        difficulty: level.toLowerCase(),
+        timeTaken,
+      });
+
+      // Dodaj punkty jeśli poprawna odpowiedź
+      if (isCorrect) {
+        await addPoints(user.id, 10);
+      }
+    }
 
     let updatedList = remaining;
 
-    if (userAnswer === correct) {
+    if (isCorrect) {
       setFeedbackColor("bg-green-500");
       updatedList = remaining.filter((word) => word.id !== wordToCheck.id);
       setScore((prev) => prev + 1);
@@ -238,6 +258,7 @@ export default function FlashcardGame() {
       setCorrectAnswer("");
       setInput("");
       setRemaining(updatedList);
+      setStartTime(new Date()); // Resetuj czas dla następnego słówka
     }, 1000);
   };
 

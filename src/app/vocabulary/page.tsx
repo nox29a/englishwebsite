@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
+import { addPoints } from "../utils/addPoints";
+import { saveAttempt } from "../utils/saveAttempt";
 
 // Typy
 
@@ -215,7 +217,7 @@ const resetGame = () => {
   }
 }, [userId, difficulty]);
 
-  const handleClick = (side: "pl" | "en", slotIndex: number) => {
+const handleClick = (side: "pl" | "en", slotIndex: number) => {
     const slots = side === "pl" ? plSlots : enSlots;
     const slot = slots[slotIndex];
     if (!slot.id || (error && error.side === side && error.slotIndex === slotIndex) || correctHighlight)
@@ -232,67 +234,97 @@ const resetGame = () => {
     }
 
     if (selected.id === slot.id && selected.side !== side) {
-  // Znajdź indeksy pewnie po ID (awaryjnie użyj slotIndex/selected.slotIndex)
+  // Znajdź indeksy
   let plIndex = side === "pl" ? slotIndex : plSlots.findIndex((s) => s.id === slot.id);
   let enIndex = side === "en" ? slotIndex : enSlots.findIndex((s) => s.id === slot.id);
 
   if (plIndex === -1 && selected.side === "pl") plIndex = selected.slotIndex;
   if (enIndex === -1 && selected.side === "en") enIndex = selected.slotIndex;
 
-  // Bezpieczny guard
   if (plIndex === -1 || enIndex === -1) {
-    // coś poszło nie tak — anuluj wybór
     setSelected(null);
     return;
   }
+
+  // Zapisz ID słowa przed wejściem w setTimeout
+  const correctWordId = slot.id;
+
   setScore((s) => {
     const newScore = s + 1;
 
     // Wywołaj zapis z nowym wynikiem i aktualnymi użytymi ID
-    setTimeout(() => {
+    setTimeout(async () => {
+      if (userId && correctWordId) {
+        const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+        try {
+          await saveAttempt(userId, {
+            type: "word-match",
+            id: correctWordId!,
+            isCorrect: true,
+            difficulty,
+            timeTaken,
+          });
+          await addPoints(userId, 10);
+        } catch (error) {
+          console.error("Error saving attempt:", error);
+        }
+      }
       saveProgress([...usedIds], newScore, errors);
-    }, 600); // trochę po usunięciu pary
+    }, 600);
 
     return newScore;
   });
+
   setCorrectHighlight({ plIndex, enIndex });
   setSelected(null);
 
-
-  // Po krótkim highlight -> usuń parę i (opcjonalnie) dodaj nowe z delayem
   setTimeout(() => {
-    // Stwórz kopie aktualnych slotów i usuń odpowiednie indeksy
     const updatedPl = plSlots.map((s, i) => (i === plIndex ? { id: null, word: null } : s));
     const updatedEn = enSlots.map((s, i) => (i === enIndex ? { id: null, word: null } : s));
 
-    // Aktualizuj stan natychmiast na bazie kopii
     setPlSlots(updatedPl);
     setEnSlots(updatedEn);
     setCorrectHighlight(null);
 
-    // Ile par (liczone po PL) zostało na planszy?
     const remainingPairs = updatedPl.filter((s) => s.id !== null).length;
-
-    // Jeśli brakuje par do minimalnego progu - uzupełnij, ale z dodatkowym delayem,
-    // żeby wszystko się najpierw "rozjechało" w UI i nie było race condition.
-    const MIN_PAIRS = 5;
-    const toAdd = Math.max(0, MIN_PAIRS - remainingPairs);
+    const toAdd = Math.max(0, 5 - remainingPairs);
     if (toAdd > 3) {
-      // delay pozwala dokończyć animację/usunięcie, a addNewPairs użyje przekazanych kopii
       setTimeout(() => addNewPairs(toAdd, updatedPl, updatedEn), 300);
-      
-
     }
   }, 500);
 
   return;
 }
 
+// Zliczanie błędów:
+const errorWordId = slot.id; // Zapisz ID przed wejściem w setErrors
 
-    // Zliczanie błędów:
-    setErrors((e) => e + 1);
-    setError({ side, slotIndex });
-    setSelected(null);
+setErrors((e) => {
+  const newErrors = e + 1;
+
+  setTimeout(async () => {
+    if (userId && errorWordId) {
+      const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+      try {
+        await saveAttempt(userId, {
+          type: "word-match",
+          id: errorWordId!,
+          isCorrect: false,
+          difficulty,
+          timeTaken,
+        });
+      } catch (error) {
+        console.error("Error saving attempt:", error);
+      }
+    }
+    saveProgress(usedIds, score, newErrors);
+  }, 600);
+
+  return newErrors;
+});
+
+setError({ side, slotIndex });
+setSelected(null);
     setTimeout(() => setError(null), 1000);
   };
 

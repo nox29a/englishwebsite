@@ -231,7 +231,7 @@ const checkAnswers = async () => {
     // Zapisz próbę
     await saveAttempt(user.id, {
       type: "irregular_verb",
-      id: currentVerb.index.toString(), // lub inne unikalne ID czasownika
+      id: currentVerb.index, // lub inne unikalne ID czasownika
       isCorrect,
       timeTaken,
     });

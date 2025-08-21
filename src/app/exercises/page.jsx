@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import Navbar from '@/components/Navbar';
 
 import { tasks } from "@/components/words/tasks";
+import { addPoints } from "../utils/addPoints";
+import { saveAttempt } from "../utils/saveAttempt";
 
 const levels = ["Wszystkie", "Łatwy", "Średni", "Trudny"];
 
@@ -168,6 +170,18 @@ export default function ZadaniaPage() {
 
       if (error) {
         console.error('Error saving answer:', error);
+      }
+
+      // Zapisz próbę i dodaj punkty jeśli odpowiedź poprawna
+      await saveAttempt(userId, {
+        type: "quiz",
+        id: taskId,
+        isCorrect,
+        timeTaken: 0, // Możesz dodać pomiar czasu jeśli potrzebujesz
+      });
+
+      if (isCorrect) {
+        await addPoints(userId, 10);
       }
     }
   };
