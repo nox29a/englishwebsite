@@ -12,12 +12,15 @@
     "@azure-rest/ai-inference": "^1.0.0-beta.6",
     "@azure/core-auth": "^1.10.0",
     "@radix-ui/react-slot": "^1.2.3",
+    "@react-three/drei": "^10.7.4",
+    "@react-three/fiber": "^9.3.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.55.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dayjs": "^1.11.13",
     "framer-motion": "^12.23.11",
     "js-cookie": "^3.0.5",
     "lottie-react": "^2.4.1",
@@ -29,7 +32,8 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "recharts": "^3.1.2",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "three": "^0.179.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

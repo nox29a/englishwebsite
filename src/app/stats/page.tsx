@@ -10,6 +10,12 @@ import { useRouter } from "next/navigation";
 import StreakCounter from "./StreakCounter";
 import ErrorStatistics from "./Mistakes";
 
+import SessionLengthDistribution from "./SessionLengthDistribution";
+
+import VocabularyGrowth from "./VocabularyGrowth";
+import AccuracyTrend from "./AccuracyTrend";
+import TimeOfDayPerformance from "./TimeOfDayPerformance";
+
 export default function StatsPage() {
   const [userType, setUserType] = useState<null | string>(null);
   const [loading, setLoading] = useState(true);
@@ -101,9 +107,16 @@ export default function StatsPage() {
                 >
                   Przejdź na Premium
                 </button>
+
               </div>
-            )}
+      )}
+            <SessionLengthDistribution />
+<VocabularyGrowth />
+<AccuracyTrend />
+<TimeOfDayPerformance />
           </div>
+
+
         </div>
       </main>
 

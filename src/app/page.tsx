@@ -5,12 +5,9 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
 
-import {
 
-  Rocket,
 
-  User as UserIcon, // Dodana nowa ikona
-} from "lucide-react";
+
 
 export default function Home() {
 

@@ -36,7 +36,7 @@ export default function MistakesChart() {
 
   return (
     <Card className="p-6 shadow-xl rounded-2xl bg-indigo-900">
-      <h2 className="text-xl font-bold mb-4 text-center">✅ poprawne odpowiedzi vs ❌ błędne odpowiedzi </h2>
+      <h2 className="text-xl font-bold mb-4 text-center">✅ poprawne odpowiedzi vs ❌ błędne odpowiedzi</h2>
       <ResponsiveContainer width="100%" height={250}>
         <PieChart>
           <Pie
