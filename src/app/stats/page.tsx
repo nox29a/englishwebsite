@@ -65,7 +65,7 @@ export default function StatsPage() {
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         Ładowanie statystyk...
       </div>
-    );
+    );}
 //     <>
 //       <Navbar />
 //       <main className="relative p-6 md:p-12 bg-gray-900 min-h-screen overflow-hidden">
