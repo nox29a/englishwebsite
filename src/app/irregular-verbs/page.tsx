@@ -11,12 +11,35 @@ import { saveAttempt } from "../utils/saveAttempt";
 import { addPoints } from "../utils/addPoints";
 import { Mic, Trophy, Clock, Target, CheckCircle2, XCircle, Flame, Star, Crown, Sparkles, Zap, Brain } from "lucide-react";
 
+interface Verb {
+  index: number;
+  base: string;
+  past: string;
+  participle: string;
+  translation: string;
+}
+
+interface Achievement {
+  name: string;
+  description: string;
+  icon: string;
+}
+
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  velocity: { x: number; y: number };
+}
+
 export default function IrregularVerbsTrainer() {
-  const getRandomVerb = (list: typeof verbs) =>
+  const getRandomVerb = (list: Verb[]) =>
     list[Math.floor(Math.random() * list.length)];
 
-  const [remainingVerbs, setRemainingVerbs] = useState([...verbs]);
-  const [currentVerb, setCurrentVerb] = useState(getRandomVerb(verbs));
+  const [remainingVerbs, setRemainingVerbs] = useState<Verb[]>([...verbs]);
+  const [currentVerb, setCurrentVerb] = useState<Verb>(getRandomVerb(verbs));
   const [inputBase, setInputBase] = useState("");
   const [inputPast, setInputPast] = useState("");
   const [inputParticiple, setInputParticiple] = useState("");
@@ -36,13 +59,13 @@ export default function IrregularVerbsTrainer() {
   
   // Dopaminowe elementy
   const [streak, setStreak] = useState(0);
-  const [showAchievement, setShowAchievement] = useState(null);
-  const [particles, setParticles] = useState([]);
+  const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
+  const [particles, setParticles] = useState<Particle[]>([]);
   const [feedbackState, setFeedbackState] = useState("");
 
   // Particle system for celebrations
   const createParticles = (type = 'success') => {
-    const newParticles = [];
+    const newParticles: Particle[] = [];
     const colors = type === 'success' ? ['#10B981', '#34D399', '#6EE7B7'] : ['#F59E0B', '#FBBF24', '#FCD34D'];
     
     for (let i = 0; i < 15; i++) {
@@ -363,7 +386,7 @@ export default function IrregularVerbsTrainer() {
   const totalTimeSpent = timeSpent + sessionTime;
   const progressPercentage = verbs.length > 0 ? ((verbs.length - remainingVerbs.length) / verbs.length) * 100 : 0;
 
-  const feedbackClasses = {
+  const feedbackClasses: Record<string, string> = {
     correct: "border-green-500 bg-green-50 dark:bg-green-900/20 shadow-lg shadow-green-500/20",
     incorrect: "border-red-500 bg-red-50 dark:bg-red-900/20 shadow-lg shadow-red-500/20",
     default: "border-white/20"

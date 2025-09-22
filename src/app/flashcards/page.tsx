@@ -7,21 +7,47 @@ import Navbar from "@/components/Navbar";
 import { Categories } from "@/components/words/flashcards_words";
 import { ChevronRight, Mic, Volume2, RotateCcw, CheckCircle2, XCircle, Trophy, Brain, Clock, Target, Star, Zap, Flame, Award, TrendingUp, Battery, Crown, Sparkles } from 'lucide-react';
 
+// Definicje typów
+interface Word {
+  id: number;
+  pl: string;
+  en: string;
+  level: string;
+}
 
+interface Category {
+  name: string;
+  words: Word[];
+}
+
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  velocity: { x: number; y: number };
+}
+
+interface Achievement {
+  name: string;
+  description: string;
+  icon: string;
+}
 
 export default function FlashcardGame() {
   const [category, setCategory] = useState(Categories[0].name);
   const [level, setLevel] = useState("easy");
-  const [direction, setDirection] = useState("pl-en");
+  const [direction, setDirection] = useState<"pl-en" | "en-pl">("pl-en");
   const [input, setInput] = useState("");
-  const [remaining, setRemaining] = useState([]);
-  const [current, setCurrent] = useState({ id: -1, pl: "", en: "", level: "" });
+  const [remaining, setRemaining] = useState<Word[]>([]);
+  const [current, setCurrent] = useState<Word>({ id: -1, pl: "", en: "", level: "" });
   const [score, setScore] = useState(0);
-  const [feedbackState, setFeedbackState] = useState("");
+  const [feedbackState, setFeedbackState] = useState<"correct" | "incorrect" | "">("");
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [totalTimeSpent, setTotalTimeSpent] = useState(0);
-  const [availableLevels, setAvailableLevels] = useState([]);
+  const [availableLevels, setAvailableLevels] = useState<string[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState(Date.now());
   
   // Dopaminowe elementy
@@ -30,15 +56,15 @@ export default function FlashcardGame() {
   const [totalScore, setTotalScore] = useState(0);
   const [level_xp, setLevelXp] = useState(0);
   const [userLevel, setUserLevel] = useState(1);
-  const [showAchievement, setShowAchievement] = useState(null);
+  const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
   const [showStreakBonus, setShowStreakBonus] = useState(false);
   const [combo, setCombo] = useState(0);
   const [energy, setEnergy] = useState(100);
-  const [badges, setBadges] = useState([]);
-  const [particles, setParticles] = useState([]);
+  const [badges, setBadges] = useState<string[]>([]);
+  const [particles, setParticles] = useState<Particle[]>([]);
 
   // Speech recognition
-  const recognitionRef = useRef(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [isListening, setIsListening] = useState(false);
 
   // Achievements system
@@ -51,14 +77,14 @@ export default function FlashcardGame() {
   ];
 
   // Particle system for celebrations
-  const createParticles = (type = 'success') => {
-    const newParticles = [];
+  const createParticles = (type: 'success' | 'celebration' = 'success') => {
+    const newParticles: Particle[] = [];
     const colors = type === 'success' ? ['#10B981', '#34D399', '#6EE7B7'] : ['#F59E0B', '#FBBF24', '#FCD34D'];
     
     for (let i = 0; i < 15; i++) {
       newParticles.push({
         id: Math.random(),
-        x: Math.random() * window.innerWidth,
+        x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1000),
         y: Math.random() * 200 + 100,
         color: colors[Math.floor(Math.random() * colors.length)],
         size: Math.random() * 8 + 4,
@@ -71,8 +97,8 @@ export default function FlashcardGame() {
   };
 
   // XP and level calculations
-  const getRequiredXP = (level) => level * 100;
-  const addXP = (amount) => {
+  const getRequiredXP = (level: number) => level * 100;
+  const addXP = (amount: number) => {
     const newXP = level_xp + amount;
     const requiredXP = getRequiredXP(userLevel);
     
@@ -91,9 +117,7 @@ export default function FlashcardGame() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRecognition =
-        (window).SpeechRecognition ||
-        (window).webkitSpeechRecognition;
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
@@ -101,7 +125,7 @@ export default function FlashcardGame() {
         recognitionRef.current.interimResults = false;
         recognitionRef.current.maxAlternatives = 1;
 
-        recognitionRef.current.onresult = (event) => {
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           const transcript = event.results[0][0].transcript;
           setInput(transcript);
         };
@@ -110,7 +134,7 @@ export default function FlashcardGame() {
           setIsListening(false);
         };
 
-        recognitionRef.current.onerror = (e) => {
+        recognitionRef.current.onerror = (e: SpeechRecognitionErrorEvent) => {
           console.error("Speech recognition error:", e);
           setIsListening(false);
         };
@@ -118,7 +142,7 @@ export default function FlashcardGame() {
     }
   }, [direction]);
 
-  const speak = (text, lang) => {
+  const speak = (text: string, lang: string) => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     try {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -149,20 +173,20 @@ export default function FlashcardGame() {
     speak(prompt, lang);
   };
 
-  const getWords = () => {
+  const getWords = (): Word[] => {
     const selectedCategory = Categories.find(c => c.name === category);
     if (!selectedCategory) return [];
     return selectedCategory.words.filter(word => word.level === level);
   };
 
-  const getAvailableLevels = () => {
+  const getAvailableLevels = (): string[] => {
     const selectedCategory = Categories.find(c => c.name === category);
     if (!selectedCategory) return [];
     const levels = new Set(selectedCategory.words.map(word => word.level));
     return Array.from(levels);
   };
 
-  const getRandomWord = (words) => {
+  const getRandomWord = (words: Word[]): Word => {
     if (words.length === 0) return { id: -1, pl: "Brak fiszek", en: "No flashcards", level: "" };
     const randomIndex = Math.floor(Math.random() * words.length);
     return words[randomIndex];
@@ -316,7 +340,7 @@ export default function FlashcardGame() {
     setEnergy(100);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSubmit();
     }
@@ -681,8 +705,8 @@ export default function FlashcardGame() {
                 {["easy", "medium", "hard"].map((lvl) => {
                   const isAvailable = availableLevels.includes(lvl);
                   const isSelected = level === lvl;
-                  const levelLabels = { easy: "Łatwy", medium: "Średni", hard: "Trudny" };
-                  const levelColors = { 
+                  const levelLabels: Record<string, string> = { easy: "Łatwy", medium: "Średni", hard: "Trudny" };
+                  const levelColors: Record<string, string> = { 
                     easy: "from-green-400 to-green-600", 
                     medium: "from-amber-400 to-amber-600", 
                     hard: "from-red-400 to-red-600" 
