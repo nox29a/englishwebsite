@@ -12,6 +12,21 @@ interface Flashcard {
   level: string;
 }
 
+interface Achievement {
+  name: string;
+  description: string;
+  icon: string;
+}
+
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  velocity: { x: number; y: number };
+}
+
 export default function Flashcards() {
   const [selectedCategory, setSelectedCategory] = useState<string>(Categories[0]?.name || '');
   const [difficulty, setDifficulty] = useState<string>('easy');
@@ -23,30 +38,32 @@ export default function Flashcards() {
   const [visibleCount, setVisibleCount] = useState<number>(20);
   const [streak, setStreak] = useState(0);
   const [totalSeen, setTotalSeen] = useState(0);
-  const [showAchievement, setShowAchievement] = useState(null);
+  const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
   const [particles, setParticles] = useState([]);
 
   // Particle system for celebrations
-  const createParticles = (x, y, type = 'success') => {
-    const newParticles = [];
-    const colors = type === 'success' ? ['#10B981', '#34D399', '#6EE7B7'] : ['#F59E0B', '#FBBF24', '#FCD34D'];
-    
-    for (let i = 0; i < 10; i++) {
-      newParticles.push({
-        id: Math.random(),
-        x: x + (Math.random() - 0.5) * 100,
-        y: y + (Math.random() - 0.5) * 100,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        size: Math.random() * 6 + 3,
-        velocity: { x: (Math.random() - 0.5) * 8, y: Math.random() * -10 - 3 }
-      });
+// Particle system for celebrations
+const createParticles = (x: number, y: number, type: 'success' | 'warning' = 'success') => {
+  const colors = type === 'success' ? ['#10B981', '#34D399', '#6EE7B7'] : ['#F59E0B', '#FBBF24', '#FCD34D'];
+  
+  const newParticles = Array.from({ length: 10 }, (_, i) => ({
+    id: Math.random(),
+    x: x + (Math.random() - 0.5) * 100,
+    y: y + (Math.random() - 0.5) * 100,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    size: Math.random() * 6 + 3,
+    velocity: { 
+      x: (Math.random() - 0.5) * 8, 
+      y: Math.random() * -10 - 3 
     }
-    
-    setParticles(prev => [...prev, ...newParticles]);
-    setTimeout(() => {
-      setParticles(prev => prev.filter(p => !newParticles.some(np => np.id === p.id)));
-    }, 2000);
-  };
+  }));
+
+  setParticles(prev => [...prev, ...newParticles]);
+  
+  setTimeout(() => {
+    setParticles(prev => prev.filter(p => !newParticles.some(np => np.id === p.id)));
+  }, 2000);
+};
 
   // Funkcja do tasowania kart z typami TypeScript
   const shuffleArray = (array: Flashcard[]): Flashcard[] => {
