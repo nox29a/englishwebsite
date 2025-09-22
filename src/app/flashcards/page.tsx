@@ -7,7 +7,36 @@ import Navbar from "@/components/Navbar";
 import { Categories } from "@/components/words/flashcards_words";
 import { ChevronRight, Mic, Volume2, RotateCcw, CheckCircle2, XCircle, Trophy, Brain, Clock, Target, Star, Zap, Flame, Award, TrendingUp, Battery, Crown, Sparkles } from 'lucide-react';
 
-// Definicje typów
+// Definicje typów dla SpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
+
+interface SpeechRecognition extends EventTarget {
+  new (): SpeechRecognition;
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
 interface Word {
   id: number;
   pl: string;
@@ -63,7 +92,7 @@ export default function FlashcardGame() {
   const [badges, setBadges] = useState<string[]>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
 
-  // Speech recognition
+  // Speech recognition - POPRAWIONE
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [isListening, setIsListening] = useState(false);
 
@@ -115,31 +144,50 @@ export default function FlashcardGame() {
     }
   };
 
+  // POPRAWIONE: Speech Recognition useEffect
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
       if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.lang = direction === "pl-en" ? "en-US" : "pl-PL";
-        recognitionRef.current.interimResults = false;
-        recognitionRef.current.maxAlternatives = 1;
+        try {
+          recognitionRef.current = new SpeechRecognition();
+          recognitionRef.current.lang = direction === "pl-en" ? "en-US" : "pl-PL";
+          recognitionRef.current.interimResults = false;
+          recognitionRef.current.maxAlternatives = 1;
 
-        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-          const transcript = event.results[0][0].transcript;
-          setInput(transcript);
-        };
+          recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+            const transcript = event.results[0][0].transcript;
+            setInput(transcript);
+          };
 
-        recognitionRef.current.onend = () => {
-          setIsListening(false);
-        };
+          recognitionRef.current.onend = () => {
+            setIsListening(false);
+          };
 
-        recognitionRef.current.onerror = (e: SpeechRecognitionErrorEvent) => {
-          console.error("Speech recognition error:", e);
-          setIsListening(false);
-        };
+          recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+            console.error("Speech recognition error:", event.error);
+            setIsListening(false);
+          };
+        } catch (error) {
+          console.error("Error initializing speech recognition:", error);
+        }
       }
     }
+
+    // Cleanup function
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
+        try {
+          recognitionRef.current.stop();
+        } catch (error) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
   }, [direction]);
 
   const speak = (text: string, lang: string) => {
@@ -164,6 +212,9 @@ export default function FlashcardGame() {
         console.error("Cannot start recognition:", err);
         setIsListening(false);
       }
+    } else {
+      console.error("Speech recognition not available");
+      setIsListening(false);
     }
   };
 

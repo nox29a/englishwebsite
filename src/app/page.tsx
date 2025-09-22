@@ -4,14 +4,35 @@ import { useEffect, useState } from "react";
 import { User } from '@supabase/supabase-js';
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
-
-
-
-
+import { 
+  Brain, 
+  BookOpen, 
+  Zap, 
+  TrendingUp, 
+  MessageCircle, 
+  PenTool, 
+  RotateCcw, 
+  TestTube, 
+  CreditCard, 
+  BarChart, 
+  Star, 
+  Check, 
+  Crown, 
+  Sparkles,
+  Trophy,
+  Target,
+  Flame,
+  Globe,
+  Users,
+  Award,
+  Rocket,
+  ArrowRight,
+  Play
+} from "lucide-react";
 
 export default function Home() {
-
   const [user, setUser] = useState<User | null>(null);
+
   useEffect(() => {
     const getUser = async () => {
       const { data, error } = await supabase.auth.getUser();
@@ -24,283 +45,352 @@ export default function Home() {
   }, []);  
 
   return (
-          <>
-          <Navbar />
-    <div className="min-h-screen bg-gray-900 text-gray-100">
-
- <header className="w-full py-6 bg-white dark:bg-gray-900 shadow-md">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          {/* Lewa strona - przyciski */}
-          <div></div>
-          <div className="flex items-center space-x-4">
-
-
-
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-800 to-indigo-900 py-20 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Opanuj angielski z LearnEnglishAI
-          </h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-300">
-            Interaktywne lekcje, personalizowane ścieżki nauki i native speakerzy na wyciągnięcie ręki
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/try" className="bg-white text-blue-800 px-8 py-3 rounded-lg font-bold hover:bg-gray-100 transition">
-              Rozpocznij darmową lekcję
-            </Link>
-            <Link href="/pricing" className="border-2 border-white px-8 py-3 rounded-lg font-bold hover:bg-white hover:text-blue-800 transition">
-              Zobacz plany subskrypcji
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Features Section */}
- <section className="py-16 px-4 max-w-6xl mx-auto">
-      <h2 className="text-3xl font-bold text-center mb-12">Dlaczego warto uczyć się z nami?</h2>
-      
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <FeatureCard 
-          icon="🤖"
-          title="Rozmowy z AI"
-          description="Konwersacje z inteligentnym asystentem dostosowane do Twojego poziomu"
-        />
-        <FeatureCard 
-          icon="📚"
-          title="Personalizowane lekcje"
-          description="Materiały dopasowane do Twoich celów i zainteresowań"
-        />
-        <FeatureCard 
-          icon="⚡"
-          title="Natychmiastowa informacja zwrotna"
-          description="Błyskawiczna korekta błędów i sugestie poprawy"
-        />
-        <FeatureCard 
-          icon="📈"
-          title="Śledzenie postępów"
-          description="Monitoruj swoje osiągnięcia i motywuj się do dalszej nauki"
-        />
-      </div>
-    </section>
-
-      {/* Existing Features Showcase */}
-      <section className="py-16 bg-gray-800 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Poznaj nasze narzędzia</h2>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ToolCard 
-              title="Fiszki"
-              description="Powtarzaj najważniejsze słówka na różnych poziomach – szybko i skutecznie."
-              href="/flashcards"
-              color="bg-purple-900"
-            />
-            <ToolCard 
-              title="Ściąga gramatyczna"
-              description="Podręczna ściągawka z najważniejszych konstrukcji i czasów gramatycznych."
-              href="/grammar"
-              color="bg-blue-900"
-            />
-            <ToolCard 
-              title="Trener słówek"
-              description="Interaktywny system nauki który pomoże Ci opanować nowe słownictwo w praktyce."
-              href="/vocabulary"
-              color="bg-green-900"
-            />
-            <ToolCard 
-              title="Rozmowa"
-              description="Różnorodne ćwiczenia łączące słownictwo, gramatykę i rozumienie ze słuchu."
-              href="/conversation"
-              color="bg-yellow-800"
-            />
-            <ToolCard 
-              title="Zadania praktyczne"
-              description="Ćwiczenia, dzięki którym utrwalisz słownictwo i poznane struktury w kontekście."
-              href="/exercises"
-              color="bg-red-900"
-            />
-            <ToolCard 
-              title="Czasowniki nieregularne"
-              description="Ćwicz formy nieregularnych czasowników i zapamiętuj je skutecznie."
-              href="/irregular-verbs"
-              color="bg-indigo-900"
-            />
-                        <ToolCard 
-              title="Testy"
-              description="Sprawdź swoją wiedzę zalenie od poziomu"
-              href="/test"
-              color="bg-amber-900"
-            />
-                        <ToolCard 
-              title="Karty słówek"
-              description="Ćwicz nowe słówka i zapamiętuj je skutecznie."
-              href="/cards"
-              color="bg-cyan-900"
-            />
-                                    <ToolCard 
-              title="Statystyki"
-              description="Śledź postępy"
-              href="/stats"
-              color="bg-pink-900"
-            />
-            
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-16 px-4 max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12">Wybierz plan dla siebie</h2>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white relative overflow-hidden">
+        {/* Animated background overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse" />
         
-        <div className="grid md:grid-cols-2 gap-8">
-          <PricingCard 
-            name="Basic"
-            price="0"
-            features={[
-              "Ograniczony dostęp do materiałów",
-              "Podstawowe fiszki",
-              "Śledzenie postępów"
-            ]}
-            cta="Rozpocznij za darmo"
-            featured={false}
-          />
-          <PricingCard 
-            name="Premium"
-            price="14.99"
-            features={[
-              "Pełny dostęp do kursów",
-              "Rozmowy z Agentami AI",
-              "Nieograniczona nauka",
-              "Premium wsparcie"
-            ]}
-            cta="Kup dostęp"
-            featured={true}
-          />
+        {/* Hero Section */}
+        <div className="relative z-10 py-20 px-4">
+          <div className="max-w-6xl mx-auto text-center">
+            <div className="mb-8 inline-block">
+              <div className="bg-gradient-to-r from-yellow-400/20 to-orange-500/20 backdrop-blur-sm px-6 py-3 rounded-full border border-yellow-500/30">
+                <div className="flex items-center gap-2 text-yellow-300 font-bold">
+                  <Sparkles className="w-5 h-5" />
+                  <span>Dopamine Learning System</span>
+                  <Sparkles className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+            
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+              Opanuj angielski z LearnEnglishAI
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-gray-300">
+              Interaktywne lekcje, personalizowane ścieżki nauki i native speakerzy na wyciągnięcie ręki
+            </p>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
+              <Link 
+                href="/try" 
+                className="group px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-3"
+              >
+                <Play className="w-5 h-5" />
+                <span>Rozpocznij darmową lekcję</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link 
+                href="/pricing" 
+                className="group px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-xl font-bold hover:bg-white/20 transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+              >
+                <Crown className="w-5 h-5" />
+                <span>Zobacz plany subskrypcji</span>
+              </Link>
+            </div>
 
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-16 bg-gray-800 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Dołącz do zadowolonych uczniów</h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <Testimonial 
-              quote="W 3 miesiące poprawiłem swój angielski na tyle, że dostałem awans w pracy!"
-              author="Marek, 32 lata"
-            />
-            <Testimonial 
-              quote="Najlepsza platforma do nauki jaką próbowałam. Uwielbiam system nauki słówek!"
-              author="Anna, 25 lat"
-            />
-            <Testimonial 
-              quote="Nauka z AI to game-changer. Polecam każdemu!"
-              author="Kasia, 28 lat"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-blue-900 text-white text-center px-4">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-6">Gotów zacząć swoją przygodę z angielskim?</h2>
-          <p className="text-xl mb-8">Dołącz do nas i zobacz różnicę już po pierwszej lekcji!</p>
-          <Link 
-            href="/register" 
-            className="bg-white text-blue-900 px-8 py-3 rounded-lg font-bold hover:bg-gray-100 transition inline-block"
-          >
-            Zarejestruj się teraz
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-950 text-gray-300 py-12 px-4">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8">
-          <div>
-            <h3 className="text-xl font-bold mb-4 text-white">LearnEnglishAI</h3>
-            <p>Najskuteczniejsza platforma do nauki angielskiego online.</p>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4 text-white">Narzędzia</h4>
-            <ul className="space-y-2">
-              <li><Link href="/flashcards" className="hover:text-blue-400">Fiszki</Link></li>
-              <li><Link href="/grammar" className="hover:text-blue-400">Ściąga gramatyczna</Link></li>
-              <li><Link href="/vocabulary" className="hover:text-blue-400">Trener słówek</Link></li>
-              <li><Link href="/conversation" className="hover:text-blue-400">Rozmowa</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4 text-white">Firma</h4>
-            <ul className="space-y-2">
-              <li><Link href="/about" className="hover:text-blue-400">O nas</Link></li>
-              <li><Link href="/pricing" className="hover:text-blue-400">Cennik</Link></li>
-              <li><Link href="/regulamin" className="hover:text-blue-400">Regulamin</Link></li>
-              <li><Link href="/contact" className="hover:text-blue-400">Kontakt</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4 text-white">Social Media</h4>
-            <div className="flex space-x-4">
-              <Link href="#" className="hover:text-blue-400">Facebook</Link>
-              <Link href="#" className="hover:text-blue-400">Instagram</Link>
-              <Link href="#" className="hover:text-blue-400">Tiktok</Link>
+            {/* Stats preview */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="text-2xl font-bold text-green-400">10k+</div>
+                <div className="text-sm text-gray-300">Aktywnych uczniów</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="text-2xl font-bold text-blue-400">95%</div>
+                <div className="text-sm text-gray-300">Satysfakcja</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="text-2xl font-bold text-purple-400">50k+</div>
+                <div className="text-sm text-gray-300">Lekcji ukończonych</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="text-2xl font-bold text-amber-400">24/7</div>
+                <div className="text-sm text-gray-300">Dostęp AI</div>
+              </div>
             </div>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto mt-8 pt-8 border-t border-gray-800 text-center">
-          <p>© 2025 LearnEnglishAI. Wszystkie prawa zastrzeżone.</p>
-        </div>
-      </footer>
-    </div>
+
+        {/* Features Section */}
+        <section className="py-16 px-4 max-w-6xl mx-auto relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
+            Dlaczego warto uczyć się z nami?
+          </h2>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <FeatureCard 
+              icon={Brain}
+              title="Rozmowy z AI"
+              description="Konwersacje z inteligentnym asystentem dostosowane do Twojego poziomu"
+              gradient="from-purple-500 to-pink-600"
+            />
+            <FeatureCard 
+              icon={BookOpen}
+              title="Personalizowane lekcje"
+              description="Materiały dopasowane do Twoich celów i zainteresowań"
+              gradient="from-blue-500 to-cyan-600"
+            />
+            <FeatureCard 
+              icon={Zap}
+              title="Natychmiastowa informacja zwrotna"
+              description="Błyskawiczna korekta błędów i sugestie poprawy"
+              gradient="from-amber-500 to-orange-600"
+            />
+            <FeatureCard 
+              icon={TrendingUp}
+              title="Śledzenie postępów"
+              description="Monitoruj swoje osiągnięcia i motywuj się do dalszej nauki"
+              gradient="from-green-500 to-emerald-600"
+            />
+          </div>
+        </section>
+
+        {/* Tools Showcase */}
+        <section className="py-16 bg-black/20 backdrop-blur-sm px-4 relative z-10">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
+              Poznaj nasze narzędzia
+            </h2>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <ToolCard 
+                title="Fiszki"
+                description="Powtarzaj najważniejsze słówka na różnych poziomach – szybko i skutecznie."
+                href="/flashcards"
+                icon={BookOpen}
+                gradient="from-purple-500 to-indigo-600"
+              />
+              <ToolCard 
+                title="Ściąga gramatyczna"
+                description="Podręczna ściągawka z najważniejszych konstrukcji i czasów gramatycznych."
+                href="/grammar"
+                icon={PenTool}
+                gradient="from-blue-500 to-indigo-600"
+              />
+              <ToolCard 
+                title="Trener słówek"
+                description="Interaktywny system nauki który pomoże Ci opanować nowe słownictwo w praktyce."
+                href="/vocabulary"
+                icon={Brain}
+                gradient="from-green-500 to-emerald-600"
+              />
+              <ToolCard 
+                title="Rozmowa"
+                description="Różnorodne ćwiczenia łączące słownictwo, gramatykę i rozumienie ze słuchu."
+                href="/conversation"
+                icon={MessageCircle}
+                gradient="from-amber-500 to-orange-600"
+              />
+              <ToolCard 
+                title="Zadania praktyczne"
+                description="Ćwiczenia, dzięki którym utrwalisz słownictwo i poznane struktury w kontekście."
+                href="/exercises"
+                icon={Target}
+                gradient="from-red-500 to-pink-600"
+              />
+              <ToolCard 
+                title="Czasowniki nieregularne"
+                description="Ćwicz formy nieregularnych czasowników i zapamiętuj je skutecznie."
+                href="/irregular-verbs"
+                icon={RotateCcw}
+                gradient="from-violet-500 to-purple-600"
+              />
+              <ToolCard 
+                title="Testy"
+                description="Sprawdź swoją wiedzę zależnie od poziomu"
+                href="/test"
+                icon={TestTube}
+                gradient="from-teal-500 to-cyan-600"
+              />
+              <ToolCard 
+                title="Karty słówek"
+                description="Ćwicz nowe słówka i zapamiętuj je skutecznie."
+                href="/cards"
+                icon={CreditCard}
+                gradient="from-rose-500 to-pink-600"
+              />
+              <ToolCard 
+                title="Statystyki"
+                description="Śledź postępy"
+                href="/stats"
+                icon={BarChart}
+                gradient="from-emerald-500 to-green-600"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section className="py-16 px-4 max-w-6xl mx-auto relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
+            Wybierz plan dla siebie
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <PricingCard 
+              name="Basic"
+              price="0"
+              features={[
+                "Ograniczony dostęp do materiałów",
+                "Podstawowe fiszki",
+                "Śledzenie postępów"
+              ]}
+              cta="Rozpocznij za darmo"
+              featured={false}
+            />
+            <PricingCard 
+              name="Premium"
+              price="14.99"
+              features={[
+                "Pełny dostęp do kursów",
+                "Rozmowy z Agentami AI",
+                "Nieograniczona nauka",
+                "Premium wsparcie"
+              ]}
+              cta="Kup dostęp"
+              featured={true}
+            />
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="py-16 bg-black/20 backdrop-blur-sm px-4 relative z-10">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
+              Dołącz do zadowolonych uczniów
+            </h2>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <Testimonial 
+                quote="W 3 miesiące poprawiłem swój angielski na tyle, że dostałem awans w pracy!"
+                author="Marek, 32 lata"
+              />
+              <Testimonial 
+                quote="Najlepsza platforma do nauki jaką próbowałam. Uwielbiam system nauki słówek!"
+                author="Anna, 25 lat"
+              />
+              <Testimonial 
+                quote="Nauka z AI to game-changer. Polecam każdemu!"
+                author="Kasia, 28 lat"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 bg-gradient-to-r from-blue-600/30 to-purple-600/30 backdrop-blur-sm text-center px-4 relative z-10">
+          <div className="max-w-2xl mx-auto">
+            <div className="mb-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+              <Rocket className="w-5 h-5 text-blue-400" />
+              <span className="text-blue-300 font-medium">Gotowy na przygodę?</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+              Gotów zacząć swoją przygodę z angielskim?
+            </h2>
+            <p className="text-xl mb-8 text-gray-300">
+              Dołącz do nas i zobacz różnicę już po pierwszej lekcji!
+            </p>
+            <Link 
+              href="/register" 
+              className="group inline-flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-8 py-4 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              <Trophy className="w-6 h-6" />
+              <span>Zarejestruj się teraz</span>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-black/30 backdrop-blur-sm text-gray-300 py-12 px-4 border-t border-white/10 relative z-10">
+          <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                  <Brain className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white">LearnEnglishAI</h3>
+              </div>
+              <p className="text-gray-400">Najskuteczniejsza platforma do nauki angielskiego online.</p>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4 text-white">Narzędzia</h4>
+              <ul className="space-y-2">
+                <li><Link href="/flashcards" className="hover:text-purple-400 transition-colors">Fiszki</Link></li>
+                <li><Link href="/grammar" className="hover:text-purple-400 transition-colors">Ściąga gramatyczna</Link></li>
+                <li><Link href="/vocabulary" className="hover:text-purple-400 transition-colors">Trener słówek</Link></li>
+                <li><Link href="/conversation" className="hover:text-purple-400 transition-colors">Rozmowa</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4 text-white">Firma</h4>
+              <ul className="space-y-2">
+                <li><Link href="/about" className="hover:text-purple-400 transition-colors">O nas</Link></li>
+                <li><Link href="/pricing" className="hover:text-purple-400 transition-colors">Cennik</Link></li>
+                <li><Link href="/regulamin" className="hover:text-purple-400 transition-colors">Regulamin</Link></li>
+                <li><Link href="/contact" className="hover:text-purple-400 transition-colors">Kontakt</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4 text-white">Social Media</h4>
+              <div className="flex space-x-4">
+                <Link href="#" className="hover:text-purple-400 transition-colors">Facebook</Link>
+                <Link href="#" className="hover:text-purple-400 transition-colors">Instagram</Link>
+                <Link href="#" className="hover:text-purple-400 transition-colors">TikTok</Link>
+              </div>
+            </div>
+          </div>
+          <div className="max-w-6xl mx-auto mt-8 pt-8 border-t border-white/10 text-center">
+            <p className="text-gray-400">© 2025 LearnEnglishAI. Wszystkie prawa zastrzeżone.</p>
+          </div>
+        </footer>
+      </div>
     </>
   );
 }
 
 // Component for feature cards
-function FeatureCard({ icon, title, description }: { icon: string, title: string, description: string }) {
+function FeatureCard({ icon: IconComponent, title, description, gradient }: { 
+  icon: React.ElementType, 
+  title: string, 
+  description: string,
+  gradient: string 
+}) {
   return (
-    <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 overflow-hidden group">
-      {/* Ciągły efekt połysku - wolniejszy i bardziej rozmyty */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 -left-40 w-32 h-full bg-white opacity-[0.03] transform -skew-x-12 animate-shimmer-slow blur-md"></div>
+    <div className="group bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15">
+      <div className={`w-14 h-14 bg-gradient-to-r ${gradient} rounded-xl flex items-center justify-center mb-4 transform group-hover:scale-110 transition-transform duration-300`}>
+        <IconComponent className="w-7 h-7 text-white" />
       </div>
-      
-      {/* Dodatkowy efekt przy najechaniu - subtelniejszy */}
-      <div className="absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-        <div className="absolute top-0 -left-40 w-32 h-full bg-white opacity-[0.08] transform -skew-x-12 group-hover:animate-shimmer-slow blur-xl"></div>
-      </div>
-      
-      <div className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-500">{icon}</div>
-      <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
-      <p className="text-gray-300">{description}</p>
-      
-      <style jsx>{`
-        @keyframes shimmer-slow {
-          0% { left: -40%; }
-          100% { left: 140%; }
-        }
-        .animate-shimmer-slow {
-          animation: shimmer-slow 6s infinite ease-in-out;
-        }
-      `}</style>
+      <h3 className="text-xl font-bold mb-3 text-white">{title}</h3>
+      <p className="text-gray-300 leading-relaxed">{description}</p>
     </div>
   );
 }
 
 // Component for tool cards
-function ToolCard({ title, description, href, color }: { title: string, description: string, href: string, color: string }) {
+function ToolCard({ title, description, href, icon: IconComponent, gradient }: { 
+  title: string, 
+  description: string, 
+  href: string, 
+  icon: React.ElementType,
+  gradient: string 
+}) {
   return (
-    <Link href={href} className={`${color} p-6 rounded-lg hover:shadow-md transition block h-full hover:brightness-110`}>
-      <h3 className="text-xl font-bold mb-3">{title}</h3>
-      <p className="text-gray-300">{description}</p>
+    <Link 
+      href={href} 
+      className="group bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15 block h-full"
+    >
+      <div className="flex items-center gap-4 mb-4">
+        <div className={`w-12 h-12 bg-gradient-to-r ${gradient} rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300`}>
+          <IconComponent className="w-6 h-6 text-white" />
+        </div>
+        <h3 className="text-xl font-bold text-white">{title}</h3>
+      </div>
+      <p className="text-gray-300 leading-relaxed mb-4">{description}</p>
+      <div className="flex items-center text-purple-400 font-medium">
+        <span>Rozpocznij naukę</span>
+        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+      </div>
     </Link>
   );
 }
@@ -314,30 +404,46 @@ function PricingCard({ name, price, features, cta, featured }: {
   featured: boolean 
 }) {
   return (
-    <div className={`relative ${featured ? 'border-2 border-blue-500' : 'border border-gray-700'} bg-gray-800 rounded-lg p-6 hover:bg-gray-600 transition`}>
+    <div className={`relative bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border p-8 transition-all duration-300 transform hover:scale-[1.02] ${
+      featured ? 'border-yellow-500/50 bg-gradient-to-b from-yellow-500/10 to-orange-500/10' : 'border-white/20'
+    }`}>
       {featured && (
-        <div className="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 text-sm font-bold rounded-bl-lg">
-          Najpopularniejszy
+        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-2 text-sm font-bold rounded-full border-2 border-yellow-300 flex items-center gap-2">
+            <Crown className="w-4 h-4" />
+            <span>Najpopularniejszy</span>
+          </div>
         </div>
       )}
-      <h3 className="text-2xl font-bold mb-2">{name}</h3>
-      <p className="text-4xl font-bold mb-4">
-        {price === "0" ? "Darmowy" : `${price}`}
-        {price !== "0" && <span className="text-lg font-normal">/miesiąc</span>}
-      </p>
-      <ul className="mb-6 space-y-2">
+      
+      <div className="text-center mb-6">
+        <h3 className="text-2xl font-bold mb-2 text-white">{name}</h3>
+        <div className="flex items-center justify-center mb-4">
+          <span className="text-5xl font-bold text-white">
+            {price === "0" ? "Darmowy" : `${price}`}
+          </span>
+          {price !== "0" && <span className="text-gray-400 ml-2">/miesiąc</span>}
+        </div>
+      </div>
+      
+      <ul className="mb-8 space-y-3">
         {features.map((feature, index) => (
           <li key={index} className="flex items-start text-gray-300">
-            <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            {feature}
+            <div className="w-5 h-5 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+              <Check className="w-3 h-3 text-white" />
+            </div>
+            <span>{feature}</span>
           </li>
         ))}
       </ul>
+      
       <Link 
         href={price === "0" ? "/register" : "/signup?plan=" + name.toLowerCase()} 
-        className={`block text-center py-3 px-4 rounded-lg font-bold ${featured ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-700 hover:bg-gray-500 text-white'}`}
+        className={`block text-center py-4 px-6 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+          featured 
+            ? 'bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white' 
+            : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white'
+        }`}
       >
         {cta}
       </Link>
@@ -348,12 +454,21 @@ function PricingCard({ name, price, features, cta, featured }: {
 // Component for testimonials
 function Testimonial({ quote, author }: { quote: string, author: string }) {
   return (
-    <div className="bg-gray-700 p-6 rounded-lg shadow-sm hover:bg-gray-700 transition">
-      <svg className="w-8 h-8 text-yellow-400 mb-4" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-      </svg>
-      <p className="text-lg italic mb-4">"{quote}"</p>
-      <p className="font-semibold">— {author}</p>
+    <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15">
+      <div className="mb-4">
+        <div className="flex text-yellow-400 mb-4">
+          {[...Array(5)].map((_, i) => (
+            <Star key={i} className="w-5 h-5 fill-current" />
+          ))}
+        </div>
+        <p className="text-lg italic mb-4 text-white">"{quote}"</p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+            <Users className="w-5 h-5 text-white" />
+          </div>
+          <p className="font-semibold text-purple-300">— {author}</p>
+        </div>
+      </div>
     </div>
   );
 }
