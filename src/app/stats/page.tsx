@@ -64,7 +64,7 @@ export default function StatsPage() {
   return (
     <>
       <Navbar />
-      <main className="relative p-6 md:p-12 bg-gray-900 min-h-screen overflow-hidden">
+      {/* <main className="relative p-6 md:p-12 bg-gray-900 min-h-screen overflow-hidden">
         <div className="inset-0 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
             <div className="absolute top-0 -left-40 w-32 h-full bg-white opacity-[0.03] transform -skew-x-12 animate-shimmer-slow blur-md"></div>
@@ -118,7 +118,7 @@ export default function StatsPage() {
 
 
         </div>
-      </main>
+      </main> */}
 
       <style jsx>{`
         @keyframes shimmer-slow {
