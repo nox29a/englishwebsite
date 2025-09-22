@@ -221,54 +221,30 @@ export default function WordMatchGame() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-900 p-6 flex flex-col items-center text-white">
+<div className="min-h-screen p-6 flex flex-col items-center text-white bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
 
-        {/* Wybór kategorii */}
-        <div className="mb-4">
-          <label htmlFor="category" className="block text-sm font-medium mb-2">
-            Wybierz kategorię:
-          </label>
-          <select
-            id="category"
-            value={category.name}
-            onChange={(e) => {
-              const selectedCategory = Categories.find(cat => cat.name === e.target.value);
-              if (selectedCategory) setCategory(selectedCategory);
-            }}
-            className="bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-white"
-          >
-            {Categories.map((cat) => (
-              <option key={cat.name} value={cat.name}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          <p className="text-sm text-gray-400 mt-1">{category.description}</p>
-        </div>
 
-        {/* Poziomy */}
-        <div className="mb-6 flex gap-4">
-          {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
-            <button
-              key={level}
-              onClick={() => setDifficulty(level)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full border border-gray-600 transition-colors duration-200
-                ${
-                  difficulty === level
-                    ? "bg-blue-400 text-white"
-                    : "bg-gray-800 text-blue-400 hover:bg-gray-700"
-                }`}
-            >
-              {level === "easy"
-                ? "Łatwy"
-                : level === "medium"
-                ? "Średni"
-                : "Trudny"}
-            </button>
-          ))}
-        </div>
-
-        {/* Plansza */}
+  {/* Poziomy trudności */}
+  <div className="mb-6 flex gap-4">
+    {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
+      <button
+        key={level}
+        onClick={() => setDifficulty(level)}
+        className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-lg transform hover:scale-105 ${
+          difficulty === level
+            ? level === "easy"
+              ? "bg-gradient-to-r from-green-400 to-green-600 text-white"
+              : level === "medium"
+              ? "bg-gradient-to-r from-amber-400 to-amber-600 text-white"
+              : "bg-gradient-to-r from-red-400 to-red-600 text-white"
+            : "bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20"
+        }`}
+      >
+        {level === "easy" ? "Łatwy" : level === "medium" ? "Średni" : "Trudny"}
+      </button>
+    ))}
+  </div>
+          {/* Plansza */}
         <div className="flex justify-between w-full max-w-3xl gap-6">
           <div className="w-1/2 flex flex-col gap-4">
             {plSlots.map((slot, idx) => (
@@ -296,30 +272,69 @@ export default function WordMatchGame() {
           </div>
         </div>
 
-        {/* Statystyki */}
-        <div className="mt-8 text-lg space-y-1">
-          <p>
-            Czas gry: <strong>{gameTime}s</strong>
-          </p>
-          <p>
-            Nauczone słowa: <strong>{Math.max(score)}</strong>
-          </p>
-          <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
-            <div 
-              className="bg-blue-600 h-2.5 rounded-full" 
-              style={{ width: `${words.length > 0 ? (usedIds.length / words.length) * 100 : 0}%` }}
-            ></div>
-          </div>
+  {/* Statystyki */}
+  <div className="mt-10 w-full max-w-md text-center">
+    <div className="mb-4 text-xl font-bold text-white"></div>
+    <div className="flex justify-around gap-4">
+      <div className="text-center group cursor-pointer">
+        <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-400/20 to-green-600/20 border border-green-500/30 backdrop-blur-sm rounded-xl mb-2 group-hover:scale-110 transition-transform">
+          ✅
         </div>
-
-        {/* Reset */}
-        <button
-          onClick={resetGame}
-          className="mt-6 px-6 py-2 rounded-full bg-green-400 text-gray-900 font-semibold hover:bg-green-500 transition"
-        >
-          Zagraj ponownie
-        </button>
+        <div className="text-2xl font-bold text-white">{score}</div>
+        <div className="text-xs text-gray-400">Punkty</div>
       </div>
+      <div className="text-center group cursor-pointer">
+        <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-red-400/20 to-red-600/20 border border-red-500/30 backdrop-blur-sm rounded-xl mb-2 group-hover:scale-110 transition-transform">
+          ❌
+        </div>
+        <div className="text-2xl font-bold text-white">{errors}</div>
+        <div className="text-xs text-gray-400">Błędy</div>
+      </div>
+    </div>
+    <div className="mt-4">
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-4 overflow-hidden border border-white/10">
+        <div 
+          className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-4 rounded-full transition-all duration-1000 ease-out relative"
+          style={{ width: `${words.length > 0 ? (usedIds.length / words.length) * 100 : 0}%` }}
+        >
+          <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Reset */}
+  <button
+    onClick={resetGame}
+    className="m-8 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+  >
+    🔄 Zagraj ponownie
+  </button>
+    {/* Wybór kategorii */}
+  <div className="mb-6 w-full max-w-md bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 animate-fade-in">
+    <label htmlFor="category" className="block text-sm font-medium mb-2 text-purple-400">
+      Wybierz kategorię:
+    </label>
+    <select
+      id="category"
+      value={category.name}
+      onChange={(e) => {
+        const selectedCategory = Categories.find(cat => cat.name === e.target.value);
+        if (selectedCategory) setCategory(selectedCategory);
+      }}
+      className="w-full px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-lg font-medium bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 border-white/20"
+    >
+      {Categories.map((cat) => (
+        <option key={cat.name} value={cat.name} className="bg-gray-900">
+          {cat.name}
+        </option>
+      ))}
+    </select>
+    <p className="text-sm text-gray-400 mt-2">{category.description}</p>
+  </div>
+</div>
+
+
     </>
   );
 }

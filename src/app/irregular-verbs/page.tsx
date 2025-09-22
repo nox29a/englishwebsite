@@ -9,12 +9,11 @@ import Navbar from "@/components/Navbar";
 import { verbs } from "@/components/words/irreagular_verbs";
 import { saveAttempt } from "../utils/saveAttempt";
 import { addPoints } from "../utils/addPoints";
-import { Mic } from "lucide-react";
+import { Mic, Trophy, Clock, Target, CheckCircle2, XCircle, Flame, Star, Crown, Sparkles, Zap, Brain } from "lucide-react";
 
 export default function IrregularVerbsTrainer() {
   const getRandomVerb = (list: typeof verbs) =>
     list[Math.floor(Math.random() * list.length)];
-
 
   const [remainingVerbs, setRemainingVerbs] = useState([...verbs]);
   const [currentVerb, setCurrentVerb] = useState(getRandomVerb(verbs));
@@ -35,9 +34,31 @@ export default function IrregularVerbsTrainer() {
   const [sessionTime, setSessionTime] = useState<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Dopaminowe elementy
+  const [streak, setStreak] = useState(0);
+  const [showAchievement, setShowAchievement] = useState(null);
+  const [particles, setParticles] = useState([]);
+  const [feedbackState, setFeedbackState] = useState("");
 
-//zapisywanie sesji
-
+  // Particle system for celebrations
+  const createParticles = (type = 'success') => {
+    const newParticles = [];
+    const colors = type === 'success' ? ['#10B981', '#34D399', '#6EE7B7'] : ['#F59E0B', '#FBBF24', '#FCD34D'];
+    
+    for (let i = 0; i < 15; i++) {
+      newParticles.push({
+        id: Math.random(),
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * 200 + 100,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: Math.random() * 8 + 4,
+        velocity: { x: (Math.random() - 0.5) * 10, y: Math.random() * -15 - 5 }
+      });
+    }
+    
+    setParticles(newParticles);
+    setTimeout(() => setParticles([]), 3000);
+  };
 
   const loadUserData = async () => {
     const {
@@ -51,7 +72,7 @@ export default function IrregularVerbsTrainer() {
     }
   };
 
-    const startRecognition = (setter: (val: string) => void) => {
+  const startRecognition = (setter: (val: string) => void) => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -113,8 +134,6 @@ export default function IrregularVerbsTrainer() {
     }
   };
 
-  
-
   const saveProgress = async () => {
     const {
       data: { user },
@@ -163,7 +182,7 @@ export default function IrregularVerbsTrainer() {
     loadData();
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setSessionTime((prev) => prev + 1);
     }, 1000);
@@ -181,13 +200,21 @@ export default function IrregularVerbsTrainer() {
     };
   }, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
 
- useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       saveProgress();
     }, 5000);
 
     return () => clearInterval(interval);
   }, [remainingVerbs, correctAnswers, totalAnswers, timeSpent, sessionTime]);
+
+  // Hide achievement after 3 seconds
+  useEffect(() => {
+    if (showAchievement) {
+      const timer = setTimeout(() => setShowAchievement(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showAchievement]);
 
   const resetTrainer = async () => {
     const freshVerbs = [...verbs];
@@ -204,60 +231,88 @@ export default function IrregularVerbsTrainer() {
     setCorrectAnswers(0);
     setSessionTime(0);
     setTimeSpent(0);
+    setStreak(0);
+    setFeedbackState("");
 
     await saveProgress();
   };
 
-const checkAnswers = async () => {
-  const isBaseCorrect =
-    inputBase.trim().toLowerCase() === currentVerb.base.toLowerCase();
-  const isPastCorrect =
-    inputPast.trim().toLowerCase() === currentVerb.past.toLowerCase();
-  const isParticipleCorrect =
-    inputParticiple.trim().toLowerCase() ===
-    currentVerb.participle.toLowerCase();
+  const checkAnswers = async () => {
+    const isBaseCorrect =
+      inputBase.trim().toLowerCase() === currentVerb.base.toLowerCase();
+    const isPastCorrect =
+      inputPast.trim().toLowerCase() === currentVerb.past.toLowerCase();
+    const isParticipleCorrect =
+      inputParticiple.trim().toLowerCase() ===
+      currentVerb.participle.toLowerCase();
 
-  const isCorrect = isBaseCorrect && isPastCorrect && isParticipleCorrect;
-  
-  // Zapisz czas odpowiedzi
-  const timeTaken = sessionTime; // lub inny sposób mierzenia czasu odpowiedzi
+    const isCorrect = isBaseCorrect && isPastCorrect && isParticipleCorrect;
+    
+    // Zapisz czas odpowiedzi
+    const timeTaken = sessionTime; // lub inny sposób mierzenia czasu odpowiedzi
 
-  setTotalAnswers((prev) => prev + 1);
+    setTotalAnswers((prev) => prev + 1);
 
-  // Pobierz użytkownika
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (user) {
-    // Zapisz próbę
-    await saveAttempt(user.id, {
-      type: "irregular_verb",
-      id: currentVerb.index, // lub inne unikalne ID czasownika
-      isCorrect,
-      timeTaken,
-    });
+    // Pobierz użytkownika
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      // Zapisz próbę
+      await saveAttempt(user.id, {
+        type: "irregular_verb",
+        id: currentVerb.index,
+        isCorrect,
+        timeTaken,
+      });
 
-    // Jeśli odpowiedź poprawna, dodaj punkty
-    if (isCorrect) {
-      await addPoints(user.id, 4);
+      // Jeśli odpowiedź poprawna, dodaj punkty
+      if (isCorrect) {
+        await addPoints(user.id, 4);
+      }
     }
-  }
 
-  if (isCorrect) {
-    setResult("✅ Wszystko poprawnie!");
-    setCorrectAnswers((prev) => prev + 1);
-    setAnsweredCorrectly(true);
+    if (isCorrect) {
+      setResult("✅ Wszystko poprawnie!");
+      setCorrectAnswers((prev) => prev + 1);
+      setAnsweredCorrectly(true);
+      setFeedbackState("correct");
+      setStreak(prev => prev + 1);
+      createParticles('success');
 
-    setRemainingVerbs((prev) =>
-      prev.filter((v) => v.base !== currentVerb.base)
-    );
-  } else {
-    setResult("❌ Błąd. Spróbuj ponownie lub pokaż odpowiedź.");
-  }
-};
+      // Check for streak achievements
+      if (streak + 1 === 5) {
+        setShowAchievement({
+          name: 'Na fali!',
+          description: '5 poprawnych odpowiedzi z rzędu!',
+          icon: '🔥'
+        });
+      } else if (streak + 1 === 10) {
+        setShowAchievement({
+          name: 'Niepokonany!',
+          description: '10 poprawnych odpowiedzi z rzędu!',
+          icon: '⚡'
+        });
+      }
+
+      setRemainingVerbs((prev) =>
+        prev.filter((v) => v.base !== currentVerb.base)
+      );
+    } else {
+      setResult("❌ Błąd. Spróbuj ponownie lub pokaż odpowiedź.");
+      setFeedbackState("incorrect");
+      setStreak(0);
+    }
+  };
 
   const nextVerb = () => {
     if (remainingVerbs.length === 0) {
       setResult("🎉 Wszystkie czasowniki zostały rozwiązane!");
+      createParticles('celebration');
+      setShowAchievement({
+        name: 'Mistrz czasowników!',
+        description: 'Ukończyłeś wszystkie czasowniki!',
+        icon: '👑'
+      });
       return;
     }
 
@@ -269,6 +324,7 @@ const checkAnswers = async () => {
     setResult("");
     setShowAnswer(false);
     setAnsweredCorrectly(false);
+    setFeedbackState("");
 
     setTimeout(() => {
       baseInputRef.current?.focus();
@@ -305,197 +361,362 @@ const checkAnswers = async () => {
   };
 
   const totalTimeSpent = timeSpent + sessionTime;
+  const progressPercentage = verbs.length > 0 ? ((verbs.length - remainingVerbs.length) / verbs.length) * 100 : 0;
+
+  const feedbackClasses = {
+    correct: "border-green-500 bg-green-50 dark:bg-green-900/20 shadow-lg shadow-green-500/20",
+    incorrect: "border-red-500 bg-red-50 dark:bg-red-900/20 shadow-lg shadow-red-500/20",
+    default: "border-white/20"
+  };
 
   return (
     <>
       <Navbar />
-      <div
-        className={`${
-          darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"
-        } max-w-3xl mx-auto mt-10 p-4 rounded shadow-md`}
-        onKeyDown={handleKeyDown}
-        tabIndex={0}
-      >
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-2 md:gap-0">
-          <div className="text-left">
-            {firstName && (
-              <p
-                className={`${
-                  darkMode ? "text-gray-300" : "text-gray-700"
-                } text-sm md:text-base`}
-              >
-                Cześć, <strong>{firstName}</strong>!
-              </p>
-            )}
-          </div>
-
-          <div
-            className={`text-center md:text-right text-sm md:text-base text-white`}
-          >
-            <p>
-              Poprawne: <strong>{correctAnswers}</strong>
-            </p>
-            <p>
-              Pozostało:{" "}
-              <strong>
-                {remainingVerbs.length} z {verbs.length}
-              </strong>
-            </p>
-            <p
-              className={`${
-                darkMode ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
-              Czas: <strong>{formatTime(totalTimeSpent)}</strong>
-            </p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+        
+        {/* Background particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {particles.map(particle => (
+            <div
+              key={particle.id}
+              className="absolute animate-ping"
+              style={{
+                left: particle.x,
+                top: particle.y,
+                backgroundColor: particle.color,
+                width: particle.size,
+                height: particle.size,
+                borderRadius: '50%'
+              }}
+            />
+          ))}
         </div>
 
-        <Card
-          className={`${
-            darkMode ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"
-          } shadow-xl`}
-        >
-          <CardContent className="space-y-4">
-            <h2
-              className={`text-xl font-semibold text-center md:text-left ${
-                darkMode ? "text-blue-400" : "text-blue-600"
-              }`}
-            >
-              Tłumaczenie: <span>{currentVerb.translation}</span>
-            </h2>
-
-            <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              
-              <Input
-                ref={baseInputRef}
-                value={inputBase}
-                onChange={(e) => setInputBase(e.target.value)}
-                placeholder="Base"
-              />
-              <Button
-                size="icon"
-                onClick={() => startRecognition(setInputBase)}
-                tabIndex={-1}
-              >
-                <Mic />
-              </Button>
+        {/* Achievement Popup */}
+        {showAchievement && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
+              <div className="flex items-center space-x-3">
+                <div className="text-3xl">{showAchievement.icon}</div>
+                <div>
+                  <div className="font-bold text-lg">{showAchievement.name}</div>
+                  <div className="text-sm opacity-90">{showAchievement.description}</div>
+                </div>
+              </div>
             </div>
-              <div>
+          </div>
+        )}
 
-                           <div className="flex items-center gap-2">
-                           
-              <Input
-                value={inputPast}
-                onChange={(e) => setInputPast(e.target.value)}
-                placeholder="Past Simple"
+        <div className="max-w-4xl mx-auto px-4 py-6 relative">
+          
+          {/* Top Stats Bar */}
+          <div className="mb-6 bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center space-x-6">
+                {firstName && (
+                  <div className="flex items-center space-x-2">
+                    <Crown className="w-6 h-6 text-yellow-400" />
+                    <div>
+                      <div className="text-white font-bold">Cześć, {firstName}!</div>
+                      <div className="text-gray-300 text-sm">Mistrz czasowników</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Streak */}
+                {streak > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <Flame className="w-6 h-6 text-orange-500" />
+                    <div>
+                      <div className="text-white font-bold">{streak} streak</div>
+                      <div className="text-gray-300 text-sm">Z rzędu!</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-4 text-white text-sm">
+                <div className="text-center">
+                  <div className="font-bold text-lg">{correctAnswers}</div>
+                  <div className="text-gray-400">Poprawne</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-lg">{remainingVerbs.length}</div>
+                  <div className="text-gray-400">Pozostało</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-lg">{formatTime(totalTimeSpent)}</div>
+                  <div className="text-gray-400">Czas</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mb-6">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-4 mb-2 overflow-hidden border border-white/10">
+              <div 
+                className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-4 rounded-full transition-all duration-1000 ease-out relative"
+                style={{ width: `${progressPercentage}%` }}
+              >
+                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+              </div>
+            </div>
+            <div className="flex justify-between text-sm text-gray-300">
+              <span>Postęp: {verbs.length - remainingVerbs.length}/{verbs.length}</span>
+              <span>Dokładność: {getAccuracy()}%</span>
+            </div>
+          </div>
+
+          {/* Main Card */}
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8 mb-6">
+            
+            {/* Translation Display */}
+            <div className="text-center mb-8">
+              <div className="bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/20 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse"></div>
                 
-              />
-              <Button
-                size="icon"
-                onClick={() => startRecognition(setInputPast)}
-                tabIndex={-1}
-              >
-                <Mic />
-              </Button>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-center mb-4">
+                    <Brain className="w-8 h-8 text-blue-400 mr-3" />
+                    <h2 className="text-2xl font-bold text-white">Tłumaczenie</h2>
+                  </div>
+                  <h3 className="text-4xl font-bold text-white mb-2">
+                    {currentVerb.translation}
+                  </h3>
+                  
+                  {/* Streak indicator */}
+                  {streak > 0 && (
+                    <div className="mt-3 inline-flex items-center bg-orange-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-orange-500/30">
+                      <Flame className="w-4 h-4 text-orange-400 mr-2" />
+                      <span className="text-orange-300 font-bold">{streak} z rzędu!</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="mt-5"></div>
-            <div className="flex items-center gap-2">
-              
-              <Input
-                value={inputParticiple}
-                onChange={(e) => setInputParticiple(e.target.value)}
-                placeholder="Past Participle"
-                
-              />
-              <Button
-                size="icon"
-                onClick={() => startRecognition(setInputParticiple)}
-                tabIndex={-1}
-              >
-                <Mic />
-              </Button>
-            </div>
-            </div></div>
 
-            <div className="flex flex-col sm:flex-row sm:justify-start sm:gap-2 gap-2">
-              <Button
+            {/* Input Section */}
+            <div className="space-y-6 mb-6">
+              {/* Base Form */}
+              <div className="space-y-2">
+                <label className="text-gray-300 font-medium">Forma podstawowa (Base)</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={baseInputRef}
+                    value={inputBase}
+                    onChange={(e) => setInputBase(e.target.value)}
+                    placeholder="Wpisz formę podstawową..."
+                    className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-lg font-medium ${
+                      feedbackClasses[feedbackState] || feedbackClasses.default
+                    } bg-white/10 backdrop-blur-sm text-white placeholder-gray-400`}
+                  />
+                  <button
+                    onClick={() => startRecognition(setInputBase)}
+                    className="px-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20 transition-all duration-300 transform hover:scale-110"
+                  >
+                    <Mic className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Past Simple */}
+              <div className="space-y-2">
+                <label className="text-gray-300 font-medium">Czas przeszły (Past Simple)</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    value={inputPast}
+                    onChange={(e) => setInputPast(e.target.value)}
+                    placeholder="Wpisz czas przeszły..."
+                    className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-lg font-medium ${
+                      feedbackClasses[feedbackState] || feedbackClasses.default
+                    } bg-white/10 backdrop-blur-sm text-white placeholder-gray-400`}
+                  />
+                  <button
+                    onClick={() => startRecognition(setInputPast)}
+                    className="px-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20 transition-all duration-300 transform hover:scale-110"
+                  >
+                    <Mic className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Past Participle */}
+              <div className="space-y-2">
+                <label className="text-gray-300 font-medium">Imiesłów bierny (Past Participle)</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    value={inputParticiple}
+                    onChange={(e) => setInputParticiple(e.target.value)}
+                    placeholder="Wpisz imiesłów bierny..."
+                    className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-lg font-medium ${
+                      feedbackClasses[feedbackState] || feedbackClasses.default
+                    } bg-white/10 backdrop-blur-sm text-white placeholder-gray-400`}
+                  />
+                  <button
+                    onClick={() => startRecognition(setInputParticiple)}
+                    className="px-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20 transition-all duration-300 transform hover:scale-110"
+                  >
+                    <Mic className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3 mb-6">
+              <button
                 onClick={() => {
                   if (showAnswer || answeredCorrectly) nextVerb();
                   else checkAnswers();
-
-                 
                 }}
-                className="w-full sm:w-auto"
+                className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center"
               >
-                Sprawdź
-              </Button>
+                <Zap className="w-5 h-5 mr-2" />
+                {(showAnswer || answeredCorrectly) ? 'Następny' : 'Sprawdź'}
+              </button>
 
-              <Button
-                variant="secondary"
+              <button
                 onClick={() => {
                   if (!answeredCorrectly && !showAnswer) {
                     setTotalAnswers((prev) => prev + 1);
                   }
                   nextVerb();
                 }}
-                className="w-full sm:w-auto"
+                className="px-6 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-105"
               >
-                Następne
-              </Button>
+                Następny
+              </button>
 
-              <Button
-                variant="outline"
+              <button
                 onClick={() => {
                   if (!showAnswer && !answeredCorrectly) {
                     setTotalAnswers((prev) => prev + 1);
                   }
                   setShowAnswer(true);
                 }}
-                className="w-full sm:w-auto"
+                className="px-6 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-105"
               >
                 Pokaż odpowiedź
-              </Button>
+              </button>
 
-              <Button
-                variant="destructive"
+              <button
                 onClick={resetTrainer}
-                className="w-full sm:w-auto"
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all duration-300 transform hover:scale-105"
               >
                 Resetuj
-              </Button>
+              </button>
             </div>
 
+            {/* Feedback */}
             {result && (
-              <p
-                className={`text-lg font-medium text-center md:text-left ${
-                  darkMode ? "text-green-400" : "text-green-700"
-                }`}
-              >
-                {result}
-              </p>
-            )}
-
-            {showAnswer && (
-              <div
-                className={`${
-                  darkMode ? "text-gray-300" : "text-gray-700"
-                } text-sm text-center md:text-left`}
-              >
-                <p>
-                  Base: <strong>{currentVerb.base}</strong>
-                </p>
-                <p>
-                  Past: <strong>{currentVerb.past}</strong>
-                </p>
-                <p>
-                  Participle: <strong>{currentVerb.participle}</strong>
-                </p>
+              <div className={`mb-6 p-4 backdrop-blur-sm border rounded-xl ${
+                feedbackState === 'correct' 
+                  ? 'bg-green-500/20 border-green-500/30' 
+                  : 'bg-red-500/20 border-red-500/30'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    {feedbackState === 'correct' ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-400 mr-2" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-400 mr-2" />
+                    )}
+                    <span className={`font-medium ${
+                      feedbackState === 'correct' ? 'text-green-300' : 'text-red-300'
+                    }`}>
+                      {result}
+                    </span>
+                  </div>
+                  {feedbackState === 'correct' && (
+                    <div className="flex items-center space-x-2">
+                      <Sparkles className="w-4 h-4 text-yellow-400" />
+                      <span className="text-yellow-300 font-bold">+4 pkt</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+
+            {/* Answer Display */}
+            {showAnswer && (
+              <div className="p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+                <h4 className="text-white font-bold mb-3 flex items-center">
+                  <Star className="w-5 h-5 text-yellow-400 mr-2" />
+                  Poprawne odpowiedzi:
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-gray-300">
+                  <div>
+                    <span className="text-gray-400">Base:</span>
+                    <div className="font-bold text-white text-lg">{currentVerb.base}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Past:</span>
+                    <div className="font-bold text-white text-lg">{currentVerb.past}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Participle:</span>
+                    <div className="font-bold text-white text-lg">{currentVerb.participle}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Stats */}
+            <div className="flex flex-wrap gap-6 items-center justify-center mt-8">
+              <div className="text-center group cursor-pointer">
+                <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-400/20 to-green-600/20 backdrop-blur-sm rounded-xl mb-2 border border-green-500/30 group-hover:scale-110 transition-transform">
+                  <Trophy className="w-7 h-7 text-green-400" />
+                </div>
+                <div className="text-2xl font-bold text-white">{correctAnswers}</div>
+                <div className="text-xs text-gray-400">Poprawne</div>
+              </div>
+              
+              <div className="text-center group cursor-pointer">
+                <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-400/20 to-blue-600/20 backdrop-blur-sm rounded-xl mb-2 border border-blue-500/30 group-hover:scale-110 transition-transform">
+                  <Target className="w-7 h-7 text-blue-400" />
+                </div>
+                <div className="text-2xl font-bold text-white">{getAccuracy()}%</div>
+                <div className="text-xs text-gray-400">Dokładność</div>
+              </div>
+              
+              <div className="text-center group cursor-pointer">
+                <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-amber-400/20 to-amber-600/20 backdrop-blur-sm rounded-xl mb-2 border border-amber-500/30 group-hover:scale-110 transition-transform">
+                  <Clock className="w-7 h-7 text-amber-400" />
+                </div>
+                <div className="text-2xl font-bold text-white">{Math.floor(totalTimeSpent / 60)}</div>
+                <div className="text-xs text-gray-400">Minut</div>
+              </div>
+
+              {streak > 0 && (
+                <div className="text-center group cursor-pointer">
+                  <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-orange-400/20 to-orange-600/20 backdrop-blur-sm rounded-xl mb-2 border border-orange-500/30 group-hover:scale-110 transition-transform">
+                    <Flame className="w-7 h-7 text-orange-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-white">{streak}</div>
+                  <div className="text-xs text-gray-400">Streak</div>
+                </div>
+              )}
+            </div>
+
+            {/* Completion Message */}
+            {remainingVerbs.length === 0 && (
+              <div className="mt-8 text-center p-8 bg-gradient-to-br from-yellow-500/20 to-green-500/20 backdrop-blur-sm rounded-2xl border border-yellow-500/30 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-green-400/10 to-blue-400/10 animate-pulse"></div>
+                <div className="relative z-10">
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h2 className="text-3xl font-bold text-white mb-2">
+                    Gratulacje!
+                  </h2>
+                  <p className="text-gray-300 text-lg">Ukończyłeś wszystkie czasowniki nieregularne!</p>
+                  <div className="mt-4 text-2xl font-bold text-yellow-400">
+                    Jesteś mistrzem czasowników! 👑
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );
