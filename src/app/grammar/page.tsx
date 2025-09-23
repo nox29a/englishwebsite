@@ -168,45 +168,25 @@ export default function SciagaPage() {
     }, 2000);
   };
 
-  const toggleMastered = (itemName, event) => {
-    event.stopPropagation();
-    
-    const rect = event.target.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    
-    setMasteredItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemName)) {
-        newSet.delete(itemName);
-      } else {
-        newSet.add(itemName);
-        createParticles(x, y);
-        
-        // Check for achievements
-        if (newSet.size === 5) {
-          setShowAchievement({
-            name: "Dobry start!",
-            description: "Opanowałeś 5 zagadnień!",
-            icon: "🌟"
-          });
-        } else if (newSet.size === 10) {
-          setShowAchievement({
-            name: "Na dobrej drodze!",
-            description: "Opanowałeś 10 zagadnień!",
-            icon: "🔥"
-          });
-        } else if (newSet.size === 16) {
-          setShowAchievement({
-            name: "Mistrz gramatyki!",
-            description: "Opanowałeś wszystkie zagadnienia!",
-            icon: "👑"
-          });
-        }
-      }
-      return newSet;
-    });
-  };
+const toggleMastered = (itemName: string, event: React.MouseEvent<HTMLButtonElement>) => {
+  event.stopPropagation();
+
+  const rect = (event.target as HTMLElement).getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+
+  setMasteredItems(prev => {
+    const newSet = new Set(prev);
+    if (newSet.has(itemName)) {
+      newSet.delete(itemName);
+    } else {
+      newSet.add(itemName);
+      createParticles(x, y);
+      // achievements...
+    }
+    return newSet;
+  });
+};
 
   // Hide achievement after 3 seconds
   useEffect(() => {
