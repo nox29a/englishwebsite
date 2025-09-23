@@ -194,26 +194,35 @@ export default function FlashcardGame() {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
       if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.lang = direction === "pl-en" ? "en-US" : "pl-PL";
-        recognitionRef.current.interimResults = false;
-        recognitionRef.current.maxAlternatives = 1;
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        
+        recognition.lang = direction === "pl-en" ? "en-US" : "pl-PL";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
 
-        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
           const transcript = event.results[0][0].transcript;
           setInput(transcript);
         };
 
-        recognitionRef.current.onend = () => {
+        recognition.onend = () => {
           setIsListening(false);
         };
 
-        recognitionRef.current.onerror = (e: SpeechRecognitionErrorEvent) => {
+        recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
           console.error("Speech recognition error:", e);
           setIsListening(false);
         };
       }
     }
+
+    // Cleanup function
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
   }, [direction]);
 
   const speak = (text: string, lang: string) => {
@@ -229,7 +238,7 @@ export default function FlashcardGame() {
   };
 
   const startListening = () => {
-    if (recognitionRef.current) {
+    if (recognitionRef.current && !isListening) {
       try {
         setIsListening(true);
         recognitionRef.current.lang = direction === "pl-en" ? "en-US" : "pl-PL";
