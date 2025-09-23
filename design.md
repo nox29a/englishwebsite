@@ -1,224 +1,334 @@
 {
-  "project": {
-    "name": "English Learning Platform for ADHD Users",
-    "purpose": "Web-based English learning application specifically designed for users with ADHD, focusing on minimalism, immediate gratification, distraction reduction, personalization, and adaptive learning support."
-  },
-  
-  "design_philosophy": {
-    "core_principles": [
-      "Minimalist interface",
-      "Immediate feedback",
-      "Reduced cognitive load",
-      "Personalized experience",
-      "Consistent visual language",
-      "Accessibility first"
-    ],
-    "adhd_considerations": [
-      "Short attention span accommodation",
-      "Reduction of visual distractions",
-      "Clear visual hierarchy",
-      "Immediate gratification systems",
-      "Micro-interactions for engagement",
-      "Flexible learning paths",
-      "Optional calm mode for reduced animations and notifications"
-    ]
-  },
-  
-  "color_palette": {
-    "primary": {
-      "blue": "#3B82F6",
-      "green": "#10B981",
-      "soft_red": "#F87171",
-      "soft_amber": "#FBBF24",
-      "violet": "#8B5CF6",
-      "turquoise": "#14B8A6"
+  "designSystem": {
+    "theme": {
+      "name": "Dopamine Learning System",
+      "philosophy": "Maksymalizacja dopaminowych strzałów poprzez gamifikację, nagrody wizualne i interaktywność",
+      "primaryGoal": "Sprawić, aby nauka była uzależniająca w pozytywny sposób"
     },
-    "light_theme": {
-      "background": "#FFFFFF",
-      "text_primary": "#1F2937",
-      "text_secondary": "#6B7280",
-      "borders": "#E5E7EB",
-      "surface": "#F9FAFB"
-    },
-    "dark_theme": {
-      "background": "#111827",
-      "text_primary": "#F3F4F6",
-      "text_secondary": "#9CA3AF",
-      "borders": "#374151",
-      "surface": "#1F2937"
-    }
-  },
-  
-  "typography": {
-    "font_family": "Inter, system-ui, sans-serif",
-    "weights": [400, 500, 600, 700],
-    "scale": {
-      "h1": "2.5rem",
-      "h2": "2rem",
-      "h3": "1.5rem",
-      "body": "1.125rem",
-      "small": "0.875rem"
-    },
-    "line_height": "1.6",
-    "max_line_length": "70 characters",
-    "contrast_ratio": "4.5:1 minimum"
-  },
-  
-  "spacing_layout": {
-    "scale": "4px base unit",
-    "spacing": {
-      "xs": "4px",
-      "sm": "8px",
-      "md": "16px",
-      "lg": "24px",
-      "xl": "32px",
-      "xxl": "48px"
-    },
-    "border_radius": {
-      "small": "4px",
-      "medium": "8px",
-      "large": "12px",
-      "full": "9999px"
-    },
-    "shadows": {
-      "small": "0 1px 2px rgba(0, 0, 0, 0.05)",
-      "medium": "0 4px 6px rgba(0, 0, 0, 0.1)",
-      "large": "0 10px 15px rgba(0, 0, 0, 0.1)"
-    },
-    "max_content_width": "1200px"
-  },
-  
-  "ui_components": {
-    "buttons": {
-      "primary": "bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2",
-      "secondary": "bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg px-4 py-2",
-      "tertiary": "bg-transparent hover:bg-gray-100 text-blue-600 border border-gray-300 rounded-lg px-4 py-2",
-      "success": "bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-2",
-      "danger": "bg-red-500 hover:bg-red-600 text-white rounded-lg px-4 py-2",
-      "ghost": "p-2 rounded-full hover:bg-gray-100 text-gray-600"
-    },
-    "cards": "bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-200 dark:border-gray-700",
-    "forms": {
-      "input": "border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-      "label": "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1",
-      "placeholder": "text-gray-400 italic",
-      "inline_validation": "real-time feedback with checkmark or error message"
-    },
-    "progress_bars": {
-      "linear": {
-        "container": "bg-gray-200 dark:bg-gray-700 rounded-full h-2",
-        "fill": "bg-blue-600 rounded-full h-2 transition-all duration-300"
+    
+    "colors": {
+      "backgrounds": {
+        "primary": "bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900",
+        "secondary": "bg-white/10 backdrop-blur-lg",
+        "tertiary": "bg-black/20 backdrop-blur-sm",
+        "success": "bg-green-500/20 backdrop-blur-sm",
+        "error": "bg-red-500/20 backdrop-blur-sm",
+        "warning": "bg-amber-500/20 backdrop-blur-sm"
       },
-      "segmented": "flex gap-1 items-center h-2 rounded-full overflow-hidden"
+      
+      "gradients": {
+        "primary": "bg-gradient-to-r from-blue-500 to-purple-600",
+        "secondary": "bg-gradient-to-r from-violet-500 to-purple-600",
+        "success": "bg-gradient-to-r from-green-500 to-emerald-600",
+        "warning": "bg-gradient-to-r from-amber-400 to-orange-500",
+        "danger": "bg-gradient-to-r from-red-500 to-red-600",
+        "accent": "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500",
+        "level": {
+          "easy": "bg-gradient-to-r from-green-400 to-green-600",
+          "medium": "bg-gradient-to-r from-amber-400 to-amber-600",
+          "hard": "bg-gradient-to-r from-red-400 to-red-600"
+        }
+      },
+      
+      "text": {
+        "primary": "text-white",
+        "secondary": "text-gray-300",
+        "muted": "text-gray-400",
+        "accent": "text-purple-400",
+        "success": "text-green-400",
+        "error": "text-red-400",
+        "warning": "text-amber-400"
+      },
+      
+      "borders": {
+        "primary": "border border-white/20",
+        "secondary": "border border-white/10",
+        "success": "border border-green-500/30",
+        "error": "border border-red-500/30",
+        "warning": "border border-amber-500/30"
+      }
+    },
+    
+    "components": {
+      "cards": {
+        "primary": {
+          "class": "bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6",
+          "hover": "hover:bg-white/15 transition-all duration-300 transform hover:scale-[1.02]"
+        },
+        "secondary": {
+          "class": "bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10",
+          "hover": "hover:bg-black/30 transition-all duration-300"
+        },
+        "achievement": {
+          "class": "bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300",
+          "animation": "animate-bounce"
+        }
+      },
+      
+      "buttons": {
+        "primary": {
+          "class": "px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105",
+          "disabled": "disabled:from-gray-600 disabled:to-gray-700 disabled:transform-none disabled:shadow-none"
+        },
+        "secondary": {
+          "class": "px-6 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-105"
+        },
+        "success": {
+          "class": "px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+        },
+        "icon": {
+          "class": "w-12 h-12 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-110 flex items-center justify-center"
+        }
+      },
+      
+      "inputs": {
+        "primary": {
+          "class": "px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-lg font-medium bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 border-white/20",
+          "success": "border-green-500 bg-green-50 dark:bg-green-900/20 shadow-lg shadow-green-500/20",
+          "error": "border-red-500 bg-red-50 dark:bg-red-900/20 shadow-lg shadow-red-500/20"
+        }
+      },
+      
+      "progressBars": {
+        "primary": {
+          "container": "bg-gray-800/50 backdrop-blur-sm rounded-full h-4 overflow-hidden border border-white/10",
+          "fill": "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-4 rounded-full transition-all duration-1000 ease-out relative",
+          "shine": "absolute inset-0 bg-white/20 animate-pulse"
+        },
+        "xp": {
+          "container": "bg-gray-700 rounded-full overflow-hidden",
+          "fill": "bg-gradient-to-r from-blue-400 to-purple-500 transition-all duration-500"
+        },
+        "energy": {
+          "container": "bg-gray-700 rounded-full overflow-hidden",
+          "fill": {
+            "high": "bg-gradient-to-r from-green-400 to-green-600",
+            "medium": "bg-gradient-to-r from-yellow-400 to-yellow-600",
+            "low": "bg-gradient-to-r from-red-400 to-red-600"
+          }
+        }
+      },
+      
+      "statCards": {
+        "primary": {
+          "container": "text-center group cursor-pointer",
+          "icon": "flex items-center justify-center w-14 h-14 backdrop-blur-sm rounded-xl mb-2 group-hover:scale-110 transition-transform",
+          "value": "text-2xl font-bold text-white",
+          "label": "text-xs text-gray-400",
+          "colors": {
+            "success": "bg-gradient-to-br from-green-400/20 to-green-600/20 border border-green-500/30",
+            "primary": "bg-gradient-to-br from-blue-400/20 to-blue-600/20 border border-blue-500/30",
+            "warning": "bg-gradient-to-br from-amber-400/20 to-amber-600/20 border border-amber-500/30",
+            "accent": "bg-gradient-to-br from-purple-400/20 to-purple-600/20 border border-purple-500/30"
+          }
+        }
+      },
+      
+      "feedback": {
+        "success": {
+          "class": "p-4 bg-green-500/20 backdrop-blur-sm border border-green-500/30 rounded-xl",
+          "icon": "w-5 h-5 text-green-400",
+          "text": "text-green-300 font-medium"
+        },
+        "error": {
+          "class": "p-4 bg-red-500/20 backdrop-blur-sm border border-red-500/30 rounded-xl",
+          "icon": "w-5 h-5 text-red-400",
+          "text": "text-red-300 font-medium"
+        },
+        "streak": {
+          "class": "inline-flex items-center bg-orange-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-orange-500/30",
+          "text": "text-orange-300 font-bold"
+        }
+      }
+    },
+    
+    "animations": {
+      "entrance": {
+        "fadeIn": "animate-fade-in",
+        "slideUp": "animate-slide-up",
+        "bounce": "animate-bounce",
+        "pulse": "animate-pulse",
+        "spin": "animate-spin"
+      },
+      
+      "interactions": {
+        "hover": "transition-all duration-300 transform hover:scale-105",
+        "hoverLight": "transition-all duration-300 transform hover:scale-[1.02]",
+        "hoverIcon": "transition-all duration-300 transform hover:scale-110",
+        "click": "active:scale-95 transition-transform duration-150"
+      },
+      
+      "particles": {
+        "success": {
+          "colors": ["#10B981", "#34D399", "#6EE7B7"],
+          "animation": "animate-ping",
+          "duration": 3000
+        },
+        "celebration": {
+          "colors": ["#F59E0B", "#FBBF24", "#FCD34D"],
+          "animation": "animate-bounce",
+          "duration": 3000
+        }
+      }
+    },
+    
+    "gamification": {
+      "achievements": {
+        "popup": {
+          "position": "fixed top-20 left-1/2 transform -translate-x-1/2 z-50",
+          "class": "bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300",
+          "animation": "animate-bounce",
+          "duration": 3000
+        },
+        
+        "types": {
+          "first_success": {
+            "name": "Pierwszy sukces!",
+            "icon": "🎯",
+            "trigger": "first_correct_answer"
+          },
+          "streak_5": {
+            "name": "Na fali!",
+            "icon": "🔥",
+            "trigger": "5_correct_in_row"
+          },
+          "streak_10": {
+            "name": "Niepokonany!",
+            "icon": "⚡",
+            "trigger": "10_correct_in_row"
+          },
+          "speed_demon": {
+            "name": "Demon prędkości",
+            "icon": "💨",
+            "trigger": "answer_under_3_seconds"
+          },
+          "perfectionist": {
+            "name": "Perfekcjonista",
+            "icon": "👑",
+            "trigger": "complete_category_no_errors"
+          }
+        }
+      },
+      
+      "xpSystem": {
+        "baseXP": 10,
+        "streakBonus": 5,
+        "comboBonus": 10,
+        "perfectBonus": 50,
+        "levelMultiplier": 100
+      },
+      
+      "streakSystem": {
+        "bonusThresholds": [5, 10, 15, 20],
+        "visualEffects": {
+          "5": "🔥",
+          "10": "⚡",
+          "15": "💫",
+          "20": "👑"
+        }
+      }
+    },
+    
+    "layout": {
+      "container": {
+        "main": "max-w-6xl mx-auto px-4 py-6 relative",
+        "card": "max-w-4xl mx-auto px-4 py-6"
+      },
+      
+      "spacing": {
+        "section": "mb-6",
+        "card": "p-6",
+        "cardLarge": "p-8",
+        "grid": "gap-6",
+        "gridSmall": "gap-3"
+      },
+      
+      "responsive": {
+        "grid2": "grid md:grid-cols-2 gap-6",
+        "grid3": "grid grid-cols-2 md:grid-cols-3 gap-3",
+        "flexWrap": "flex flex-wrap gap-6 items-center justify-between",
+        "flexCol": "flex flex-col sm:flex-row gap-3"
+      }
+    },
+    
+    "typography": {
+      "headings": {
+        "h1": "text-4xl md:text-5xl font-bold text-white",
+        "h2": "text-3xl font-bold text-white",
+        "h3": "text-xl font-semibold text-white",
+        "display": "text-6xl font-bold text-white"
+      },
+      
+      "body": {
+        "primary": "text-gray-300 text-lg",
+        "secondary": "text-gray-400",
+        "small": "text-sm text-gray-400",
+        "bold": "font-bold text-white"
+      }
+    },
+    
+    "effects": {
+      "glassmorphism": {
+        "primary": "backdrop-blur-lg bg-white/10 border border-white/20",
+        "secondary": "backdrop-blur-sm bg-white/5 border border-white/10",
+        "dark": "backdrop-blur-sm bg-black/20 border border-white/10"
+      },
+      
+      "shadows": {
+        "soft": "shadow-2xl",
+        "colored": "shadow-lg shadow-blue-500/30",
+        "success": "shadow-lg shadow-green-500/20",
+        "error": "shadow-lg shadow-red-500/20"
+      },
+      
+      "overlays": {
+        "gradient": "absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse",
+        "shine": "absolute inset-0 bg-white/20 animate-pulse"
+      }
+    },
+    
+    "usage": {
+      "principles": [
+        "Każda interakcja powinna dawać natychmiastową wizualną odpowiedź",
+        "Używaj animacji transform:scale dla efektu 'responsywności'",
+        "Gradientowe tła dla wszystkich głównych elementów",
+        "Backdrop-blur dla efektu szkła na każdym elemencie UI",
+        "Konsekwentne używanie white/opacity dla przezroczystości",
+        "Animacje transition-all duration-300 jako standard",
+        "Cząsteczki i efekty wizualne dla pozytywnych akcji",
+        "System osiągnięć z popup'ami dla dopaminowych strzałów"
+      ],
+      
+      "patterns": {
+        "cardWithHover": "bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15",
+        "buttonPrimary": "px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105",
+        "statCard": "text-center group cursor-pointer",
+        "progressBar": "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 transition-all duration-1000 ease-out relative"
+      }
+    },
+    
+    "customCSS": {
+      "keyframes": {
+        "@keyframes fade-in": {
+          "from": { "opacity": "0", "transform": "translateY(20px)" },
+          "to": { "opacity": "1", "transform": "translateY(0)" }
+        },
+        "@keyframes slide-up": {
+          "from": { "transform": "translateY(100%)" },
+          "to": { "transform": "translateY(0)" }
+        },
+        "@keyframes particle-float": {
+          "0%": { "transform": "translateY(0) scale(1)", "opacity": "1" },
+          "50%": { "transform": "translateY(-50px) scale(1.2)", "opacity": "0.8" },
+          "100%": { "transform": "translateY(-100px) scale(0)", "opacity": "0" }
+        }
+      },
+      
+      "utilities": {
+        ".animate-fade-in": { "animation": "fade-in 0.5s ease-out" },
+        ".animate-slide-up": { "animation": "slide-up 0.3s ease-out" },
+        ".animate-particle": { "animation": "particle-float 3s ease-out forwards" }
+      }
     }
-  },
-  
-  "gamification_elements": {
-    "badges": {
-      "size": "64x64px",
-      "animation": "optional bounce + confetti effect",
-      "shape": "circular/oval"
-    },
-    "level_system": {
-      "visualization": "progress bar with level number and growth iconography",
-      "advancement": "animation + notification (reduced in calm mode)"
-    },
-    "notifications": {
-      "position": "top-right",
-      "timeout": "5000ms",
-      "colors": "contextual based on type",
-      "focus_mode": "delivers notifications only after session ends"
-    }
-  },
-  
-  "responsiveness": {
-    "breakpoints": {
-      "mobile": "max-width: 767px",
-      "tablet": "min-width: 768px",
-      "desktop": "min-width: 1024px",
-      "large_desktop": "min-width: 1440px"
-    },
-    "mobile_first": true,
-    "touch_targets": "min 44x44px",
-    "gestures": "swipe left/right support for navigation on mobile"
-  },
-  
-  "accessibility": {
-    "standards": "WCAG 2.1 AA",
-    "requirements": [
-      "Clear focus indicators",
-      "Comprehensive ARIA labels",
-      "Full keyboard navigation",
-      "Skip navigation links",
-      "Alternative text for images"
-    ],
-    "contrast_ratios": {
-      "normal_text": "4.5:1 minimum",
-      "large_text": "3:1 minimum",
-      "interactive_elements": "clear state differentiation"
-    },
-    "motion_preferences": "Respects prefers-reduced-motion system setting"
-  },
-  
-  "adhd_specific_features": {
-    "distraction_reduction": [
-      "No auto-playing media",
-      "Minimal purposeful animations",
-      "Clean layout without unnecessary elements"
-    ],
-    "micro_interactions": [
-      "Immediate action feedback",
-      "Subtle confirmation animations",
-      "Optional confirmation sounds"
-    ],
-    "content_structure": [
-      "Short sessions (max 15 minutes)",
-      "Clear module separation",
-      "Pausable at any point",
-      "Progressive disclosure of content"
-    ],
-    "focus_tools": [
-      "Pomodoro-like timer (10–15 min focus mode)",
-      "Session break reminders",
-      "Calm mode with reduced effects and notifications"
-    ]
-  },
-  
-  "visual_style": {
-    "aesthetic": "Modern flat design with subtle shadows",
-    "icons": "Line icons (Lucide, Heroicons)",
-    "inspirations": [
-      "Duolingo (gamification)",
-      "Headspace (calm interface)",
-      "Notion (modularity)",
-      "Forest App (focus tracking)"
-    ]
-  },
-  
-  "technical_requirements": {
-    "performance": {
-      "page_load": "< 3 seconds",
-      "interaction_response": "< 100 milliseconds",
-      "image_optimization": "WebP/AVIF formats",
-      "lazy_loading": "Below-the-fold content"
-    },
-    "browser_support": [
-      "Chrome (last 2 versions)",
-      "Firefox (last 2 versions)",
-      "Safari (last 2 versions)",
-      "Edge (last 2 versions)"
-    ]
-  },
-  
-  "implementation_checklist": [
-    "Theme system (light/dark)",
-    "Responsive design (including large desktop)",
-    "Gamification elements with calm mode option",
-    "Accessibility features with motion reduction",
-    "Performance optimization",
-    "Cross-browser testing",
-    "Mobile usability testing with gesture navigation",
-    "User settings persistence",
-    "Focus mode and session timer"
-  ]
+  }
 }

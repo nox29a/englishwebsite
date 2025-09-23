@@ -5,6 +5,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import { Brain, Clock, MessageSquare, Eye, EyeOff, Star, Sparkles, BookOpen, Lightbulb, CheckCircle } from "lucide-react";
 
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  velocity: { x: number; y: number };
+}
+
+interface Achievement {
+  name: string;
+  description: string;
+  icon: string;
+}
+
 const times = [
   {
     name: "Present Simple",
@@ -127,15 +142,16 @@ export default function SciagaPage() {
   const [masteredItems, setMasteredItems] = useState(new Set());
   const [showMastered, setShowMastered] = useState(true);
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
-  const [particles, setParticles] = useState([]);
-  const [showAchievement, setShowAchievement] = useState(null);
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
 
   // Particle system for celebrations
-  const createParticles = (x, y) => {
-    const newParticles = [];
-    const colors = ['#10B981', '#34D399', '#6EE7B7', '#F59E0B', '#FBBF24'];
+  const createParticles = (x: number, y: number, type: 'success' | 'warning' = 'success'): void => {
+    const colors = type === 'success' ? ['#10B981', '#34D399', '#6EE7B7'] : ['#F59E0B', '#FBBF24', '#FCD34D'];
     
-    for (let i = 0; i < 8; i++) {
+    const newParticles: Particle[] = [];
+    
+    for (let i = 0; i < 10; i++) {
       newParticles.push({
         id: Math.random(),
         x: x + (Math.random() - 0.5) * 100,
