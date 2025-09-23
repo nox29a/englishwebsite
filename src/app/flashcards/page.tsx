@@ -7,7 +7,81 @@ import Navbar from "@/components/Navbar";
 import { Categories } from "@/components/words/flashcards_words";
 import { ChevronRight, Mic, Volume2, RotateCcw, CheckCircle2, XCircle, Trophy, Brain, Clock, Target, Star, Zap, Flame, Award, TrendingUp, Battery, Crown, Sparkles } from 'lucide-react';
 
-// Definicje typów
+// Definicje typów dla Speech Recognition API
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+  interpretation: any;
+  emma: Document;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  readonly length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+declare class SpeechRecognition extends EventTarget {
+  grammars: SpeechGrammarList;
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  serviceURI: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onaudiostart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onaudioend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+  onnomatch: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onsoundstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onsoundend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onspeechstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onspeechend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+}
+
+interface SpeechGrammarList {
+  readonly length: number;
+  item(index: number): SpeechGrammar;
+  [index: number]: SpeechGrammar;
+  addFromURI(src: string, weight?: number): void;
+  addFromString(string: string, weight?: number): void;
+}
+
+interface SpeechGrammar {
+  src: string;
+  weight: number;
+}
+
+// Definicje typów aplikacji
 interface Word {
   id: number;
   pl: string;
@@ -33,14 +107,6 @@ interface Achievement {
   name: string;
   description: string;
   icon: string;
-}
-
-// Extended Window interface for Speech Recognition
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
 }
 
 export default function FlashcardGame() {
@@ -71,8 +137,8 @@ export default function FlashcardGame() {
   const [badges, setBadges] = useState<string[]>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
 
-  // Speech recognition - POPRAWIONE
-  const recognitionRef = useRef<any>(null);
+  // Speech recognition
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [isListening, setIsListening] = useState(false);
 
   // Achievements system
@@ -123,50 +189,31 @@ export default function FlashcardGame() {
     }
   };
 
-  // POPRAWIONE: Speech Recognition useEffect
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
       if (SpeechRecognition) {
-        try {
-          recognitionRef.current = new SpeechRecognition();
-          recognitionRef.current.continuous = false;
-          recognitionRef.current.interimResults = false;
-          recognitionRef.current.lang = direction === "pl-en" ? "en-US" : "pl-PL";
-          recognitionRef.current.maxAlternatives = 1;
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.lang = direction === "pl-en" ? "en-US" : "pl-PL";
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.maxAlternatives = 1;
 
-          recognitionRef.current.onresult = (event: any) => {
-            const transcript = event.results[0][0].transcript;
-            setInput(transcript);
-          };
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(transcript);
+        };
 
-          recognitionRef.current.onend = () => {
-            setIsListening(false);
-          };
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
 
-          recognitionRef.current.onerror = (event: any) => {
-            console.error("Speech recognition error:", event.error);
-            setIsListening(false);
-          };
-        } catch (error) {
-          console.error("Error initializing speech recognition:", error);
-        }
-      } else {
-        console.warn("Speech Recognition API not supported in this browser");
+        recognitionRef.current.onerror = (e: SpeechRecognitionErrorEvent) => {
+          console.error("Speech recognition error:", e);
+          setIsListening(false);
+        };
       }
     }
-
-    // Cleanup function
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (error) {
-          // Ignore errors during cleanup
-        }
-      }
-    };
   }, [direction]);
 
   const speak = (text: string, lang: string) => {
@@ -182,18 +229,15 @@ export default function FlashcardGame() {
   };
 
   const startListening = () => {
-    if (!recognitionRef.current) {
-      console.error("Speech recognition not initialized");
-      return;
-    }
-
-    try {
-      setIsListening(true);
-      recognitionRef.current.lang = direction === "pl-en" ? "en-US" : "pl-PL";
-      recognitionRef.current.start();
-    } catch (err) {
-      console.error("Cannot start recognition:", err);
-      setIsListening(false);
+    if (recognitionRef.current) {
+      try {
+        setIsListening(true);
+        recognitionRef.current.lang = direction === "pl-en" ? "en-US" : "pl-PL";
+        recognitionRef.current.start();
+      } catch (err) {
+        console.error("Cannot start recognition:", err);
+        setIsListening(false);
+      }
     }
   };
 
