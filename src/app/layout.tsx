@@ -6,20 +6,24 @@ import { ThemeProvider } from "next-themes";
 
 import { AuthProvider } from "./ClientWrapper";
 import SessionHandler from "./SessionHandler";
+import { Outfit, Fragment_Mono } from 'next/font/google'
 
 // czcionki
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const outfit = Outfit({
+  variable: '--font-outfit',
+  subsets: ['latin'],
+  display: 'swap',
+})
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const fragmentMono = Fragment_Mono({
+  variable: '--font-fragment-mono',
+  subsets: ['latin'],
+  weight: ['400'],
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  title: "LearnEnglishAI",
+  title: "Axon",
   description: "Ucz się angielskiego",
 };
 
@@ -31,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${outfit.variable} ${fragmentMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>

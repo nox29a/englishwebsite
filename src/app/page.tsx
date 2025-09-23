@@ -59,10 +59,10 @@ export default function Home() {
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-              Opanuj angielski z LearnEnglishAI
+              Popraw swój angielski z AxonAI
             </h1>
             <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-gray-300">
-              Od ucznia dla uczniów
+              Od uczniów dla uczniów
             </p>
             
             <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
@@ -303,7 +303,7 @@ export default function Home() {
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
                   <Brain className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white">LearnEnglishAI</h3>
+                <h3 className="text-xl font-bold text-white">AxonAI</h3>
               </div>
               <p className="text-gray-400">Najskuteczniejsza platforma do nauki angielskiego online.</p>
             </div>
@@ -335,7 +335,7 @@ export default function Home() {
             </div>
           </div>
           <div className="max-w-6xl mx-auto mt-8 pt-8 border-t border-white/10 text-center">
-            <p className="text-gray-400">© 2025 LearnEnglishAI. Wszystkie prawa zastrzeżone.</p>
+            <p className="text-gray-400">© 2025 AxonAI. Wszystkie prawa zastrzeżone.</p>
           </div>
         </footer>
       </div>

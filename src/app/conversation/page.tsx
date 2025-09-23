@@ -685,7 +685,7 @@ useEffect(() => {
                 className="fixed top-1/2 right-8 transform -translate-y-1/2"
               >
                 <div className="bg-orange-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-orange-500/30 flex items-center gap-2">
-                  <Fire className="w-5 h-5 text-orange-400" />
+               
                   <span className="text-orange-300 font-bold">{streak} streak!</span>
                 </div>
               </motion.div>

@@ -100,8 +100,8 @@ export default function Navbar() {
           <div className="flex justify-between items-center relative z-10">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-all duration-300 shadow-lg">
-                <Brain className="w-6 h-6 text-white" />
+              <div className="p-2 text-2xl font-blond bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-all duration-300 shadow-lg ">
+                AxonAI
               </div>
               <div>
                 <div className="text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
