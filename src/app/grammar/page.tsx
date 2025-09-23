@@ -20,7 +20,17 @@ interface Achievement {
   icon: string;
 }
 
-const times = [
+type Difficulty = 'easy' | 'medium' | 'hard';
+
+interface GrammarItem {
+  name: string;
+  explanation: string;
+  example: string;
+  hints: string[];
+  difficulty: Difficulty;
+}
+
+const times: GrammarItem[] = [
   {
     name: "Present Simple",
     explanation: "Używamy, gdy mówimy o czymś, co dzieje się zawsze lub regularnie.",
@@ -93,7 +103,7 @@ const times = [
   }
 ];
 
-const extraSections = [
+const extraSections: GrammarItem[] = [
   {
     name: "Zero Conditional",
     explanation: "Prawdy ogólne – jeśli coś się wydarzy, zawsze ma ten sam rezultat.",
