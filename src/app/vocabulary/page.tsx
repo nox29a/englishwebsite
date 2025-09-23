@@ -2,16 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
-import { Categories } from "@/components/words/flashcards_words";
+import { Categories, Category, Word } from "@/components/words/flashcards_words";
 
 // Typy
 
-type Word = {
-  id: number;
-  pl: string;
-  en: string;
-  level: "easy" | "medium" | "hard";
-};
+
 
 type SlotWord = {
   id: number | null;
@@ -20,11 +15,6 @@ type SlotWord = {
 
 type Difficulty = "easy" | "medium" | "hard";
 
-type Category = {
-  name: string;
-  description: string;
-  words: Word[];
-};
 
 
 const SLOT_COUNT = 5;

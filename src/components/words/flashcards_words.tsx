@@ -4,12 +4,12 @@ export interface W1000 {
   en: string;
 }
 
-interface Category {
+export interface Category {
   name: string;
   description: string;
   words: Word[];
 }
-interface Word {
+export interface Word {
   id: number;
   pl: string;
   en: string;
