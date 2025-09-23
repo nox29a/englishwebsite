@@ -214,14 +214,16 @@ const toggleMastered = (itemName: string, event: React.MouseEvent<HTMLButtonElem
   const totalCount = allItems.length;
   const progressPercentage = (masteredCount / totalCount) * 100;
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'easy': return 'from-green-400 to-green-600';
-      case 'medium': return 'from-amber-400 to-amber-600';
-      case 'hard': return 'from-red-400 to-red-600';
-      default: return 'from-blue-400 to-blue-600';
-    }
-  };
+type Difficulty = 'easy' | 'medium' | 'hard' | 'all';
+
+const getDifficultyColor = (difficulty: Difficulty) => {
+  switch (difficulty) {
+    case 'easy': return 'from-green-400 to-green-600';
+    case 'medium': return 'from-amber-400 to-amber-600';
+    case 'hard': return 'from-red-400 to-red-600';
+    default: return 'from-blue-400 to-blue-600'; // np. dla "all"
+  }
+};
 
   return (
     <>
