@@ -5,7 +5,22 @@ import { supabase } from "@/lib/supabaseClient";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import ChartContainer from "@/components/ui/Chart";
-
+import { 
+  Trophy, 
+  Target, 
+  Zap, 
+  BookOpen, 
+  Clock, 
+  TrendingUp, 
+  Award, 
+  Flame,
+  Star,
+  Brain,
+  Sparkles,
+  BarChart3,
+  Calendar,
+  CheckCircle
+} from "lucide-react";
 
 export default function DashboardPage() {
   const [userData, setUserData] = useState<any>(null);
@@ -78,7 +93,7 @@ export default function DashboardPage() {
           // Przygotowanie danych o czasie z różnych źródeł
           const allTimeData: any[] = [];
           
-          // Pobieranie danych z firegular_progress
+          // Pobieranie danych z irregular_progress
           if (irregular_progress) {
             irregular_progress.forEach((item: any) => {
               if (item.updated_at) {
@@ -203,7 +218,7 @@ export default function DashboardPage() {
             }
           }
 
-          // Firegular progress
+          // Irregular progress
           if (irregular_progress && irregular_progress.length > 0) {
             irregular_progress.forEach((item: any) => {
               combinedCorrect += item.correct_answers || 0;
@@ -260,8 +275,18 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="text-indigo-600 dark:text-indigo-400 text-xl">Ładowanie danych...</div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center relative overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse"></div>
+        
+        {/* Loading Card */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl mb-4 shadow-lg">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+          </div>
+          <h2 className="text-2xl font-bold text-white">Ładowanie danych...</h2>
+          <p className="text-gray-300 mt-2">Przygotowujemy Twój dashboard</p>
+        </div>
       </div>
     );
   }
@@ -274,91 +299,66 @@ export default function DashboardPage() {
   });
 
   const activityByDayFiltered = [
-  { name: 'Niedziela', value: activityByDay[0] },
-  { name: 'Poniedziałek', value: activityByDay[1] },
-  { name: 'Wtorek', value: activityByDay[2] },
-  { name: 'Środa', value: activityByDay[3] },
-  { name: 'Czwartek', value: activityByDay[4] },
-  { name: 'Piątek', value: activityByDay[5] },
-  { name: 'Sobota', value: activityByDay[6] }
-].filter(day => day.value > 0);
+    { name: 'Niedziela', value: activityByDay[0] },
+    { name: 'Poniedziałek', value: activityByDay[1] },
+    { name: 'Wtorek', value: activityByDay[2] },
+    { name: 'Środa', value: activityByDay[3] },
+    { name: 'Czwartek', value: activityByDay[4] },
+    { name: 'Piątek', value: activityByDay[5] },
+    { name: 'Sobota', value: activityByDay[6] }
+  ].filter(day => day.value > 0);
 
-// Znajdź najbardziej produktywne dni (tylko te z aktywnością)
-const mostProductiveDays = activityByDayFiltered
-  .sort((a, b) => b.value - a.value)
-  .slice(0, 2)
-  .map(item => item.name)
-  .join(' i ');
-  // Przygotowanie danych do mapy aktywności (ostatnie 3 miesiące - 91 dni)
-  const prepareActivityMapData = () => {
-    const today = new Date();
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setDate(today.getDate() - 90); // 91 dni włącznie z dzisiaj
-    
-    const activityMapData = [];
-    
-    // Tworzymy dane dla ostatnich 91 dni
-    for (let i = 90; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
-      
-      const dateKey = date.toDateString();
-      const hasData = timeData.some((d: any) => 
-        d.dateObj.toDateString() === dateKey
-      );
-      
-      // Znajdź czas nauki dla tego dnia
-      const dayData = timeData.find((d: any) => d.dateObj.toDateString() === dateKey);
-      const timeSpent = dayData ? dayData.time : 0;
-      
-      // Określ poziom aktywności na podstawie czasu nauki
-      let activityLevel = 0;
-      if (timeSpent > 0) {
-        if (timeSpent <= 15) activityLevel = 1;
-        else if (timeSpent <= 30) activityLevel = 2;
-        else activityLevel = 3;
-      }
-      
-      activityMapData.push({
-        date,
-        timeSpent,
-        activityLevel
-      });
-    }
-    
-    return activityMapData;
-  };
-
-  const activityMapData = prepareActivityMapData();
+  // Znajdź najbardziej produktywne dni (tylko te z aktywnością)
+  const mostProductiveDays = activityByDayFiltered
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 2)
+    .map(item => item.name)
+    .join(' i ');
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 md:p-8 relative overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse"></div>
+        
+        {/* Floating Particles */}
+        <div className="absolute top-20 left-10 w-4 h-4 bg-purple-400/30 rounded-full animate-bounce"></div>
+        <div className="absolute top-40 right-20 w-6 h-6 bg-blue-400/30 rounded-full animate-pulse"></div>
+        <div className="absolute bottom-32 left-20 w-3 h-3 bg-pink-400/30 rounded-full animate-ping"></div>
+        <div className="absolute bottom-20 right-10 w-5 h-5 bg-indigo-400/30 rounded-full animate-bounce"></div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
           {/* Header with streak */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Twój dashboard</h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Twój Dashboard</h1>
+              <p className="text-gray-300 text-lg">Śledź swój postęp w nauce</p>
               {streak > 0 && (
-                <div className="flex items-center mt-2">
-                  <span className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-3 py-1 rounded-full text-sm font-medium">
-                    🔥 Streak: {streak} dni
-                  </span>
+                <div className="inline-flex items-center bg-orange-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-orange-500/30 mt-3">
+                  <Flame className="w-5 h-5 text-orange-300 mr-2" />
+                  <span className="text-orange-300 font-bold">Streak: {streak} dni</span>
                 </div>
               )}
             </div>
-            <nav className="flex gap-4">
-              <Link href="/" className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition">
+            
+            <nav className="flex gap-3">
+              <Link 
+                href="/" 
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <BookOpen className="w-5 h-5 inline mr-2" />
                 Kontynuuj naukę
               </Link>
-              <Link href="/settings" className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+              <Link 
+                href="/settings" 
+                className="px-6 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-105"
+              >
                 Ustawienia
               </Link>
               <button 
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition"
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 Wyloguj
               </button>
@@ -367,195 +367,230 @@ const mostProductiveDays = activityByDayFiltered
 
           {/* User Profile Card */}
           {userData && (
-            <div className="mb-8 p-6 bg-white dark:bg-gray-900 rounded-2xl shadow">
+            <div className="mb-8 bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-8 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15">
               <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-300">
-                  {userData.first_name?.[0]}{userData.last_name?.[0]}
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
+                    {userData.first_name?.[0]}{userData.last_name?.[0]}
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                    <Sparkles className="w-3 h-3 text-white" />
+                  </div>
                 </div>
+                
                 <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                  <h2 className="text-2xl font-bold text-white mb-1">
                     {userData.first_name} {userData.last_name}
                   </h2>
-                  <p className="text-gray-600 dark:text-gray-400">{userData.email}</p>
+                  <p className="text-gray-300 text-lg">{userData.email}</p>
                   {combinedProgress && (
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
+                    <p className="mt-2 text-gray-400">
                       Dołączyłeś {new Date(userData.created_at).toLocaleDateString("pl-PL")} • 
                       Całkowity czas nauki: {Math.round((combinedProgress.time_spent || 0) / 60)} minut
                     </p>
                   )}
                 </div>
-            
                 
-                <div className="grid grid-cols-4 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                      {combinedProgress?.correct_answers || 0}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Poprawne</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                      {combinedProgress?.total_answers || 0}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Odpowiedzi</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                      {combinedProgress?.total_answers > 0 
-                        ? Math.round((combinedProgress.correct_answers / combinedProgress.total_answers) * 100) 
-                        : 0}%
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Skuteczność</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                      {combinedProgress?.completed_tasks || 0}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Ukończone zadania</p>
-                  </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <StatMiniCard 
+                    icon={<Target className="w-5 h-5 text-green-400" />}
+                    value={combinedProgress?.correct_answers || 0}
+                    label="Poprawne"
+                    bgColor="bg-gradient-to-br from-green-400/20 to-green-600/20 border border-green-500/30"
+                  />
+                  <StatMiniCard 
+                    icon={<BarChart3 className="w-5 h-5 text-blue-400" />}
+                    value={combinedProgress?.total_answers || 0}
+                    label="Odpowiedzi"
+                    bgColor="bg-gradient-to-br from-blue-400/20 to-blue-600/20 border border-blue-500/30"
+                  />
+                  <StatMiniCard 
+                    icon={<TrendingUp className="w-5 h-5 text-purple-400" />}
+                    value={`${combinedProgress?.total_answers > 0 
+                      ? Math.round((combinedProgress.correct_answers / combinedProgress.total_answers) * 100) 
+                      : 0}%`}
+                    label="Skuteczność"
+                    bgColor="bg-gradient-to-br from-purple-400/20 to-purple-600/20 border border-purple-500/30"
+                  />
+                  <StatMiniCard 
+                    icon={<CheckCircle className="w-5 h-5 text-amber-400" />}
+                    value={combinedProgress?.completed_tasks || 0}
+                    label="Ukończone"
+                    bgColor="bg-gradient-to-br from-amber-400/20 to-amber-600/20 border border-amber-500/30"
+                  />
                 </div>
               </div>
             </div>
           )}
           
-          {/* Stats Grid */}
+          {/* Main Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* Overall Progress */}
             <StatCard 
-              title="Ogólny postęp"
-              icon={
-                <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              }
+              title="Ogólny Postęp"
+              icon={<Trophy className="w-6 h-6 text-purple-400" />}
+              bgColor="bg-gradient-to-br from-purple-400/20 to-purple-600/20 border border-purple-500/30"
             >
               {combinedProgress ? (
-                <div className="space-y-2">
-                  <StatItem label="Poprawne odpowiedzi" value={combinedProgress.correct_answers} />
-                  <StatItem label="Łączne odpowiedzi" value={combinedProgress.total_answers} />
-                  <StatItem 
+                <div className="space-y-3">
+                  <ProgressItem 
+                    label="Poprawne odpowiedzi" 
+                    value={combinedProgress.correct_answers}
+                    color="text-green-400"
+                  />
+                  <ProgressItem 
+                    label="Łączne odpowiedzi" 
+                    value={combinedProgress.total_answers}
+                    color="text-blue-400"
+                  />
+                  <ProgressItem 
                     label="Dokładność" 
                     value={`${combinedProgress.total_answers > 0 
                       ? Math.round((combinedProgress.correct_answers / combinedProgress.total_answers) * 100) 
-                      : 0}%`} 
+                      : 0}%`}
+                    color="text-purple-400"
                   />
-                  <StatItem 
+                  <ProgressItem 
                     label="Czas nauki" 
-                    value={`${Math.round((combinedProgress.time_spent || 0) / 60)} minut`} 
+                    value={`${Math.round((combinedProgress.time_spent || 0) / 60)} minut`}
+                    color="text-amber-400"
                   />
-                  <StatItem 
+                  <ProgressItem 
                     label="Ukończone zadania" 
-                    value={combinedProgress.completed_tasks || 0} 
+                    value={combinedProgress.completed_tasks || 0}
+                    color="text-emerald-400"
                   />
                 </div>
               ) : (
-                <p className="text-gray-500">Brak danych</p>
+                <p className="text-gray-400">Brak danych</p>
               )}
             </StatCard>
 
-            {/* Firegular Progress */}
+            {/* Irregular Verbs Progress */}
             <StatCard 
-              title="Czasowniki nieregularne"
-              icon={
-                <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              }
+              title="Czasowniki Nieregularne"
+              icon={<Zap className="w-6 h-6 text-yellow-400" />}
+              bgColor="bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 border border-yellow-500/30"
             >
               {irregularProgressData?.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {irregularProgressData.map((item: any, index: number) => (
-                    <div key={`irregular_progress-${index}`} className="border-b border-gray-100 dark:border-gray-800 pb-2 last:border-0">
-                      <h4 className="font-medium text-gray-700 dark:text-gray-300">
+                    <div key={`irregular_progress-${index}`} className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                      <h4 className="font-bold text-white mb-2">
                         Postęp czasowników
                       </h4>
-                      <div className="flex justify-between text-sm text-gray-500 dark:text-gray-500">
+                      <div className="flex justify-between text-sm text-gray-300 mb-2">
                         <span>Poprawne: {item.correct_answers}/{item.total_answers}</span>
                         <span>Pozostało: {item.remaining_verbs ? item.remaining_verbs.length : 0}</span>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 mt-1">
+                      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-3 overflow-hidden border border-white/10">
                         <div 
-                          className="bg-indigo-600 h-1.5 rounded-full" 
+                          className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-1000 ease-out relative"
                           style={{ 
                             width: `${item.total_answers > 0 ? Math.round((item.correct_answers / item.total_answers) * 100) : 0}%` 
                           }}
-                        />
+                        >
+                          <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">Brak danych o czasownikach</p>
+                <p className="text-gray-400">Brak danych o czasownikach</p>
               )}
             </StatCard>
 
-            {/* Tasks Progress */}
+            {/* Grammar Tasks Progress */}
             <StatCard 
-              title="Postęp zadań gramatycznych"
-              icon={
-                <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-              }
+              title="Zadania Gramatyczne"
+              icon={<BookOpen className="w-6 h-6 text-green-400" />}
+              bgColor="bg-gradient-to-br from-green-400/20 to-green-600/20 border border-green-500/30"
             >
               {tasksProgressData ? (
-                <div className="space-y-3">
-                  <div className="border-b border-gray-100 dark:border-gray-800 pb-2">
-                    <h4 className="font-medium text-gray-700 dark:text-gray-300">
+                <div className="space-y-4">
+                  <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                    <h4 className="font-bold text-white mb-2">
                       Ogólny postęp zadań
                     </h4>
-                    <div className="flex justify-between text-sm text-gray-500 dark:text-gray-500">
+                    <div className="flex justify-between text-sm text-gray-300 mb-2">
                       <span>Poprawne: {tasksProgressData.correct_answers}/320</span>
                       <span>Ukończone: {combinedProgress?.completed_tasks || 0}</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 mt-1">
+                    <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-3 overflow-hidden border border-white/10">
                       <div 
-                        className="bg-indigo-600 h-1.5 rounded-full" 
+                        className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-1000 ease-out relative"
                         style={{ 
                           width: `${tasksProgressData.total_attempts > 0 ? Math.round((tasksProgressData.correct_answers / 320) * 100) : 0}%` 
                         }}
-                      />
+                      >
+                        <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-500">Brak danych o zadaniach</p>
+                <p className="text-gray-400">Brak danych o zadaniach</p>
               )}
             </StatCard>
-</div>
 
-          {/* Additional Charts Section */}
+            {/* Time Stats */}
+            <StatCard 
+              title="Statystyki Czasu"
+              icon={<Clock className="w-6 h-6 text-blue-400" />}
+              bgColor="bg-gradient-to-br from-blue-400/20 to-blue-600/20 border border-blue-500/30"
+            >
+              <div className="space-y-3">
+                <ProgressItem 
+                  label="Czas dzisiaj" 
+                  value={`${timeData.length > 0 && timeData[0].dateObj.toDateString() === new Date().toDateString() ? timeData[0].time : 0} min`}
+                  color="text-blue-400"
+                />
+                <ProgressItem 
+                  label="Średnio dziennie" 
+                  value={`${timeData.length > 0 ? Math.round(timeData.reduce((sum, item) => sum + item.time, 0) / timeData.length) : 0} min`}
+                  color="text-purple-400"
+                />
+                <ProgressItem 
+                  label="Dni aktywnych" 
+                  value={timeData.length}
+                  color="text-green-400"
+                />
+                <ProgressItem 
+                  label="Łączny czas" 
+                  value={`${Math.round((combinedProgress?.time_spent || 0) / 60)} min`}
+                  color="text-amber-400"
+                />
+              </div>
+            </StatCard>
+          </div>
 
-
-          {/* Additional Stats Section */}
+          {/* Detailed Progress Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Flashcards Progress */}
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow">
-              <h3 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Postęp fiszek
-              </h3>
+            <DetailedStatCard 
+              title="Postęp Fiszek"
+              icon={<Brain className="w-5 h-5 text-indigo-400" />}
+            >
               {flashcardsData?.length > 0 ? (
                 <div className="space-y-4">
                   {flashcardsData.map((item: any, index: number) => (
                     <div 
                       key={`flashcard-${index}-${item.level}-${item.direction}`}
-                      className="border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0"
+                      className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10 transition-all duration-300 hover:bg-black/30"
                     >
-                      <h4 className="font-medium text-gray-700 dark:text-gray-300">
+                      <h4 className="font-bold text-white mb-2">
                         {item.level} ({item.direction})
                       </h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 dark:text-gray-500 mt-1">
+                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-3">
                         <span>Pozostało: {item.remaining_ids?.length || 0}</span>
                         <span>Poprawne: {item.correct_answers}/{item.total_answers}</span>
                         <span>Dokładność: {item.total_answers > 0 ? Math.round((item.correct_answers / item.total_answers) * 100) : 0}%</span>
                         <span>Czas: {Math.round((item.time_spend || 0) / 60)} min</span>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 mt-2">
+                      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-2 overflow-hidden border border-white/10">
                         <div 
-                          className="bg-indigo-600 h-2 rounded-full" 
+                          className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-2 rounded-full transition-all duration-1000 ease-out"
                           style={{ 
                             width: `${item.total_answers > 0 ? Math.round((item.correct_answers / item.total_answers) * 100) : 0}%` 
                           }}
@@ -565,38 +600,35 @@ const mostProductiveDays = activityByDayFiltered
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">Brak danych o fiszkach</p>
+                <p className="text-gray-400">Brak danych o fiszkach</p>
               )}
-            </div>
+            </DetailedStatCard>
 
             {/* Word Match Progress */}
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow">
-              <h3 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                Dopasowywanie słów
-              </h3>
+            <DetailedStatCard 
+              title="Dopasowywanie Słów"
+              icon={<Star className="w-5 h-5 text-yellow-400" />}
+            >
               {wordMatchData?.length > 0 ? (
                 <div className="space-y-4">
                   {wordMatchData.map((item: any, index: number) => (
                     <div 
                       key={`wordmatch-${index}-${item.difficulty}`}
-                      className="border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0"
+                      className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10 transition-all duration-300 hover:bg-black/30"
                     >
-                      <h4 className="font-medium text-gray-700 dark:text-gray-300">
+                      <h4 className="font-bold text-white mb-2">
                         Poziom: {item.difficulty}
                       </h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 dark:text-gray-500 mt-1">
+                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-3">
                         <span>Nauczone: {item.learned_ids?.length || 0}</span>
                         <span>Wynik: {item.score}</span>
                         <span>Błędy: {item.errors}</span>
                         <span>Czas: {Math.round(item.time_spent / 60)} min</span>
-                        <span>Dokładność: {(item.score + item.errors) > 0 ? Math.round((item.score / (item.score + item.errors)) * 100) : 0}%</span>
+                        <span className="col-span-2">Dokładność: {(item.score + item.errors) > 0 ? Math.round((item.score / (item.score + item.errors)) * 100) : 0}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 mt-2">
+                      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-2 overflow-hidden border border-white/10">
                         <div 
-                          className="bg-indigo-600 h-2 rounded-full" 
+                          className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-2 rounded-full transition-all duration-1000 ease-out"
                           style={{ 
                             width: `${(item.score + item.errors) > 0 ? Math.round((item.score / (item.score + item.errors)) * 100) : 0}%` 
                           }}
@@ -606,9 +638,9 @@ const mostProductiveDays = activityByDayFiltered
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">Brak danych o dopasowywaniu</p>
+                <p className="text-gray-400">Brak danych o dopasowywaniu</p>
               )}
-            </div>
+            </DetailedStatCard>
           </div>
         </div>
       </div>
@@ -616,27 +648,71 @@ const mostProductiveDays = activityByDayFiltered
   );
 }
 
-// Component for stat cards
-function StatCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+// Enhanced Stat Card Component
+function StatCard({ title, icon, children, bgColor }: { 
+  title: string; 
+  icon: React.ReactNode; 
+  children: React.ReactNode;
+  bgColor?: string;
+}) {
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow h-full">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
+    <div className={`bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15 h-full ${bgColor || ''}`}>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center justify-center w-12 h-12 backdrop-blur-sm rounded-xl border border-white/20 group-hover:scale-110 transition-transform bg-gradient-to-br from-white/10 to-white/5">
           {icon}
         </div>
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{title}</h3>
+        <h3 className="text-xl font-bold text-white">{title}</h3>
       </div>
       {children}
     </div>
   );
 }
 
-// Component for stat items
-function StatItem({ label, value }: { label: string; value: string | number }) {
+// Mini Stat Card for Profile Section
+function StatMiniCard({ icon, value, label, bgColor }: {
+  icon: React.ReactNode;
+  value: string | number;
+  label: string;
+  bgColor: string;
+}) {
   return (
-    <div className="flex justify-between">
-      <span className="text-gray-600 dark:text-gray-400">{label}</span>
-      <span className="font-medium text-gray-800 dark:text-gray-200">{value}</span>
+    <div className="text-center group cursor-pointer">
+      <div className={`flex items-center justify-center w-14 h-14 backdrop-blur-sm rounded-xl mb-2 group-hover:scale-110 transition-transform ${bgColor}`}>
+        {icon}
+      </div>
+      <div className="text-2xl font-bold text-white">{value}</div>
+      <div className="text-xs text-gray-400">{label}</div>
+    </div>
+  );
+}
+
+// Detailed Stat Card Component
+function DetailedStatCard({ title, icon, children }: { 
+  title: string; 
+  icon: React.ReactNode; 
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15">
+      <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+        {icon}
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+// Progress Item Component
+function ProgressItem({ label, value, color }: { 
+  label: string; 
+  value: string | number; 
+  color?: string;
+}) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className="text-gray-300">{label}</span>
+      <span className={`font-bold ${color || 'text-white'}`}>{value}</span>
     </div>
   );
 }

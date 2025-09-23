@@ -1,9 +1,10 @@
 "use client"
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X, Crown, Star, Zap, Brain, Home, BookOpen, MessageCircle, PenTool, RotateCcw, User, LogIn } from "lucide-react";
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from "@/lib/supabaseClient";
+import { Brain } from "lucide-react";
+
 
 interface Profile {
   id: string;
@@ -54,39 +55,33 @@ export default function Navbar() {
 
   const navLinks = [
     { 
-      href: "/", 
-      label: "Strona główna", 
-      icon: Home,
+      href: "/cards", 
+      label: "Fiszki", 
       gradient: "from-blue-500 to-cyan-600"
     },
     { 
       href: "/flashcards", 
-      label: "Fiszki", 
-      icon: BookOpen,
+      label: "Nauka słówek", 
       gradient: "from-purple-500 to-pink-600"
     },
     { 
       href: "/vocabulary", 
-      label: "Trener słówek", 
-      icon: Brain,
+      label: "Dopasowanie słówek", 
       gradient: "from-green-500 to-emerald-600"
     },
     { 
       href: "/conversation", 
       label: "Rozmowa", 
-      icon: MessageCircle,
       gradient: "from-amber-500 to-orange-600"
     },
     { 
       href: "/exercises", 
       label: "Zadania gramatyczne", 
-      icon: PenTool,
       gradient: "from-red-500 to-pink-600"
     },
     { 
       href: "/irregular-verbs", 
       label: "Czasowniki nieregularne", 
-      icon: RotateCcw,
       gradient: "from-indigo-500 to-purple-600"
     },
   ];
@@ -110,16 +105,15 @@ export default function Navbar() {
               </div>
               <div>
                 <div className="text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-                  LearnEnglishAI
+                 
                 </div>
-                <div className="text-xs text-purple-300 -mt-1">Dopamine Learning System</div>
+                <div className="text-xs text-purple-300 -mt-1"></div>
               </div>
             </Link>
 
             {/* Menu desktop */}
             <div className="hidden lg:flex items-center space-x-2">
               {navLinks.map((link) => {
-                const IconComponent = link.icon;
                 const isActive = path === link.href;
                 
                 return (
@@ -133,9 +127,6 @@ export default function Navbar() {
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <IconComponent className={`w-4 h-4 transition-all duration-300 ${
-                        isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                      }`} />
                       <span className="font-medium text-sm hidden xl:block">{link.label}</span>
                     </div>
                     
@@ -153,10 +144,8 @@ export default function Navbar() {
                 <>
                   {/* User stats preview */}
                   <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-full border border-white/20">
-                    <Star className="w-4 h-4 text-yellow-400" />
                     <span className="text-sm font-bold text-white">Lvl 5</span>
                     <div className="w-px h-4 bg-white/20" />
-                    <Zap className="w-4 h-4 text-blue-400" />
                     <span className="text-sm font-bold text-white">1250 XP</span>
                   </div>
 
@@ -170,8 +159,6 @@ export default function Navbar() {
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      {userType === "premium" && <Crown className="w-5 h-5" />}
-                      <User className="w-5 h-5" />
                       <span>Konto</span>
                     </div>
                     
@@ -189,7 +176,6 @@ export default function Navbar() {
                   className="group px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   <div className="flex items-center gap-2">
-                    <LogIn className="w-5 h-5" />
                     <span>Zaloguj się</span>
                   </div>
                 </Link>
@@ -201,7 +187,9 @@ export default function Navbar() {
               className="md:hidden w-12 h-12 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-110 flex items-center justify-center"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <div className="w-6 h-6 text-white font-bold">
+                {mobileOpen ? "X" : "≡"}
+              </div>
             </button>
           </div>
         </div>
@@ -227,7 +215,7 @@ export default function Navbar() {
                   onClick={() => setMobileOpen(false)}
                   className="w-10 h-10 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-110 flex items-center justify-center"
                 >
-                  <X className="w-5 h-5" />
+                  <div className="w-5 h-5 font-bold">X</div>
                 </button>
               </div>
 
@@ -240,7 +228,9 @@ export default function Navbar() {
                         ? "bg-gradient-to-r from-yellow-400 to-orange-500" 
                         : "bg-gradient-to-r from-blue-500 to-purple-600"
                     }`}>
-                      {userType === "premium" ? <Crown className="w-6 h-6 text-white" /> : <User className="w-6 h-6 text-white" />}
+                      <div className="w-6 h-6 text-white font-bold">
+                        {userType === "premium" ? "P" : "U"}
+                      </div>
                     </div>
                     <div>
                       <div className="font-bold text-white">{userType === "premium" ? "Premium User" : "Basic User"}</div>
@@ -259,7 +249,6 @@ export default function Navbar() {
               {/* Navigation links */}
               <div className="space-y-2 flex-1">
                 {navLinks.map((link) => {
-                  const IconComponent = link.icon;
                   const isActive = path === link.href;
                   
                   return (
@@ -278,7 +267,9 @@ export default function Navbar() {
                           ? 'bg-white/20' 
                           : 'bg-white/5 group-hover:bg-white/10'
                       }`}>
-                        <IconComponent className="w-5 h-5" />
+                        <div className="w-5 h-5 font-bold">
+                          {link.label.charAt(0)}
+                        </div>
                       </div>
                       <span className="font-medium">{link.label}</span>
                       
@@ -305,13 +296,10 @@ export default function Navbar() {
                 >
                   {user ? (
                     <>
-                      {userType === "premium" && <Crown className="w-5 h-5" />}
-                      <User className="w-5 h-5" />
                       <span>Przejdź do konta</span>
                     </>
                   ) : (
                     <>
-                      <LogIn className="w-5 h-5" />
                       <span>Zaloguj się</span>
                     </>
                   )}

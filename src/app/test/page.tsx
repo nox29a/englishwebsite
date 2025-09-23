@@ -1,15 +1,14 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { questionsDB } from "@/components/words/questions"
 import Navbar from "@/components/Navbar"
+import { questionsDB, Question } from "@/components/words/questions"
 
 export default function TestPage() {
   const [level, setLevel] = useState<string | null>(null)
-  const [questions, setQuestions] = useState<any[]>([])
+  const [questions, setQuestions] = useState<Question[]>([])
   const [currentQ, setCurrentQ] = useState(0)
-  const [answers, setAnswers] = useState<number[]>([])
+  const [answers, setAnswers] = useState<any[]>([])
   const [timeLeft, setTimeLeft] = useState(3600)
   const [finished, setFinished] = useState(false)
 
@@ -25,25 +24,38 @@ export default function TestPage() {
   // Start testu
   const startTest = (lvl: string) => {
     const pool = questionsDB[lvl]
-    const selected = pool.sort(() => 0.5 - Math.random()).slice(0, 40)
+    const selected = pool.sort(() => 0.5 - Math.random()).slice(0, 10)
     setQuestions(selected)
-    setAnswers(new Array(selected.length).fill(-1))
+    setAnswers(new Array(selected.length).fill(null))
     setLevel(lvl)
     setTimeLeft(3600)
     setFinished(false)
     setCurrentQ(0)
   }
 
-  // wybór odpowiedzi
+  // wybór odpowiedzi (choice)
   const selectAnswer = (idx: number) => {
     const newAns = [...answers]
     newAns[currentQ] = idx
     setAnswers(newAns)
   }
 
+  // wpisanie odpowiedzi (fill)
+  const typeAnswer = (val: string) => {
+    const newAns = [...answers]
+    newAns[currentQ] = val
+    setAnswers(newAns)
+  }
+
   // wynik
   const calculateScore = () =>
-    answers.filter((ans, i) => ans === questions[i]?.answer).length
+    answers.filter((ans, i) => {
+      const q = questions[i]
+      if (q.type === "choice") return ans === q.answer
+      if (q.type === "fill") 
+        return typeof ans === "string" && ans.trim().toLowerCase() === (q.answer as string).toLowerCase()
+      return false
+    }).length
 
   // format czasu
   const formatTime = (s: number) => {
@@ -52,19 +64,19 @@ export default function TestPage() {
     return `${m}:${sec.toString().padStart(2, "0")}`
   }
 
-  // EKRAN STARTOWY
+  // --- EKRAN STARTOWY ---
   if (!level) {
     return (
       <>
         <Navbar />
         <div className="min-h-screen flex flex-col items-center justify-center text-white p-6 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-          <h1 className="text-4xl font-bold mb-10 animate-fade-in">🎯 Wybierz poziom testu</h1>
+          <h1 className="text-4xl font-bold mb-10">🎯 Wybierz poziom testu</h1>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {["A1", "A2", "B1", "B2", "C1"].map((lvl) => (
               <button
                 key={lvl}
                 onClick={() => startTest(lvl)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl shadow-lg hover:scale-105 transition-all"
               >
                 {lvl}
               </button>
@@ -75,22 +87,21 @@ export default function TestPage() {
     )
   }
 
-  // EKRAN WYNIKU
+  // --- EKRAN WYNIKU ---
   if (finished) {
     const score = calculateScore()
     return (
       <>
         <Navbar />
-        <div className="min-h-screen flex flex-col items-center justify-center text-white p-6 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-          <Card className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-8 text-center animate-fade-in">
+        <div className="min-h-screen flex items-center justify-center text-white p-6 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+          <Card className="bg-white/10 backdrop-blur-lg p-8 text-center">
             <h2 className="text-3xl font-bold mb-4">🏆 Twój wynik</h2>
             <p className="text-4xl font-semibold mb-2 text-purple-400">
               {score} / {questions.length}
             </p>
-            <p className="text-gray-300 mb-6">Poziom: {level}</p>
             <button
               onClick={() => setLevel(null)}
-              className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="mt-6 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl"
             >
               Spróbuj ponownie
             </button>
@@ -102,57 +113,68 @@ export default function TestPage() {
 
   const q = questions[currentQ]
 
-  // EKRAN PYTAŃ
+  // --- EKRAN PYTAŃ ---
   return (
     <>
       <Navbar />
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white p-6">
         <div className="max-w-3xl mx-auto">
           <div className="flex justify-between items-center mb-6 text-gray-300">
-            <span className="text-lg">Pytanie {currentQ + 1}/{questions.length}</span>
+            <span>Pytanie {currentQ + 1}/{questions.length}</span>
             <span className="font-semibold">⏳ {formatTime(timeLeft)}</span>
           </div>
 
-          <Card className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 mb-6 animate-slide-up">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4">{q.q}</h2>
+          <Card className="bg-white/10 backdrop-blur-lg p-6">
+            <h2 className="text-xl font-bold mb-4">{q.q}</h2>
+
+            {q.type === "choice" && (
               <div className="space-y-3">
-                {q.options.map((opt: string, idx: number) => (
+                {q.options!.map((opt: string, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => selectAnswer(idx)}
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-300 transform ${
+                    className={`w-full px-4 py-3 rounded-xl transition-all ${
                       answers[currentQ] === idx
-                        ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30 scale-105"
-                        : "bg-white/10 hover:bg-white/20 text-white border border-white/20 hover:scale-[1.02]"
+                        ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white"
+                        : "bg-white/10 hover:bg-white/20"
                     }`}
                   >
                     {opt}
                   </button>
                 ))}
               </div>
-            </CardContent>
+            )}
+
+{q.type === "fill" && (
+  <input
+    type="text"
+    value={answers[currentQ] || ""}
+    onChange={(e) => typeAnswer(e.target.value)}
+    placeholder="Wpisz odpowiedź..."
+    className="w-full px-4 py-3 rounded-xl bg-transparent border border-white text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+  />
+)}
           </Card>
 
           <div className="flex justify-between mt-6">
             <button
               onClick={() => setCurrentQ((c) => Math.max(0, c - 1))}
               disabled={currentQ === 0}
-              className="px-6 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-105 disabled:opacity-40 disabled:transform-none"
+              className="px-6 py-3 bg-white/10 rounded-xl disabled:opacity-40"
             >
               Wstecz
             </button>
             {currentQ < questions.length - 1 ? (
               <button
                 onClick={() => setCurrentQ((c) => c + 1)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl"
               >
                 Dalej
               </button>
             ) : (
               <button
                 onClick={() => setFinished(true)}
-                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl"
               >
                 Zakończ test
               </button>

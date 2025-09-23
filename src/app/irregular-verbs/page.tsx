@@ -1,13 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
 import { verbs } from "@/components/words/irreagular_verbs";
-import { saveAttempt } from "../utils/saveAttempt";
 import { addPoints } from "../utils/addPoints";
 import { Mic, Trophy, Clock, Target, CheckCircle2, XCircle, Flame, Star, Crown, Sparkles, Zap, Brain } from "lucide-react";
 
@@ -281,12 +278,6 @@ export default function IrregularVerbsTrainer() {
     
     if (user) {
       // Zapisz próbę
-      await saveAttempt(user.id, {
-        type: "irregular_verb",
-        id: currentVerb.index,
-        isCorrect,
-        timeTaken,
-      });
 
       // Jeśli odpowiedź poprawna, dodaj punkty
       if (isCorrect) {
@@ -433,47 +424,7 @@ export default function IrregularVerbsTrainer() {
         <div className="max-w-4xl mx-auto px-4 py-6 relative">
           
           {/* Top Stats Bar */}
-          <div className="mb-6 bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center space-x-6">
-                {firstName && (
-                  <div className="flex items-center space-x-2">
-                    <Crown className="w-6 h-6 text-yellow-400" />
-                    <div>
-                      <div className="text-white font-bold">Cześć, {firstName}!</div>
-                      <div className="text-gray-300 text-sm">Mistrz czasowników</div>
-                    </div>
-                  </div>
-                )}
 
-                {/* Streak */}
-                {streak > 0 && (
-                  <div className="flex items-center space-x-2">
-                    <Flame className="w-6 h-6 text-orange-500" />
-                    <div>
-                      <div className="text-white font-bold">{streak} streak</div>
-                      <div className="text-gray-300 text-sm">Z rzędu!</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center space-x-4 text-white text-sm">
-                <div className="text-center">
-                  <div className="font-bold text-lg">{correctAnswers}</div>
-                  <div className="text-gray-400">Poprawne</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-bold text-lg">{remainingVerbs.length}</div>
-                  <div className="text-gray-400">Pozostało</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-bold text-lg">{formatTime(totalTimeSpent)}</div>
-                  <div className="text-gray-400">Czas</div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Progress Bar */}
           <div className="mb-6">

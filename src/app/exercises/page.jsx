@@ -199,6 +199,9 @@ export default function ZadaniaPage() {
   const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
 
   return (
+    <>
+    <Navbar />
+    
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white relative overflow-hidden">
       {/* Gradient overlay animowany */}
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse" />
@@ -226,9 +229,7 @@ export default function ZadaniaPage() {
       <div className="max-w-6xl mx-auto px-4 py-6 relative">
         {/* Header z statystykami */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 animate-fade-in">
-            Zadania Angielski ✨
-          </h1>
+
           
           {/* Paski postępu */}
           <div className="max-w-2xl mx-auto mb-6 space-y-4">
@@ -249,22 +250,7 @@ export default function ZadaniaPage() {
             </div>
 
             {/* Energy Bar */}
-            <div className="text-center">
-              <div className="flex justify-between text-sm mb-2">
-                <span>Energia</span>
-                <span>{energy}/100</span>
-              </div>
-              <div className="bg-gray-700 rounded-full overflow-hidden h-3">
-                <div 
-                  className={`h-3 rounded-full transition-all duration-500 ${
-                    energy > 60 ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                    energy > 30 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                    'bg-gradient-to-r from-red-400 to-red-600'
-                  }`}
-                  style={{ width: `${energy}%` }}
-                />
-              </div>
-            </div>
+
           </div>
 
           {/* Statystyki */}
@@ -452,5 +438,6 @@ export default function ZadaniaPage() {
         }
       `}</style>
     </div>
+    </>
   );
 }

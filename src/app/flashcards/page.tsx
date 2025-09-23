@@ -458,21 +458,23 @@ export default function FlashcardGame() {
   };
 
   return (
+    <>
+    <Navbar />
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative overflow-hidden">
       {/* Background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {particles.map(particle => (
           <div
-            key={particle.id}
-            className="absolute animate-ping"
-            style={{
-              left: particle.x,
-              top: particle.y,
-              backgroundColor: particle.color,
-              width: particle.size,
-              height: particle.size,
-              borderRadius: '50%'
-            }}
+          key={particle.id}
+          className="absolute animate-ping"
+          style={{
+            left: particle.x,
+            top: particle.y,
+            backgroundColor: particle.color,
+            width: particle.size,
+            height: particle.size,
+            borderRadius: '50%'
+          }}
           />
         ))}
       </div>
@@ -493,6 +495,7 @@ export default function FlashcardGame() {
       )}
 
       {/* Streak Bonus Popup */}
+      
       {showStreakBonus && (
         <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-40 animate-pulse">
           <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-bold">
@@ -854,5 +857,6 @@ export default function FlashcardGame() {
         </div>
       </div>
     </div>
+    </>
   );
 }

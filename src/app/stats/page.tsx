@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import StreakCounter from "./StreakCounter";
-import ErrorStatistics from "./Mistakes";
+
 
 import SessionLengthDistribution from "./SessionLengthDistribution";
 

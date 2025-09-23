@@ -55,20 +55,14 @@ export default function Home() {
         <div className="relative z-10 py-20 px-4">
           <div className="max-w-6xl mx-auto text-center">
             <div className="mb-8 inline-block">
-              <div className="bg-gradient-to-r from-yellow-400/20 to-orange-500/20 backdrop-blur-sm px-6 py-3 rounded-full border border-yellow-500/30">
-                <div className="flex items-center gap-2 text-yellow-300 font-bold">
-                  <Sparkles className="w-5 h-5" />
-                  <span>Dopamine Learning System</span>
-                  <Sparkles className="w-5 h-5" />
-                </div>
-              </div>
+ 
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
               Opanuj angielski z LearnEnglishAI
             </h1>
             <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-gray-300">
-              Interaktywne lekcje, personalizowane ścieżki nauki i native speakerzy na wyciągnięcie ręki
+              Od ucznia dla uczniów
             </p>
             
             <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
@@ -77,20 +71,20 @@ export default function Home() {
                 className="group px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-3"
               >
                 <Play className="w-5 h-5" />
-                <span>Rozpocznij darmową lekcję</span>
+                <span>Rozpocznij</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link 
+              {/* <Link 
                 href="/pricing" 
                 className="group px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-xl font-bold hover:bg-white/20 transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
               >
                 <Crown className="w-5 h-5" />
                 <span>Zobacz plany subskrypcji</span>
-              </Link>
+              </Link> */}
             </div>
 
             {/* Stats preview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
+            {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                 <div className="text-2xl font-bold text-green-400">10k+</div>
                 <div className="text-sm text-gray-300">Aktywnych uczniów</div>
@@ -107,14 +101,14 @@ export default function Home() {
                 <div className="text-2xl font-bold text-amber-400">24/7</div>
                 <div className="text-sm text-gray-300">Dostęp AI</div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
         {/* Features Section */}
-        <section className="py-16 px-4 max-w-6xl mx-auto relative z-10">
+        {/* <section className="py-16 px-4 max-w-6xl mx-auto relative z-10">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
-            Dlaczego warto uczyć się z nami?
+            Dlaczego warto?
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -143,18 +137,18 @@ export default function Home() {
               gradient="from-green-500 to-emerald-600"
             />
           </div>
-        </section>
+        </section> */}
 
         {/* Tools Showcase */}
         <section className="py-16 bg-black/20 backdrop-blur-sm px-4 relative z-10">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
-              Poznaj nasze narzędzia
+              Narzędzia
             </h2>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               <ToolCard 
-                title="Fiszki"
+                title="Nauka słówek"
                 description="Powtarzaj najważniejsze słówka na różnych poziomach – szybko i skutecznie."
                 href="/flashcards"
                 icon={BookOpen}
@@ -168,21 +162,21 @@ export default function Home() {
                 gradient="from-blue-500 to-indigo-600"
               />
               <ToolCard 
-                title="Trener słówek"
+                title="Dopasowanie słówek"
                 description="Interaktywny system nauki który pomoże Ci opanować nowe słownictwo w praktyce."
                 href="/vocabulary"
                 icon={Brain}
                 gradient="from-green-500 to-emerald-600"
               />
               <ToolCard 
-                title="Rozmowa"
-                description="Różnorodne ćwiczenia łączące słownictwo, gramatykę i rozumienie ze słuchu."
+                title="Rozmowa z AI"
+                description="Różnorodne ćwiczenia łączące słownictwo, gramatykę i ze słuchu."
                 href="/conversation"
                 icon={MessageCircle}
                 gradient="from-amber-500 to-orange-600"
               />
               <ToolCard 
-                title="Zadania praktyczne"
+                title="Zadania gramatyczne"
                 description="Ćwiczenia, dzięki którym utrwalisz słownictwo i poznane struktury w kontekście."
                 href="/exercises"
                 icon={Target}
@@ -203,17 +197,17 @@ export default function Home() {
                 gradient="from-teal-500 to-cyan-600"
               />
               <ToolCard 
-                title="Karty słówek"
+                title="Fiszki"
                 description="Ćwicz nowe słówka i zapamiętuj je skutecznie."
                 href="/cards"
                 icon={CreditCard}
                 gradient="from-rose-500 to-pink-600"
               />
               <ToolCard 
-                title="Statystyki"
-                description="Śledź postępy"
-                href="/stats"
-                icon={BarChart}
+                title="Rozmowa z AI"
+                description="Różnorodne ćwiczenia łączące słownictwo, gramatykę i rozumienie ze słuchu."
+                href="/"
+                icon={MessageCircle}
                 gradient="from-emerald-500 to-green-600"
               />
             </div>
@@ -221,7 +215,7 @@ export default function Home() {
         </section>
 
         {/* Pricing Section */}
-        <section className="py-16 px-4 max-w-6xl mx-auto relative z-10">
+        {/* <section className="py-16 px-4 max-w-6xl mx-auto relative z-10">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
             Wybierz plan dla siebie
           </h2>
@@ -251,10 +245,10 @@ export default function Home() {
               featured={true}
             />
           </div>
-        </section>
+        </section> */}
 
         {/* Testimonials */}
-        <section className="py-16 bg-black/20 backdrop-blur-sm px-4 relative z-10">
+        {/* <section className="py-16 bg-black/20 backdrop-blur-sm px-4 relative z-10">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
               Dołącz do zadowolonych uczniów
@@ -275,10 +269,10 @@ export default function Home() {
               />
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-r from-blue-600/30 to-purple-600/30 backdrop-blur-sm text-center px-4 relative z-10">
+        {/* <section className="py-20 bg-gradient-to-r from-blue-600/30 to-purple-600/30 backdrop-blur-sm text-center px-4 relative z-10">
           <div className="max-w-2xl mx-auto">
             <div className="mb-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
               <Rocket className="w-5 h-5 text-blue-400" />
@@ -299,7 +293,7 @@ export default function Home() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
-        </section>
+        </section> */}
 
         {/* Footer */}
         <footer className="bg-black/30 backdrop-blur-sm text-gray-300 py-12 px-4 border-t border-white/10 relative z-10">
