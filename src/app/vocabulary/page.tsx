@@ -33,7 +33,8 @@ const SLOT_COUNT = 5;
 
 export default function WordMatchGame() {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
-  const [category, setCategory] = useState<Category>(Categories[0]);
+const [category, setCategory] = useState<Category>(Categories[0] as Category);
+
   const [words, setWords] = useState<Word[]>([]);
   const [plSlots, setPlSlots] = useState<SlotWord[]>(
     Array(SLOT_COUNT).fill({ id: null, word: null })
