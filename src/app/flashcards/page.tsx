@@ -450,10 +450,11 @@ export default function FlashcardGame() {
   const xpPercentage = (level_xp / getRequiredXP(userLevel)) * 100;
   const energyColor = energy > 60 ? 'from-green-400 to-green-600' : energy > 30 ? 'from-yellow-400 to-yellow-600' : 'from-red-400 to-red-600';
 
-  const feedbackClasses = {
+  const feedbackClasses: Record<string, string> = {
     correct: "border-green-500 bg-green-50 dark:bg-green-900/20 shadow-lg shadow-green-500/20",
     incorrect: "border-red-500 bg-red-50 dark:bg-red-900/20 shadow-lg shadow-red-500/20",
-    default: "border-gray-300 dark:border-gray-700"
+    default: "border-gray-300 dark:border-gray-700",
+    "": "border-gray-300 dark:border-gray-700"
   };
 
   return (
