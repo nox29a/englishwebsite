@@ -5,7 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 
 import { AuthProvider } from "./ClientWrapper";
-import SessionHandler from "./SessionHandler";
+
 import { Outfit, Fragment_Mono } from 'next/font/google'
 
 // czcionki
@@ -39,7 +39,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            <SessionHandler />
+            
             {children}
           </AuthProvider>
         </ThemeProvider>

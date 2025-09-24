@@ -278,11 +278,14 @@ export default function IrregularVerbsTrainer() {
     
     if (user) {
       // Zapisz próbę
-
+      console.log("heh")
       // Jeśli odpowiedź poprawna, dodaj punkty
       if (isCorrect) {
         await addPoints(user.id, 4);
       }
+    }
+    else {
+console.log("hehe")
     }
 
     if (isCorrect) {

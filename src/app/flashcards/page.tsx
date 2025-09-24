@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import { Categories } from "@/components/words/flashcards_words";
 import { ChevronRight, Mic, Volume2, RotateCcw, CheckCircle2, XCircle, Trophy, Brain, Clock, Target, Star, Zap, Flame, Award, TrendingUp, Battery, Crown, Sparkles } from 'lucide-react';
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { addPoints } from "../utils/addPoints";
+import type { User } from "@supabase/supabase-js";
 
 // Definicje typów dla Speech Recognition API
 declare global {
@@ -141,6 +144,10 @@ export default function FlashcardGame() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [isListening, setIsListening] = useState(false);
 
+  // Supabase state
+  const [user, setUser] = useState<User | null>(null);
+  const supabase = createClientComponentClient();
+
   // Achievements system
   const achievements = [
     { id: 'first_correct', name: 'Pierwszy sukces!', description: 'Odpowiedz poprawnie po raz pierwszy', icon: '🎯', unlocked: false },
@@ -149,6 +156,19 @@ export default function FlashcardGame() {
     { id: 'speed_demon', name: 'Demon prędkości', description: 'Odpowiedz w mniej niż 3 sekundy', icon: '💨', unlocked: false },
     { id: 'perfectionist', name: 'Perfekcjonista', description: 'Ukończ kategorię bez błędu', icon: '👑', unlocked: false },
   ];
+
+  // Get user session
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+      }
+    };
+
+    getUser();
+
+  })
 
   // Particle system for celebrations
   const createParticles = (type: 'success' | 'celebration' = 'success') => {
@@ -336,6 +356,12 @@ export default function FlashcardGame() {
       if (combo >= 5) xpGained += 10; // Combo bonus
       
       addXP(xpGained);
+
+      // Add points to the database if user is logged in
+      if (user) {
+        addPoints(user.id, xpGained);
+      }
+      
       createParticles('success');
       
       // Check for streak achievements

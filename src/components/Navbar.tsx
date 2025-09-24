@@ -16,6 +16,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [userType, setUserType] = useState<string>("basic");
+  const [userPoints, setUserPoints] = useState<number>(0);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -46,6 +47,20 @@ export default function Navbar() {
           
         if (profileData && !profileError) {
           setUserType(profileData.user_type);
+        }
+
+        // Pobierz punkty użytkownika z leaderboard
+        const { data: leaderboardData, error: leaderboardError } = await supabase
+          .from('leaderboard')
+          .select('points')
+          .eq('user_id', data.user.id)
+          .single();
+          
+        if (leaderboardData && !leaderboardError) {
+          setUserPoints(leaderboardData.points);
+        } else {
+          // Jeśli użytkownik nie ma jeszcze wpisów w leaderboard, ustaw 0 punktów
+          setUserPoints(0);
         }
       }
     };
@@ -86,6 +101,21 @@ export default function Navbar() {
     },
   ];
 
+  // Funkcja do obliczania poziomu na podstawie punktów
+  const calculateLevel = (points: number) => {
+    return Math.floor(points / 250) + 1; // Każde 250 punktów = 1 poziom
+  };
+
+  // Funkcja do obliczania postępu do następnego poziomu
+  const calculateProgress = (points: number) => {
+    const currentLevelPoints = points % 250;
+    const pointsToNext = 250 - currentLevelPoints;
+    return { currentLevelPoints, pointsToNext, progressPercent: (currentLevelPoints / 250) * 100 };
+  };
+
+  const currentLevel = calculateLevel(userPoints);
+  const progress = calculateProgress(userPoints);
+
   return (
     <>
       <nav className={`sticky top-0 z-50 transition-all duration-300 ${
@@ -100,7 +130,7 @@ export default function Navbar() {
           <div className="flex justify-between items-center relative z-10">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="p-2 text-2xl font-blond bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-all duration-300 shadow-lg ">
+              <div className="p-2 text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-all duration-300 shadow-lg ">
                 AxonAI
               </div>
               <div>
@@ -144,9 +174,9 @@ export default function Navbar() {
                 <>
                   {/* User stats preview */}
                   <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-full border border-white/20">
-                    <span className="text-sm font-bold text-white">Lvl 5</span>
+                    <span className="text-sm font-bold text-white">Lvl {currentLevel}</span>
                     <div className="w-px h-4 bg-white/20" />
-                    <span className="text-sm font-bold text-white">1250 XP</span>
+                    <span className="text-sm font-bold text-white">{userPoints} XP</span>
                   </div>
 
                   {/* Account button */}
@@ -234,15 +264,18 @@ export default function Navbar() {
                     </div>
                     <div>
                       <div className="font-bold text-white">{userType === "premium" ? "Premium User" : "Basic User"}</div>
-                      <div className="text-sm text-gray-300">Level 5 • 1250 XP</div>
+                      <div className="text-sm text-gray-300">Level {currentLevel} • {userPoints} XP</div>
                     </div>
                   </div>
                   
                   {/* Mini progress bar */}
                   <div className="bg-gray-800/50 rounded-full h-2 overflow-hidden">
-                    <div className="bg-gradient-to-r from-pink-500 to-purple-500 h-2 rounded-full w-3/4 transition-all duration-1000" />
+                    <div 
+                      className="bg-gradient-to-r from-pink-500 to-purple-500 h-2 rounded-full transition-all duration-1000" 
+                      style={{ width: `${progress.progressPercent}%` }}
+                    />
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">750/1000 XP do następnego poziomu</div>
+                  <div className="text-xs text-gray-400 mt-1">{progress.pointsToNext} XP do następnego poziomu</div>
                 </div>
               )}
 

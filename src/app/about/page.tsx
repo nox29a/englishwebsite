@@ -8,7 +8,7 @@ export default function ONas() {
       <div className="max-w-5xl mx-auto">
         <h1 className="text-4xl font-bold mb-8 text-center">O nas</h1>
         <p className="text-gray-300 text-lg leading-relaxed mb-12 text-center">
-          LearnEnglishAI to interaktywna platforma do nauki języka angielskiego z wykorzystaniem AI.
+          AxonAI to interaktywna platforma do nauki języka angielskiego z wykorzystaniem AI.
           Tworzymy nowoczesne, spersonalizowane lekcje oraz narzędzia, które pomogą Ci w codziennym
           posługiwaniu się językiem.
         </p>

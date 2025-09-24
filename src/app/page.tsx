@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { User } from '@supabase/supabase-js';
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
+import axonImage from '@/axonai.png'; // lub './assets/axon.png'
+
 import { 
   Brain, 
   BookOpen, 
@@ -51,59 +53,48 @@ export default function Home() {
         {/* Animated background overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse" />
         
-        {/* Hero Section */}
-        <div className="relative z-10 py-20 px-4">
-          <div className="max-w-6xl mx-auto text-center">
-            <div className="mb-8 inline-block">
- 
-            </div>
-            
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-              Popraw swój angielski z AxonAI
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-gray-300">
-              Od uczniów dla uczniów
-            </p>
-            
-            <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
-              <Link 
-                href="/try" 
-                className="group px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-3"
-              >
-                <Play className="w-5 h-5" />
-                <span>Rozpocznij</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              {/* <Link 
-                href="/pricing" 
-                className="group px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-xl font-bold hover:bg-white/20 transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
-              >
-                <Crown className="w-5 h-5" />
-                <span>Zobacz plany subskrypcji</span>
-              </Link> */}
-            </div>
-
-            {/* Stats preview */}
-            {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="text-2xl font-bold text-green-400">10k+</div>
-                <div className="text-sm text-gray-300">Aktywnych uczniów</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="text-2xl font-bold text-blue-400">95%</div>
-                <div className="text-sm text-gray-300">Satysfakcja</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="text-2xl font-bold text-purple-400">50k+</div>
-                <div className="text-sm text-gray-300">Lekcji ukończonych</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="text-2xl font-bold text-amber-400">24/7</div>
-                <div className="text-sm text-gray-300">Dostęp AI</div>
-              </div>
-            </div> */}
-          </div>
+{/* Hero Section */}
+<div className="relative z-10 py-20 px-4">
+  <div className="max-w-6xl mx-auto">
+    <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+      {/* Lewa strona - tekst i przyciski */}
+      <div className="lg:w-1/2 text-center lg:text-left">
+        <div className="mb-8 inline-block"></div>
+        
+        <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+          Popraw swój angielski z axonAI
+        </h1>
+        <p className="text-xl md:text-2xl mb-8 text-gray-300">
+          Od uczniów dla uczniów
+        </p>
+        
+        <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-6 mb-12">
+          <Link 
+            href="/vocabulary" 
+            className="group px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-3 justify-center"
+          >
+            <Play className="w-5 h-5" />
+            <span>Rozpocznij</span>
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
+      </div>
+
+      {/* Prawa strona - obrazek */}
+      <div className="lg:w-1/2 flex justify-center lg:justify-end">
+        <div className="relative w-full max-w-md">
+          <img 
+            src={axonImage.src} 
+            alt="AxonAI" 
+            className="w-full h-auto rounded-2xl shadow-2xl"
+          />
+          {/* Opcjonalny efekt wizualny */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
         {/* Features Section */}
         {/* <section className="py-16 px-4 max-w-6xl mx-auto relative z-10">

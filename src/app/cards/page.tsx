@@ -445,7 +445,7 @@ export default function Flashcards() {
                 onClick={loadMoreCards}
                 className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                Pokaż więcej ({filteredCards.length - visibleCount} pozostałych)
+                Pokaż więcej 
               </button>
             </div>
           )}
