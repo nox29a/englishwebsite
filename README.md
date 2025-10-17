@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## AxonAI
 
-## Getting Started
+Platforma edukacyjna wykorzystująca Next.js 15 oraz Supabase. Projekt został rozszerzony o obsługę płatności Stripe dla planu Premium.
 
-First, run the development server:
+## Wymagane zmienne środowiskowe
+
+Skonfiguruj poniższe wartości w plikach `.env.local` (dla środowiska lokalnego) oraz w panelu hostingu:
+
+| Zmienna | Opis |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Adres instancji Supabase. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Klucz anon Supabase używany w przeglądarce. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Klucz serwisowy Supabase wykorzystywany w webhooku Stripe do aktualizacji profili. |
+| `STRIPE_SECRET_KEY` | Klucz tajny konta Stripe (skopiuj z [https://dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys)). |
+| `STRIPE_PRICE_ID` | Identyfikator ceny/subskrypcji utworzonej w Stripe. |
+| `STRIPE_WEBHOOK_SECRET` | Sekret punktu webhook Stripe (dostępny po dodaniu endpointu do zdarzeń `checkout.session.completed`). |
+
+Opcjonalnie możesz ustawić `NEXT_PUBLIC_SITE_URL`, aby wymusić adres powrotu z płatności. W przeciwnym razie używany jest origin bieżącego żądania.
+
+## Uruchomienie projektu lokalnie
+
+Zainstaluj zależności:
+
+```bash
+npm install
+```
+
+Uruchom tryb deweloperski:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Projekt będzie dostępny pod adresem [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Webhook Stripe w środowisku lokalnym
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Aby testować webhooki lokalnie, możesz użyć narzędzia `stripe listen`:
 
-## Learn More
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Polecenie zwróci sekret webhooka, który należy ustawić jako `STRIPE_WEBHOOK_SECRET`.

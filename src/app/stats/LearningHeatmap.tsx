@@ -1,26 +1,56 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
+import { isAuthSessionMissingError } from "@/lib/authErrorUtils";
+
+import { statsCardClass, subtleTextClass } from "./cardStyles";
+
+interface HeatmapDay {
+  date: string;
+  active: boolean;
+}
 
 export default function LearningHeatmap() {
-  const [days, setDays] = useState<{ date: string; active: boolean }[]>([]);
+  const [days, setDays] = useState<HeatmapDay[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data, error } = await supabase
-        .from("user_sessions")
-        .select("login_at");
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-      if (error || !data) return;
+      if (error) {
+        if (!isAuthSessionMissingError(error)) {
+          console.error("Nie udało się pobrać sesji użytkownika:", error);
+        }
+        return;
+      }
+
+      if (!user) return;
+
+      const { data, error: metricsError } = await supabase
+        .from("daily_metrics")
+        .select("metrics_date, total_attempts, total_sessions")
+        .eq("user_id", user.id)
+        .order("metrics_date", { ascending: false })
+        .limit(60);
+
+      if (metricsError || !data) {
+        setDays([]);
+        return;
+      }
 
       const activeDays = new Set(
-        data.map((s) => new Date(s.login_at).toDateString())
+        data
+          .filter((session) => (session.total_attempts ?? 0) > 0 || (session.total_sessions ?? 0) > 0)
+          .map((session) => new Date(session.metrics_date).toDateString())
       );
-
       const today = new Date();
-      const last30days: { date: string; active: boolean }[] = [];
+      const last30days: HeatmapDay[] = [];
 
       for (let i = 29; i >= 0; i--) {
         const d = new Date();
@@ -38,72 +68,52 @@ export default function LearningHeatmap() {
     fetchData();
   }, []);
 
-  // Funkcja do formatowania daty w bardziej przyjazny sposób
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL', {
-      day: 'numeric',
-      month: 'short'
+    return date.toLocaleDateString("pl-PL", {
+      day: "numeric",
+      month: "short",
     });
   };
 
   return (
-    <Card className="p-6 shadow-xl rounded-2xl bg-indigo-900 text-white">
-      <h2 className="text-xl font-bold mb-4">📅 Ostatnie 30 dni</h2>
-      
-      {/* Legenda kolorów */}
-      <div className="flex items-center gap-4 mb-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-green-400" />
-          <span>Aktywność</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-indigo-700" />
-          <span>Brak aktywności</span>
-        </div>
+    <Card className={`${statsCardClass} gap-6`}>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold tracking-wide">Aktywność z 30 dni</h2>
+        <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs uppercase tracking-wide text-slate-300">
+          30 dni
+        </span>
       </div>
+      <p className={subtleTextClass}>Zobacz, w które dni utrzymywałeś regularność nauki.</p>
 
-      {/* Kalendarz heatmap */}
-      <div className="grid grid-cols-7 gap-2">
-        {days.map((day, i) => (
+      <div className="grid grid-cols-6 gap-3 text-xs sm:grid-cols-10">
+        {days.map((day) => (
           <div
-            key={i}
-            title={`${formatDate(day.date)}: ${day.active ? 'Aktywny' : 'Brak aktywności'}`}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-lg ${
-              day.active 
-                ? "bg-green-400 hover:bg-green-300 text-indigo-900 font-bold" 
-                : "bg-indigo-700 hover:bg-indigo-600 text-gray-300"
+            key={day.date}
+            className={`flex h-12 flex-col justify-center rounded-xl border px-2 text-center transition-all duration-300 ${
+              day.active
+                ? "border-[#1D4ED8]/60 bg-gradient-to-br from-[#1D4ED8]/40 via-[#1E3A8A]/30 to-transparent text-[#E2E8F0]"
+                : "border-white/10 bg-white/5 text-slate-500"
             }`}
           >
-            {new Date(day.date).getDate()}
+            <span className="text-[11px] uppercase tracking-wide text-slate-400">
+              {formatDate(day.date)}
+            </span>
+            <span className={`text-sm font-semibold ${day.active ? "text-[#93C5FD]" : "text-slate-500"}`}>
+              {day.active ? "●" : "–"}
+            </span>
           </div>
         ))}
       </div>
 
-      {/* Etykiety dni tygodnia (opcjonalnie) */}
-      <div className="grid grid-cols-7 gap-2 mt-2 text-xs text-center text-indigo-200">
-        <span>Pon</span>
-        <span>Wt</span>
-        <span>Śr</span>
-        <span>Czw</span>
-        <span>Pt</span>
-        <span>Sob</span>
-        <span>Niedz</span>
-      </div>
-
-      {/* Statystyki podsumowujące */}
-      <div className="mt-4 pt-4 border-t border-indigo-700">
-        <div className="flex justify-between items-center text-sm">
-          <span>Aktywne dni:</span>
-          <span className="font-bold text-yellow-400">
-            {days.filter(day => day.active).length} / 30
-          </span>
+      <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center gap-2">
+          <span className="h-3 w-3 rounded-full bg-[#1D4ED8]/60" />
+          Aktywne dni
         </div>
-        <div className="flex justify-between items-center text-sm mt-1">
-          <span>Wskaźnik aktywności:</span>
-          <span className="font-bold text-yellow-400">
-            {Math.round((days.filter(day => day.active).length / 30) * 100)}%
-          </span>
+        <div className="flex items-center gap-2">
+          <span className="h-3 w-3 rounded-full bg-white/20" />
+          Przerwy w nauce
         </div>
       </div>
     </Card>

@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import type { KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
-import { Categories } from "@/components/words/flashcards_words";
-import { ChevronRight, Mic, Volume2, RotateCcw, CheckCircle2, XCircle, Trophy, Brain, Clock, Target, Star, Zap, Flame, Award, TrendingUp, Battery, Crown, Sparkles } from 'lucide-react';
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Category, Word } from "@/components/words/flashcards_words";
+import {
+  LANGUAGE_DATASETS,
+  LANGUAGE_OPTIONS,
+  type LearningLanguage,
+} from "@/components/words/language_packs";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { ChevronRight, Mic, Volume2, RotateCcw, CheckCircle2, XCircle, Trophy, Brain, Clock, Target, Star, Zap, Flame, Award, TrendingUp, Battery, Crown, Sparkles, Globe } from 'lucide-react';
+import { supabase } from "@/lib/supabaseClient";
 import { addPoints } from "../utils/addPoints";
 import type { User } from "@supabase/supabase-js";
 
@@ -84,19 +91,6 @@ interface SpeechGrammar {
   weight: number;
 }
 
-// Definicje typów aplikacji
-interface Word {
-  id: number;
-  pl: string;
-  en: string;
-  level: string;
-}
-
-interface Category {
-  name: string;
-  words: Word[];
-}
-
 interface Particle {
   id: number;
   x: number;
@@ -113,9 +107,18 @@ interface Achievement {
 }
 
 export default function FlashcardGame() {
-  const [category, setCategory] = useState(Categories[0].name);
+  const { language, setLanguage } = useLanguage();
+  const languageCategories = useMemo(
+    () => LANGUAGE_DATASETS[language] ?? LANGUAGE_DATASETS.en,
+    [language]
+  );
+  const [category, setCategory] = useState(
+    () => languageCategories[0]?.name ?? ""
+  );
   const [level, setLevel] = useState("easy");
-  const [direction, setDirection] = useState<"pl-en" | "en-pl">("pl-en");
+  const [direction, setDirection] = useState<
+    "native-to-target" | "target-to-native"
+  >("native-to-target");
   const [input, setInput] = useState("");
   const [remaining, setRemaining] = useState<Word[]>([]);
   const [current, setCurrent] = useState<Word>({ id: -1, pl: "", en: "", level: "" });
@@ -126,6 +129,22 @@ export default function FlashcardGame() {
   const [totalTimeSpent, setTotalTimeSpent] = useState(0);
   const [availableLevels, setAvailableLevels] = useState<string[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState(Date.now());
+
+  const targetLanguageOption = useMemo(
+    () => LANGUAGE_OPTIONS.find((option) => option.code === language),
+    [language]
+  );
+  const targetRecognitionLocale =
+    targetLanguageOption?.recognitionLocale ?? "en-US";
+  const targetSpeechLocale = targetLanguageOption?.speechLocale ?? "en-US";
+  const targetLabel = targetLanguageOption?.label ?? "Angielski";
+  const targetShortLabel = targetLanguageOption?.shortLabel ?? "EN";
+
+  useEffect(() => {
+    if (languageCategories[0]?.name) {
+      setCategory(languageCategories[0].name);
+    }
+  }, [languageCategories]);
   
   // Dopaminowe elementy
   const [streak, setStreak] = useState(0);
@@ -146,7 +165,6 @@ export default function FlashcardGame() {
 
   // Supabase state
   const [user, setUser] = useState<User | null>(null);
-  const supabase = createClientComponentClient();
 
   // Achievements system
   const achievements = [
@@ -159,21 +177,32 @@ export default function FlashcardGame() {
 
   // Get user session
   useEffect(() => {
+    let isMounted = true;
+
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session && isMounted) {
         setUser(session.user);
       }
     };
 
     getUser();
 
-  })
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Particle system for celebrations
   const createParticles = (type: 'success' | 'celebration' = 'success') => {
     const newParticles: Particle[] = [];
-    const colors = type === 'success' ? ['#10B981', '#34D399', '#6EE7B7'] : ['#F59E0B', '#FBBF24', '#FCD34D'];
+    const colors =
+      type === 'success'
+        ? ['var(--chart-success-1)', 'var(--chart-success-2)', 'var(--chart-success-3)']
+        : ['var(--chart-warning-1)', 'var(--chart-warning-2)', 'var(--chart-warning-3)'];
     
     for (let i = 0; i < 15; i++) {
       newParticles.push({
@@ -217,7 +246,8 @@ export default function FlashcardGame() {
         const recognition = new SpeechRecognition();
         recognitionRef.current = recognition;
         
-        recognition.lang = direction === "pl-en" ? "en-US" : "pl-PL";
+        recognition.lang =
+          direction === "native-to-target" ? targetRecognitionLocale : "pl-PL";
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
 
@@ -243,7 +273,7 @@ export default function FlashcardGame() {
         recognitionRef.current.abort();
       }
     };
-  }, [direction]);
+  }, [direction, targetRecognitionLocale]);
 
   const speak = (text: string, lang: string) => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
@@ -261,7 +291,10 @@ export default function FlashcardGame() {
     if (recognitionRef.current && !isListening) {
       try {
         setIsListening(true);
-        recognitionRef.current.lang = direction === "pl-en" ? "en-US" : "pl-PL";
+        recognitionRef.current.lang =
+          direction === "native-to-target"
+            ? targetRecognitionLocale
+            : "pl-PL";
         recognitionRef.current.start();
       } catch (err) {
         console.error("Cannot start recognition:", err);
@@ -271,21 +304,27 @@ export default function FlashcardGame() {
   };
 
   const playPrompt = () => {
-    const prompt = direction === "pl-en" ? current.pl : current.en;
-    const lang = direction === "pl-en" ? "pl-PL" : "en-US";
+    const prompt =
+      direction === "native-to-target" ? current.pl : current.en;
+    const lang =
+      direction === "native-to-target" ? "pl-PL" : targetSpeechLocale;
     speak(prompt, lang);
   };
 
   const getWords = (): Word[] => {
-    const selectedCategory = Categories.find(c => c.name === category);
+    const selectedCategory = languageCategories.find(
+      (c) => c.name === category
+    );
     if (!selectedCategory) return [];
-    return selectedCategory.words.filter(word => word.level === level);
+    return selectedCategory.words.filter((word) => word.level === level);
   };
 
   const getAvailableLevels = (): string[] => {
-    const selectedCategory = Categories.find(c => c.name === category);
+    const selectedCategory = languageCategories.find(
+      (c) => c.name === category
+    );
     if (!selectedCategory) return [];
-    const levels = new Set(selectedCategory.words.map(word => word.level));
+    const levels = new Set(selectedCategory.words.map((word) => word.level));
     return Array.from(levels);
   };
 
@@ -326,17 +365,20 @@ export default function FlashcardGame() {
     } else {
       loadProgress();
     }
-  }, [direction]);
+  }, [direction, language]);
 
   useEffect(() => {
     loadProgress();
-  }, [category, level]);
+  }, [category, level, language]);
 
   const handleSubmit = () => {
     if (current.id === -1) return;
 
     const wordToCheck = remaining.find((w) => w.id === current.id) || current;
-    const correct = direction === "pl-en" ? wordToCheck.en.toLowerCase().trim() : wordToCheck.pl.toLowerCase().trim();
+    const correct =
+      direction === "native-to-target"
+        ? wordToCheck.en.toLowerCase().trim()
+        : wordToCheck.pl.toLowerCase().trim();
     const userAnswer = input.trim().toLowerCase();
     const isCorrect = userAnswer === correct;
 
@@ -449,7 +491,7 @@ export default function FlashcardGame() {
     setEnergy(100);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSubmit();
     }
@@ -465,7 +507,7 @@ export default function FlashcardGame() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white flex flex-col items-center justify-center p-4">
+      <div className="axon-design min-h-screen bg-gradient-to-br from-[var(--cards-gradient-from)] via-[var(--cards-gradient-via)] to-[var(--cards-gradient-to)] text-[var(--foreground)] flex flex-col items-center justify-center p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-2 border-purple-500 border-t-transparent"></div>
         <p className="mt-4 text-lg font-medium">Ładowanie postępów...</p>
       </div>
@@ -479,14 +521,14 @@ export default function FlashcardGame() {
   const feedbackClasses: Record<string, string> = {
     correct: "border-green-500 bg-green-50 dark:bg-green-900/20 shadow-lg shadow-green-500/20",
     incorrect: "border-red-500 bg-red-50 dark:bg-red-900/20 shadow-lg shadow-red-500/20",
-    default: "border-gray-300 dark:border-gray-700",
-    "": "border-gray-300 dark:border-gray-700"
+    default: "border-[color:var(--border-translucent-strong)]",
+    "": "border-[color:var(--border-translucent-strong)]"
   };
 
   return (
     <>
     <Navbar />
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+    <div className="axon-design min-h-screen bg-gradient-to-br from-[var(--cards-gradient-from)] via-[var(--cards-gradient-via)] to-[var(--cards-gradient-to)] relative overflow-hidden">
       {/* Background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {particles.map(particle => (
@@ -508,7 +550,7 @@ export default function FlashcardGame() {
       {/* Achievement Popup */}
       {showAchievement && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-[var(--foreground)] px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
             <div className="flex items-center space-x-3">
               <div className="text-3xl">{showAchievement.icon}</div>
               <div>
@@ -524,365 +566,295 @@ export default function FlashcardGame() {
       
       {showStreakBonus && (
         <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-40 animate-pulse">
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-bold">
+          <div className="bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] px-4 py-2 rounded-lg font-bold">
             🔥 STREAK BONUS! +15 XP
           </div>
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto px-4 py-6 relative">
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-24 lg:pb-12 relative">
         
-        {/* Top Stats Bar */}
-        <div className="mb-6 bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center space-x-6">
-              {/* Level */}
-              <div className="flex items-center space-x-2">
-                <Crown className="w-6 h-6 text-yellow-400" />
-                <div>
-                  <div className="text-white font-bold">Level {userLevel}</div>
-                  <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-blue-400 to-purple-500 transition-all duration-500"
-                      style={{ width: `${xpPercentage}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* Streak */}
-              <div className="flex items-center space-x-2">
-                <Flame className="w-6 h-6 text-orange-500" />
-                <div>
-                  <div className="text-white font-bold">{streak} streak</div>
-                  <div className="text-gray-300 text-sm">Max: {maxStreak}</div>
-                </div>
-              </div>
-
-              {/* Total Score */}
-              <div className="flex items-center space-x-2">
-                <Star className="w-6 h-6 text-yellow-400" />
-                <div>
-                  <div className="text-white font-bold">{totalScore}</div>
-                  <div className="text-gray-300 text-sm">Razem</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Energy Bar */}
-            <div className="flex items-center space-x-2">
-              <Battery className="w-6 h-6 text-green-400" />
-              <div className="w-24 h-3 bg-gray-700 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full bg-gradient-to-r ${energyColor} transition-all duration-500`}
-                  style={{ width: `${energy}%` }}
-                />
-              </div>
-              <span className="text-white text-sm font-bold">{energy}%</span>
-            </div>
-          </div>
-        </div>
 
         {/* Progress Bar */}
-        <div className="mb-6">
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-4 mb-2 overflow-hidden border border-white/10">
-            <div 
-              className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-4 rounded-full transition-all duration-1000 ease-out relative"
-              style={{ width: `${progressPercentage}%` }}
-            >
-              <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-            </div>
-          </div>
-          <div className="flex justify-between text-sm text-gray-300">
-            <span>Postęp: {score}/{getWords().length}</span>
-            <span className="flex items-center gap-2">
-              {combo > 0 && <span className="text-purple-400 font-bold">COMBO x{combo}</span>}
-              <span>{Math.floor((Date.now() - sessionStartTime) / 60000)} min</span>
-            </span>
-          </div>
-        </div>
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6">
+          <div className="space-y-6 lg:pr-4">
 
-        {/* Main Game Card */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8 mb-6">
-          
-          {/* Word Display */}
-          <div className="text-center mb-8">
-            <div className="bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/20 relative overflow-hidden">
-              {/* Animated background */}
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse"></div>
-              
-              <div className="relative z-10">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-2 animate-pulse">
-                  {direction === "pl-en" ? current.pl : current.en}
-                </h2>
-                <p className="text-gray-300 text-lg">
-                  {direction === "pl-en" ? "Przetłumacz na angielski" : "Przetłumacz na polski"}
-                </p>
-                
-                {/* Streak indicator */}
-                {streak > 0 && (
-                  <div className="mt-3 inline-flex items-center bg-orange-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-orange-500/30">
-                    <Flame className="w-4 h-4 text-orange-400 mr-2" />
-                    <span className="text-orange-300 font-bold">{streak} z rzędu!</span>
+
+            <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-2xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-6 sm:p-10">
+              <div className="text-center space-y-6">
+                <div className="bg-gradient-to-br from-[var(--overlay-light-strong)] to-[var(--overlay-light-faint)] backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-[color:var(--border-translucent-strong)] relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#1d4ed8]/15 via-[#1e3a8a]/15 to-transparent animate-pulse"></div>
+
+                  <div className="relative z-10 space-y-3">
+                    <h2 className="text-3xl sm:text-5xl font-bold text-[var(--foreground)] animate-pulse">
+                      {direction === "native-to-target" ? current.pl : current.en}
+                    </h2>
+                    <p className="text-base sm:text-lg text-[var(--muted-foreground)]">
+                      {direction === "native-to-target"
+                        ? `Przetłumacz na ${targetLabel.toLowerCase()}`
+                        : "Przetłumacz na polski"}
+                    </p>
+
+                    {streak > 0 && (
+                      <div className="inline-flex items-center bg-[var(--overlay-light)] backdrop-blur-sm px-4 py-2 rounded-full border border-[color:var(--border-translucent)]">
+                        <Flame className="w-4 h-4 text-[var(--icon-orange)] mr-2" />
+                        <span className="text-[var(--foreground)] font-bold">{streak} z rzędu!</span>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={playPrompt}
+                      disabled={current.id === -1}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition-all duration-300 hover:from-[var(--cta-gradient-hover-from)] hover:to-[var(--cta-gradient-hover-to)] hover:shadow-xl disabled:from-white/10 disabled:to-white/5 disabled:text-[var(--muted-foreground)]"
+                    >
+                      <Volume2 className="w-5 h-5" />
+                      Odsłuchaj
+                    </button>
                   </div>
-                )}
-                
-                {/* Audio Button */}
-                <button
-                  onClick={playPrompt}
-                  disabled={current.id === -1}
-                  className="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  <Volume2 className="w-5 h-5 mr-2" />
-                  Odsłuchaj
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Input Section */}
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-lg font-medium ${
-                  feedbackClasses[feedbackState] || feedbackClasses.default
-                } bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 border-white/20`}
-                placeholder="Wpisz tłumaczenie..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                autoFocus
-                disabled={current.id === -1}
-              />
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={startListening}
-                  disabled={isListening || current.id === -1}
-                  className={`px-4 py-4 rounded-xl font-medium transition-all duration-300 flex items-center transform hover:scale-105 ${
-                    isListening 
-                      ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/30" 
-                      : "bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20"
-                  }`}
-                >
-                  <Mic className="w-5 h-5" />
-                </button>
-                
-                <button
-                  onClick={handleSubmit}
-                  disabled={current.id === -1}
-                  className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  {input ? (
-                    <span className="flex items-center">
-                      <Zap className="w-5 h-5 mr-2" />
-                      Sprawdź
-                    </span>
-                  ) : (
-                    "Dalej"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Feedback */}
-          {correctAnswer && (
-            <div className="mb-6 p-4 bg-red-500/20 backdrop-blur-sm border border-red-500/30 rounded-xl">
-              <div className="flex items-center mb-2">
-                <XCircle className="w-5 h-5 text-red-400 mr-2" />
-                <span className="text-red-300 font-medium">Niepoprawnie</span>
-              </div>
-              <p className="text-red-300">
-                Poprawna odpowiedź: <span className="font-bold text-white">{correctAnswer}</span>
-              </p>
-            </div>
-          )}
-
-          {feedbackState === "correct" && (
-            <div className="mb-6 p-4 bg-green-500/20 backdrop-blur-sm border border-green-500/30 rounded-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <CheckCircle2 className="w-5 h-5 text-green-400 mr-2" />
-                  <span className="text-green-300 font-medium">Poprawnie!</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                  <span className="text-yellow-300 font-bold">+10 XP</span>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Enhanced Stats */}
-          <div className="flex flex-wrap gap-6 items-center justify-between">
-            <div className="flex gap-6">
-              <div className="text-center group cursor-pointer">
-                <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-400/20 to-green-600/20 backdrop-blur-sm rounded-xl mb-2 border border-green-500/30 group-hover:scale-110 transition-transform">
-                  <Trophy className="w-7 h-7 text-green-400" />
-                </div>
-                <div className="text-2xl font-bold text-white">{score}</div>
-                <div className="text-xs text-gray-400">Poprawne</div>
-              </div>
-              
-              <div className="text-center group cursor-pointer">
-                <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-400/20 to-blue-600/20 backdrop-blur-sm rounded-xl mb-2 border border-blue-500/30 group-hover:scale-110 transition-transform">
-                  <Target className="w-7 h-7 text-blue-400" />
-                </div>
-                <div className="text-2xl font-bold text-white">{getWords().length - score}</div>
-                <div className="text-xs text-gray-400">Pozostało</div>
-              </div>
-              
-              <div className="text-center group cursor-pointer">
-                <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-amber-400/20 to-amber-600/20 backdrop-blur-sm rounded-xl mb-2 border border-amber-500/30 group-hover:scale-110 transition-transform">
-                  <Clock className="w-7 h-7 text-amber-400" />
-                </div>
-                <div className="text-2xl font-bold text-white">
-                  {Math.floor((Date.now() - sessionStartTime) / 60000)}
-                </div>
-                <div className="text-xs text-gray-400">Minut</div>
-              </div>
+            <div className="sticky bottom-4 left-0 right-0 z-30 -mx-4 sm:mx-0 sm:static sm:bottom-auto">
+              <div className="rounded-2xl border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-dark)]/90 backdrop-blur-lg px-4 py-4 shadow-xl supports-[padding:max(0px,env(safe-area-inset-bottom))]:pb-[calc(1rem+env(safe-area-inset-bottom))] sm:bg-[var(--overlay-light)] sm:px-6 sm:py-6 sm:shadow-2xl">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <input
+                    className={`w-full rounded-xl border-2 px-4 py-3 text-base font-medium transition-all duration-300 focus:border-transparent focus:ring-2 focus:ring-[var(--focus-ring-strong)] sm:px-6 sm:py-4 sm:text-lg ${
+                      feedbackClasses[feedbackState] || feedbackClasses.default
+                    } bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--foreground)] placeholder-[#94a3b8] border-[color:var(--border-translucent-strong)]`}
+                    placeholder="Wpisz tłumaczenie..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={current.id === -1}
+                  />
 
-              <div className="text-center group cursor-pointer">
-                <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-400/20 to-purple-600/20 backdrop-blur-sm rounded-xl mb-2 border border-purple-500/30 group-hover:scale-110 transition-transform">
-                  <TrendingUp className="w-7 h-7 text-purple-400" />
+                  <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                    <button
+                      onClick={startListening}
+                      disabled={isListening || current.id === -1}
+                      className={`flex h-14 w-full items-center justify-center rounded-xl border border-[color:var(--border-translucent-strong)] font-medium transition-all duration-300 sm:h-auto sm:w-auto sm:px-5 sm:py-4 ${
+                        isListening
+                          ? "bg-gradient-to-r from-red-500 to-red-600 text-[var(--foreground)] shadow-lg shadow-red-500/30"
+                          : "bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)]"
+                      }`}
+                    >
+                      <Mic className="w-5 h-5" />
+                    </button>
+
+                    <button
+                      onClick={handleSubmit}
+                      disabled={current.id === -1}
+                      className="flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] px-6 py-3 text-base font-semibold text-[var(--foreground)] transition-all duration-300 hover:from-[var(--cta-gradient-hover-from)] hover:to-[var(--cta-gradient-hover-to)] hover:shadow-xl disabled:from-white/10 disabled:to-white/5 disabled:text-[var(--muted-foreground)] sm:h-auto sm:w-auto sm:px-8 sm:py-4"
+                    >
+                      {input ? (
+                        <span className="flex items-center gap-2">
+                          <Zap className="w-5 h-5" />
+                          Sprawdź
+                        </span>
+                      ) : (
+                        "Dalej"
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <div className="text-2xl font-bold text-white">{streak}</div>
-                <div className="text-xs text-gray-400">Streak</div>
               </div>
             </div>
 
-            <button 
-              onClick={resetGame} 
-              className="flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-105"
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset
-            </button>
-          </div>
+            {correctAnswer && (
+              <div className="rounded-2xl border border-red-500/30 bg-red-500/15 p-4 backdrop-blur-sm">
+                <div className="mb-2 flex items-center">
+                  <XCircle className="w-5 h-5 text-red-400 mr-2" />
+                  <span className="text-red-300 font-medium">Niepoprawnie</span>
+                </div>
+                <p className="text-red-200 sm:text-red-300">
+                  Poprawna odpowiedź: <span className="font-bold text-[var(--foreground)]">{correctAnswer}</span>
+                </p>
+              </div>
+            )}
 
-          {/* Completion Message */}
-          {current.id === -1 && current.pl === "Koniec!" && (
-            <div className="mt-8 text-center p-8 bg-gradient-to-br from-yellow-500/20 to-green-500/20 backdrop-blur-sm rounded-2xl border border-yellow-500/30 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-green-400/10 to-blue-400/10 animate-pulse"></div>
-              <div className="relative z-10">
-                <div className="text-6xl mb-4">🎉</div>
-                <h2 className="text-3xl font-bold text-white mb-2">
-                  Gratulacje!
-                </h2>
-                <p className="text-gray-300 text-lg">Ukończyłeś wszystkie fiszki w tej kategorii!</p>
-                <div className="mt-4 text-2xl font-bold text-yellow-400">
-                  +50 XP Bonus!
+            {feedbackState === "correct" && (
+              <div className="rounded-2xl border border-green-500/30 bg-green-500/15 p-4 backdrop-blur-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-400" />
+                    <span className="text-green-300 font-medium">Poprawnie!</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-yellow-400" />
+                    <span className="text-yellow-300 font-bold">+10 XP</span>
+                  </div>
                 </div>
               </div>
+            )}
+
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="rounded-xl border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)]/40 p-4 text-center backdrop-blur-sm">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400/20 to-emerald-500/30">
+                    <Trophy className="w-6 h-6 text-emerald-300" />
+                  </div>
+                  <div className="mt-2 text-xl font-bold text-[var(--foreground)]">{score}</div>
+                  <div className="text-xs text-[var(--muted-foreground)]">Poprawne</div>
+                </div>
+
+                <div className="rounded-xl border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)]/40 p-4 text-center backdrop-blur-sm">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400/20 to-sky-600/30">
+                    <Target className="w-6 h-6 text-sky-300" />
+                  </div>
+                  <div className="mt-2 text-xl font-bold text-[var(--foreground)]">{getWords().length - score}</div>
+                  <div className="text-xs text-[var(--muted-foreground)]">Pozostało</div>
+                </div>
+
+                <div className="rounded-xl border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)]/40 p-4 text-center backdrop-blur-sm">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-500/30">
+                    <Clock className="w-6 h-6 text-amber-300" />
+                  </div>
+                  <div className="mt-2 text-xl font-bold text-[var(--foreground)]">
+                    {Math.floor((Date.now() - sessionStartTime) / 60000)}
+                  </div>
+                  <div className="text-xs text-[var(--muted-foreground)]">Minut</div>
+                </div>
+
+                <div className="rounded-xl border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)]/40 p-4 text-center backdrop-blur-sm">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--cta-gradient-from)]/25 to-[var(--cta-gradient-to)]/25">
+                    <TrendingUp className="w-6 h-6 text-[var(--icon-purple)]" />
+                  </div>
+                  <div className="mt-2 text-xl font-bold text-[var(--foreground)]">{streak}</div>
+                  <div className="text-xs text-[var(--muted-foreground)]">Streak</div>
+                </div>
+              </div>
+
+              <button
+                onClick={resetGame}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)]/40 px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-all duration-300 hover:bg-[var(--overlay-light-strong)] hover:shadow-lg sm:w-auto"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset
+              </button>
             </div>
+
+            {current.id === -1 && current.pl === "Koniec!" && (
+              <div className="relative overflow-hidden rounded-2xl border border-[color:var(--border-translucent)] bg-gradient-to-br from-[var(--cta-gradient-from)]/20 via-[var(--cta-gradient-to)]/20 to-emerald-500/10 p-6 text-center backdrop-blur-sm sm:p-8">
+                <div className="absolute inset-0 bg-gradient-to-r from-[var(--cta-gradient-from)]/15 via-[var(--cta-gradient-to)]/15 to-emerald-400/10 animate-pulse"></div>
+                <div className="relative z-10 space-y-4">
+                  <div className="text-5xl">🎉</div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)]">Gratulacje!</h2>
+                  <p className="text-base sm:text-lg text-[var(--muted-foreground)]">Ukończyłeś wszystkie fiszki w tej kategorii!</p>
+                  <div className="text-xl font-bold text-[var(--icon-yellow)]">+50 XP Bonus!</div>
+                </div>
+              </div>
+           
           )}
         </div>
 
         {/* Settings Cards */}
         <div className="grid gap-6">
-          
-          {/* Category Selection */}
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6">
-            <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-              <Brain className="w-6 h-6 mr-2 text-blue-400" />
-              Kategoria
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {Categories.map((cat) => (
-                <button
-                  key={cat.name}
-                  onClick={() => setCategory(cat.name)}
-                  className={`p-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
-                    category === cat.name
-                      ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30"
-                      : "bg-white/10 backdrop-blur-sm text-gray-300 hover:bg-white/20 border border-white/20"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-          </div>
 
-          {/* Level & Direction */}
-          <div className="grid md:grid-cols-2 gap-6">
-            
-            {/* Level Selection */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6">
-              <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                <Target className="w-6 h-6 mr-2 text-green-400" />
-                Poziom
+          {/* Language Selection */}
+
+
+          <aside className="mt-8 space-y-6 lg:mt-0 lg:pl-2 lg:sticky lg:top-24">
+
+
+            <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5">
+              <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
+                <Brain className="w-5 h-5 mr-2 text-[var(--icon-blue)]" />
+                Kategoria
               </h3>
-              <div className="grid grid-cols-3 gap-3">
-                {["easy", "medium", "hard"].map((lvl) => {
-                  const isAvailable = availableLevels.includes(lvl);
-                  const isSelected = level === lvl;
-                  const levelLabels: Record<string, string> = { easy: "Łatwy", medium: "Średni", hard: "Trudny" };
-                  const levelColors: Record<string, string> = { 
-                    easy: "from-green-400 to-green-600", 
-                    medium: "from-amber-400 to-amber-600", 
-                    hard: "from-red-400 to-red-600" 
-                  };
-                  
-                  return (
-                    <button
-                      key={lvl}
-                      onClick={() => isAvailable && setLevel(lvl)}
-                      disabled={!isAvailable}
-                      className={`p-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
-                        isSelected
-                          ? `bg-gradient-to-r ${levelColors[lvl]} text-white shadow-lg`
-                          : isAvailable
-                          ? "bg-white/10 backdrop-blur-sm text-gray-300 hover:bg-white/20 border border-white/20"
-                          : "bg-gray-800/50 text-gray-600 cursor-not-allowed"
-                      }`}
-                    >
-                      <div className="text-xl mb-2">
-                        {lvl === 'easy' ? '●' : lvl === 'medium' ? '●●' : '●●●'}
-                      </div>
-                      {levelLabels[lvl]}
-                    </button>
-                  );
-                })}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {languageCategories.map((cat) => (
+                  <button
+                    key={cat.name}
+                    onClick={() => setCategory(cat.name)}
+                    className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                      category === cat.name
+                        ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
+                        : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Direction Selection */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6">
-              <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                <ChevronRight className="w-6 h-6 mr-2 text-violet-400" />
-                Kierunek
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setDirection("pl-en")}
-                  className={`p-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
-                    direction === "pl-en"
-                      ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30"
-                      : "bg-white/10 backdrop-blur-sm text-gray-300 hover:bg-white/20 border border-white/20"
-                  }`}
-                >
-                  <div className="text-xl mb-2">🇵🇱 → 🇬🇧</div>
-                  PL → EN
-                </button>
-                <button
-                  onClick={() => setDirection("en-pl")}
-                  className={`p-4 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 ${
-                    direction === "en-pl"
-                      ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30"
-                      : "bg-white/10 backdrop-blur-sm text-gray-300 hover:bg-white/20 border border-white/20"
-                  }`}
-                >
-                  <div className="text-xl mb-2">🇬🇧 → 🇵🇱</div>
-                  EN → PL
-                </button>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5">
+                <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
+                  <Target className="w-5 h-5 mr-2 text-green-400" />
+                  Poziom
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {["easy", "medium", "hard"].map((lvl) => {
+                    const isAvailable = availableLevels.includes(lvl);
+                    const isSelected = level === lvl;
+                    const levelLabels: Record<string, string> = { easy: "Łatwy", medium: "Średni", hard: "Trudny" };
+                    const levelColors: Record<string, string> = {
+                      easy: "from-green-400 to-green-600",
+                      medium: "from-amber-400 to-amber-600",
+                      hard: "from-red-400 to-red-600"
+                    };
+
+                    return (
+                      <button
+                        key={lvl}
+                        onClick={() => isAvailable && setLevel(lvl)}
+                        disabled={!isAvailable}
+                        className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                          isSelected
+                            ? `bg-gradient-to-r ${levelColors[lvl]} text-[var(--foreground)] shadow-lg`
+                            : isAvailable
+                            ? "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
+                            : "bg-[var(--overlay-dark)] text-[var(--muted-foreground)] opacity-60 cursor-not-allowed"
+                        }`}
+                      >
+                        <div className="text-lg">
+                          {lvl === 'easy' ? '●' : lvl === 'medium' ? '●●' : '●●●'}
+                        </div>
+                        {levelLabels[lvl]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5">
+                <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
+                  <ChevronRight className="w-5 h-5 mr-2 text-[var(--icon-purple)]" />
+                  Kierunek
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setDirection("native-to-target")}
+                    className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                      direction === "native-to-target"
+                        ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
+                        : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
+                    }`}
+                  >
+                    <div className="text-lg">PL → {targetShortLabel}</div>
+                    <div className="text-xs text-[var(--muted-foreground)] sm:text-sm">Polski → {targetLabel}</div>
+                  </button>
+                  <button
+                    onClick={() => setDirection("target-to-native")}
+                    className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                      direction === "target-to-native"
+                        ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
+                        : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
+                    }`}
+                  >
+                    <div className="text-lg">{targetShortLabel} → PL</div>
+                    <div className="text-xs text-[var(--muted-foreground)] sm:text-sm">{targetLabel} → Polski</div>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
-    </div>
+    </div></div>
     </>
   );
 }

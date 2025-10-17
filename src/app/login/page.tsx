@@ -83,28 +83,21 @@ export default function LoginPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center px-4 relative overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse"></div>
-        
-        {/* Floating Particles */}
-        <div className="absolute top-20 left-10 w-4 h-4 bg-purple-400/30 rounded-full animate-bounce"></div>
-        <div className="absolute top-40 right-20 w-6 h-6 bg-blue-400/30 rounded-full animate-pulse"></div>
-        <div className="absolute bottom-32 left-20 w-3 h-3 bg-pink-400/30 rounded-full animate-ping"></div>
-        <div className="absolute bottom-20 right-10 w-5 h-5 bg-indigo-400/30 rounded-full animate-bounce"></div>
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#030712] via-[#050b1f] to-black flex items-center justify-center px-4 py-16">
+        {/* Background glow */}
+        <div className="absolute inset-0 opacity-70">
+          <div className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-[#1D4ED8]/20 blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-72 w-72 translate-x-24 translate-y-24 rounded-full bg-[#1E3A8A]/30 blur-3xl" />
+        </div>
 
-        <div className="w-full max-w-md relative z-10">
-          {/* Main Login Card */}
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-8 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15">
-            {/* Header with Icon */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl mb-4 shadow-lg">
-                <Sparkles className="w-8 h-8 text-white" />
+        <div className="relative z-10 w-full max-w-lg">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-10 shadow-[0_25px_80px_rgba(3,7,18,0.65)] backdrop-blur-xl transition-transform duration-300 hover:scale-[1.01]">
+            <div className="text-center mb-10">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1D4ED8]/80 to-[#1E3A8A]/80 text-slate-100 shadow-[0_10px_30px_rgba(29,78,216,0.35)]">
+                <Sparkles className="h-8 w-8" />
               </div>
-              <h2 className="text-3xl font-bold text-white mb-2">
-                Zaloguj się
-              </h2>
-              <p className="text-gray-300">Wróć do nauki i rozwijaj swoje umiejętności</p>
+              <h2 className="text-3xl font-bold tracking-wide text-slate-100">Zaloguj się</h2>
+              <p className="mt-3 text-base text-slate-400">Wróć do nauki i rozwijaj swoje umiejętności</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-6">
@@ -119,7 +112,7 @@ export default function LoginPage() {
                   value={email}
                   required
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-14 pr-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-lg font-medium bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 border-white/20"
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-6 py-4 pl-14 text-base text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
                 />
               </div>
 
@@ -134,14 +127,23 @@ export default function LoginPage() {
                   value={password}
                   required
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-14 pr-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-lg font-medium bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 border-white/20"
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-6 py-4 pl-14 text-base text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
                 />
+              </div>
+
+              <div className="flex justify-end">
+                <a
+                  href="/reset-password"
+                  className="text-sm font-medium text-[#60A5FA] transition hover:text-[#93C5FD]"
+                >
+                  Zapomniałeś hasła?
+                </a>
               </div>
 
               {/* Error Message */}
               {errorMsg && (
-                <div className="p-4 bg-red-500/20 backdrop-blur-sm border border-red-500/30 rounded-xl">
-                  <p className="text-red-300 font-medium text-center">{errorMsg}</p>
+                <div className="rounded-2xl border border-red-500/40 bg-red-500/15 px-4 py-3 text-sm text-red-200 backdrop-blur">
+                  <p className="text-center font-medium">{errorMsg}</p>
                 </div>
               )}
 
@@ -149,7 +151,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:from-gray-600 disabled:to-gray-700 disabled:transform-none disabled:shadow-none text-lg"
+                className="w-full rounded-2xl bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A] px-6 py-4 text-lg font-semibold text-slate-100 shadow-[0_10px_30px_rgba(29,78,216,0.35)] transition hover:from-[#1E40AF] hover:to-[#172554] hover:shadow-[0_20px_40px_rgba(29,78,216,0.35)] disabled:from-slate-600 disabled:to-slate-700 disabled:shadow-none"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -165,10 +167,10 @@ export default function LoginPage() {
             {/* Divider */}
             <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/20"></div>
+                <div className="w-full border-t border-white/10" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white/10 backdrop-blur-sm text-gray-300 rounded-full border border-white/10">
+                <span className="rounded-full border border-white/10 bg-black/40 px-4 py-1 text-slate-400 backdrop-blur">
                   Lub kontynuuj z
                 </span>
               </div>
@@ -178,9 +180,9 @@ export default function LoginPage() {
             <button
               onClick={handleGoogleLogin}
               disabled={googleLoading}
-              className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-105 font-medium text-lg flex items-center justify-center disabled:opacity-70 disabled:transform-none"
+              className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-lg font-medium text-slate-100 transition hover:bg-white/10 disabled:opacity-70"
             >
-              <Chrome className="w-6 h-6 mr-3" />
+              <Chrome className="h-6 w-6 text-[#1D4ED8]" />
               {googleLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
@@ -192,12 +194,12 @@ export default function LoginPage() {
             </button>
 
             {/* Register Link */}
-            <div className="text-center mt-8">
-              <p className="text-gray-300 mb-4">
+            <div className="mt-8 text-center">
+              <p className="mb-4 text-slate-400">
                 Nie masz konta?{" "}
-                <a 
-                  href="/register" 
-                  className="text-purple-400 font-bold hover:text-purple-300 transition-colors underline decoration-purple-400/50 hover:decoration-purple-300"
+                <a
+                  href="/register"
+                  className="font-semibold text-[#1D4ED8] underline decoration-[#1D4ED8]/50 underline-offset-4 transition hover:text-[#60A5FA]"
                 >
                   Zarejestruj się
                 </a>
@@ -205,24 +207,20 @@ export default function LoginPage() {
             </div>
 
             {/* Theme Toggle */}
-            <div className="flex justify-center mt-6">
+            <div className="mt-6 flex justify-center">
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="w-12 h-12 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-110 flex items-center justify-center"
+                className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-100 transition hover:bg-white/10"
                 aria-label="Przełącz motyw"
               >
                 {theme === "dark" ? (
-                  <Sun className="w-6 h-6 text-yellow-400" />
+                  <Sun className="h-6 w-6 text-amber-300" />
                 ) : (
-                  <Moon className="w-6 h-6 text-purple-400" />
+                  <Moon className="h-6 w-6 text-[#1D4ED8]" />
                 )}
               </button>
             </div>
           </div>
-
-          {/* Additional Decorative Elements */}
-          <div className="absolute -top-6 -right-6 w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full opacity-20 animate-pulse"></div>
-          <div className="absolute -bottom-4 -left-4 w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full opacity-30 animate-bounce"></div>
         </div>
       </div>
     </>

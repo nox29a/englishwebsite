@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { isAuthSessionMissingError } from "@/lib/authErrorUtils";
 import Navbar from "@/components/Navbar";
 
 export default function Settings() {
@@ -26,6 +27,10 @@ export default function Settings() {
         } = await supabase.auth.getUser();
 
         if (error) {
+          if (isAuthSessionMissingError(error)) {
+            setLoading(false);
+            return;
+          }
           setErrorMsg(error.message);
           setLoading(false);
           return;
@@ -50,8 +55,11 @@ export default function Settings() {
           setFirstName(profile.first_name || "");
           setLastName(profile.last_name || "");
         }
-      } catch (err: any) {
-        setErrorMsg(err.message || "Nieoczekiwany błąd.");
+      } catch (err: unknown) {
+        if (!isAuthSessionMissingError(err)) {
+          const message = err instanceof Error ? err.message : String(err ?? "Nieoczekiwany błąd.");
+          setErrorMsg(message || "Nieoczekiwany błąd.");
+        }
       } finally {
         setLoading(false);
       }
@@ -110,77 +118,92 @@ export default function Settings() {
 
   return (
     <>
-    <Navbar />
-    <div className="max-w-lg mx-auto p-8 bg-gray-900 text-gray-100 rounded-2xl shadow-2xl space-y-8">
-      <h1 className="text-2xl font-bold mb-4 text-indigo-400">Ustawienia konta</h1>
+      <Navbar />
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#030712] via-[#050b1f] to-black px-6 py-16">
+        <div className="pointer-events-none absolute inset-0 opacity-60">
+          <div className="absolute -top-32 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-[#1D4ED8]/20 blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-[26rem] w-[26rem] translate-x-24 translate-y-20 rounded-full bg-[#1E3A8A]/30 blur-3xl" />
+        </div>
 
-      {/* Dane profilu */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-indigo-300">Dane osobowe</h2>
+        <div className="relative mx-auto w-full max-w-2xl space-y-10 text-slate-100">
+          <header className="text-center">
+            <h1 className="text-3xl font-semibold tracking-wide">Ustawienia konta</h1>
+            <p className="mt-3 text-sm text-slate-400">
+              Aktualizuj swoje dane i zarządzaj bezpieczeństwem w jednym miejscu.
+            </p>
+          </header>
 
-        <input
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          placeholder="Imię"
-          className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none"
-          />
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-10 shadow-[0_30px_90px_rgba(3,7,18,0.65)] backdrop-blur-2xl">
+            <div className="space-y-8">
+              {/* Dane profilu */}
+              <section className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-100">Dane osobowe</h2>
 
-        <input
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          placeholder="Nazwisko"
-          className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none"
-          />
+                <input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Imię"
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+                />
 
-        <button
-          onClick={saveChanges}
-          className="w-full bg-indigo-600 py-2 rounded-lg hover:bg-indigo-700 transition font-semibold"
-          >
-          Zapisz zmiany
-        </button>
+                <input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Nazwisko"
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+                />
 
-        {successMsg && <p className="text-green-400">{successMsg}</p>}
+                <button
+                  onClick={saveChanges}
+                  className="w-full rounded-2xl bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A] px-4 py-3 text-sm font-semibold text-slate-100 shadow-[0_15px_45px_rgba(29,78,216,0.45)] transition hover:from-[#1E40AF] hover:to-[#172554]"
+                >
+                  Zapisz zmiany
+                </button>
+
+                {successMsg && <p className="text-sm text-emerald-300">{successMsg}</p>}
+              </section>
+
+              {/* Zmiana hasła */}
+              <section className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-100">Zmiana hasła</h2>
+
+                {user.app_metadata?.provider === "google" ? (
+                  <p className="text-sm text-slate-400">
+                    🔒 Zalogowałeś się przez Google – zmiana hasła dostępna jest tylko w ustawieniach konta Google.
+                  </p>
+                ) : (
+                  <>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Aktualne hasło"
+                      className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+                    />
+
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Nowe hasło"
+                      className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+                    />
+
+                    <button
+                      onClick={handlePasswordChange}
+                      className="w-full rounded-2xl bg-[#1D4ED8]/20 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-[#1D4ED8]/30"
+                    >
+                      Zmień hasło
+                    </button>
+                  </>
+                )}
+
+                {passwordMsg && <p className="text-sm text-slate-300">{passwordMsg}</p>}
+              </section>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* Zmiana hasła */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-indigo-300">Zmiana hasła</h2>
-
-        {user.app_metadata?.provider === "google" ? (
-            <p className="text-gray-400 text-sm">
-            🔒 Zalogowałeś się przez Google – zmiana hasła dostępna jest tylko w
-            ustawieniach konta Google.
-          </p>
-        ) : (
-            <>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Aktualne hasło"
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none"
-              />
-
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Nowe hasło"
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none"
-              />
-
-            <button
-              onClick={handlePasswordChange}
-              className="w-full bg-pink-600 py-2 rounded-lg hover:bg-pink-700 transition font-semibold"
-              >
-              Zmień hasło
-            </button>
-          </>
-        )}
-
-        {passwordMsg && <p className="text-sm">{passwordMsg}</p>}
-      </div>
-    </div>
-        </>
+    </>
   );
 }

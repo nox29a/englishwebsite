@@ -94,111 +94,123 @@ export default function RegisterPage() {
   };
 
   return (
-          <>
-          <Navbar />
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-xl">
-        <h2 className="text-3xl font-bold text-center text-indigo-600 mb-6">
-          Załóż konto
-        </h2>
+    <>
+      <Navbar />
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#030712] via-[#050b1f] to-black px-4 py-16">
+        <div className="pointer-events-none absolute inset-0 opacity-60">
+          <div className="absolute -top-32 left-1/2 h-[26rem] w-[26rem] -translate-x-1/2 rounded-full bg-[#1D4ED8]/25 blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] translate-x-20 translate-y-16 rounded-full bg-[#1E3A8A]/30 blur-3xl" />
+        </div>
 
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              name="firstName"
-              type="text"
-              placeholder="Imię"
-              value={formData.firstName}
-              required
-              onChange={handleChange}
-              className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            />
-            <input
-              name="lastName"
-              type="text"
-              placeholder="Nazwisko"
-              value={formData.lastName}
-              required
-              onChange={handleChange}
-              className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            />
-          </div>
-
-          <input
-            name="email"
-            type="email"
-            placeholder="Adres email"
-            value={formData.email}
-            required
-            onChange={handleChange}
-            className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          />
-
-          <input
-            name="password"
-            type="password"
-            placeholder="Hasło (min. 6 znaków)"
-            value={formData.password}
-            required
-            minLength={6}
-            onChange={handleChange}
-            className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          />
-
-          <input
-            name="confirmPassword"
-            type="password"
-            placeholder="Powtórz hasło"
-            value={formData.confirmPassword}
-            required
-            minLength={6}
-            onChange={handleChange}
-            className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          />
-
-          <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-            <input
-              name="agreed"
-              type="checkbox"
-              checked={formData.agreed}
-              onChange={handleChange}
-              className="accent-indigo-600"
-            />
-            <span>
-              Akceptuję{" "}
-              <a href="/regulamin" className="underline text-indigo-600 hover:text-indigo-800 dark:hover:text-indigo-400">
-                regulamin
-              </a>
-            </span>
-          </label>
-
-          {errorMsg && (
-            <div className="p-3 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg">
-              {errorMsg}
+        <div className="relative mx-auto flex w-full max-w-xl flex-col items-center justify-center">
+          <div className="w-full rounded-3xl border border-white/10 bg-white/5 p-10 shadow-[0_30px_90px_rgba(3,7,18,0.65)] backdrop-blur-2xl">
+            <div className="mb-8 text-center">
+              <h2 className="text-3xl font-semibold tracking-wide text-slate-100">Załóż konto</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                W kilka minut dołączysz do AxonAI i zyskasz dostęp do spersonalizowanej nauki.
+              </p>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-2 rounded-xl transition font-semibold ${
-              loading 
-                ? 'bg-indigo-400 cursor-not-allowed' 
-                : 'bg-indigo-600 hover:bg-indigo-700'
-            } text-white`}
-          >
-            {loading ? "Rejestruję..." : "Zarejestruj się"}
-          </button>
-        </form>
+            <form onSubmit={handleRegister} className="space-y-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <input
+                  name="firstName"
+                  type="text"
+                  placeholder="Imię"
+                  value={formData.firstName}
+                  required
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+                />
+                <input
+                  name="lastName"
+                  type="text"
+                  placeholder="Nazwisko"
+                  value={formData.lastName}
+                  required
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+                />
+              </div>
 
-        <p className="text-sm text-center text-gray-600 dark:text-gray-400 mt-4">
-          Masz już konto?{" "}
-          <a href="/login" className="text-indigo-600 underline hover:text-indigo-800 dark:hover:text-indigo-400">
-            Zaloguj się
-          </a>
-        </p>
+              <input
+                name="email"
+                type="email"
+                placeholder="Adres email"
+                value={formData.email}
+                required
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+              />
+
+              <input
+                name="password"
+                type="password"
+                placeholder="Hasło (min. 6 znaków)"
+                value={formData.password}
+                required
+                minLength={6}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+              />
+
+              <input
+                name="confirmPassword"
+                type="password"
+                placeholder="Powtórz hasło"
+                value={formData.confirmPassword}
+                required
+                minLength={6}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+              />
+
+              <label className="flex items-center gap-3 text-sm text-slate-400">
+                <input
+                  name="agreed"
+                  type="checkbox"
+                  checked={formData.agreed}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded border border-white/20 bg-black/40 text-[#1D4ED8] focus:ring-[#1D4ED8]/60"
+                />
+                <span>
+                  Akceptuję{" "}
+                  <a
+                    href="/regulamin"
+                    className="font-semibold text-[#1D4ED8] underline decoration-[#1D4ED8]/50 underline-offset-4 hover:text-[#60A5FA]"
+                  >
+                    regulamin
+                  </a>
+                </span>
+              </label>
+
+              {errorMsg && (
+                <div className="rounded-2xl border border-red-500/40 bg-red-500/15 px-4 py-3 text-sm text-red-200 backdrop-blur">
+                  {errorMsg}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-2xl bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A] px-4 py-3 text-sm font-semibold text-slate-100 shadow-[0_15px_45px_rgba(29,78,216,0.45)] transition hover:from-[#1E40AF] hover:to-[#172554] disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-700"
+              >
+                {loading ? "Rejestruję..." : "Zarejestruj się"}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-slate-400">
+              Masz już konto?{" "}
+              <a
+                href="/login"
+                className="font-semibold text-[#1D4ED8] underline decoration-[#1D4ED8]/50 underline-offset-4 hover:text-[#60A5FA]"
+              >
+                Zaloguj się
+              </a>
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
     </>
   );
 }

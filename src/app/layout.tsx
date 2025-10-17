@@ -1,26 +1,10 @@
 // app/layout.tsx (komponent serwerowy - bez "use client")
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 
 import { AuthProvider } from "./ClientWrapper";
-
-import { Outfit, Fragment_Mono } from 'next/font/google'
-
-// czcionki
-const outfit = Outfit({
-  variable: '--font-outfit',
-  subsets: ['latin'],
-  display: 'swap',
-})
-
-const fragmentMono = Fragment_Mono({
-  variable: '--font-fragment-mono',
-  subsets: ['latin'],
-  weight: ['400'],
-  display: 'swap',
-})
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 export const metadata: Metadata = {
   title: "Axon",
@@ -34,13 +18,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${outfit.variable} ${fragmentMono.variable} antialiased`}
-      >
+      <body className="antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            
-            {children}
+            <LanguageProvider>
+              <div id="main-content" className="relative min-h-screen focus:outline-none">
+                {children}
+              </div>
+            </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

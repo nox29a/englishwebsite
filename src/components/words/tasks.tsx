@@ -1,3 +1,5 @@
+import type { LearningLanguage } from "./language_packs";
+
 export interface Task {
   id: number;
   level: string;
@@ -7,7 +9,7 @@ export interface Task {
   explanation: string;
 }
 
-export const tasks: Task[] = [
+const englishTasks: Task[] = [
 
   // === Łatwy ===
   {
@@ -2594,4 +2596,337 @@ explanation: "Reported Speech – Present Simple do Past Simple."
     answer: "is being solved",
     explanation: "Present Continuous Passive - problem jest aktualnie rozwiązywany (czynność w toku)."
   }
-]
+];
+
+const germanTasks: Task[] = [
+  {
+    id: 1,
+    level: "Łatwy",
+    question: "Er ____ in Berlin.",
+    options: ["wohnen", "wohnt", "wohnte", "gewohnt"],
+    answer: "wohnt",
+    explanation: "Trzecia osoba liczby pojedynczej w Präsens przyjmuje końcówkę -t.",
+  },
+  {
+    id: 2,
+    level: "Łatwy",
+    question: "Wir ____ heute ins Kino.",
+    options: ["gehen", "geht", "ging", "gegangen"],
+    answer: "gehen",
+    explanation: "Formy czasownika 'gehen' w Präsens dla 1. os. liczby mnogiej to 'gehen'.",
+  },
+  {
+    id: 3,
+    level: "Łatwy",
+    question: "Sie ____ eine Tasse Kaffee.",
+    options: ["trinkt", "trinken", "trank", "getrunken"],
+    answer: "trinkt",
+    explanation: "'Sie' w znaczeniu 'ona' wymaga końcówki -t.",
+  },
+  {
+    id: 4,
+    level: "Łatwy",
+    question: "Wie sagt man 'dziękuję' auf Deutsch?",
+    options: ["Bitte", "Danke", "Hallo", "Tschüss"],
+    answer: "Danke",
+    explanation: "'Danke' oznacza 'dziękuję'.",
+  },
+  {
+    id: 5,
+    level: "Łatwy",
+    question: "Der Plural von 'Kind' ist ____.",
+    options: ["Kinds", "Kinder", "Kinde", "Kinden"],
+    answer: "Kinder",
+    explanation: "Liczba mnoga rzeczownika 'Kind' to 'Kinder'.",
+  },
+  {
+    id: 6,
+    level: "Łatwy",
+    question: "Ich ____ jeden Morgen Tee.",
+    options: ["trinke", "trinkst", "trank", "getrunken"],
+    answer: "trinke",
+    explanation: "Pierwsza osoba liczby pojedynczej przyjmuje końcówkę -e.",
+  },
+  {
+    id: 7,
+    level: "Łatwy",
+    question: "Setze den Artikel: ____ Haus ist groß.",
+    options: ["Der", "Die", "Das", "Den"],
+    answer: "Das",
+    explanation: "'Haus' to rodzaj nijaki → 'das'.",
+  },
+  {
+    id: 8,
+    level: "Łatwy",
+    question: "Wähle das Gegenteil von 'klein'.",
+    options: ["lang", "groß", "kurz", "nah"],
+    answer: "groß",
+    explanation: "Przeciwieństwem 'klein' jest 'groß'.",
+  },
+  {
+    id: 9,
+    level: "Łatwy",
+    question: "Was bedeutet 'Freund'?",
+    options: ["przyjaciel", "wróg", "dziecko", "nauczyciel"],
+    answer: "przyjaciel",
+    explanation: "'Freund' oznacza 'przyjaciel'.",
+  },
+  {
+    id: 10,
+    level: "Łatwy",
+    question: "Er ____ gestern zu Hause.",
+    options: ["ist", "war", "ist gewesen", "sein"],
+    answer: "war",
+    explanation: "Czas przeszły Präteritum czasownika 'sein' to 'war'.",
+  },
+  {
+    id: 11,
+    level: "Średni",
+    question: "Wir ____ seit zwei Jahren Deutsch.",
+    options: ["lernen", "lernten", "haben gelernt", "lernen werden"],
+    answer: "lernen",
+    explanation: "Konstrukcja z 'seit' łączy się z Präsens → 'lernen'.",
+  },
+  {
+    id: 12,
+    level: "Średni",
+    question: "Er hat das Buch gestern ____.",
+    options: ["gekauft", "kauft", "kaufe", "kaufen"],
+    answer: "gekauft",
+    explanation: "Perfekt czasownika 'kaufen' tworzymy z 'gekauft'.",
+  },
+  {
+    id: 13,
+    level: "Średni",
+    question: "Setze richtig ein: Wenn es regnet, ____ ich zu Hause.",
+    options: ["bleibe", "bleibst", "bleibt", "blieb"],
+    answer: "bleibe",
+    explanation: "Pierwsza osoba liczby pojedynczej → 'bleibe'.",
+  },
+  {
+    id: 14,
+    level: "Średni",
+    question: "Übersetze: 'Ona lubi czytać książki'.",
+    options: ["Sie liest gern Bücher.", "Sie lese gern Bücher.", "Sie liest Bücher gern.", "Sie liest Bücher mögen."],
+    answer: "Sie liest gern Bücher.",
+    explanation: "Poprawny szyk: czasownik na drugim miejscu, 'gern' po czasowniku.",
+  },
+  {
+    id: 15,
+    level: "Średni",
+    question: "Wybierz poprawne zdanie w Perfekcie.",
+    options: ["Ich habe gegessen.", "Ich hat gegessen.", "Ich bin essen.", "Ich habe esse."],
+    answer: "Ich habe gegessen.",
+    explanation: "Czas Perfekt tworzymy z 'haben' + Partizip II.",
+  },
+  {
+    id: 16,
+    level: "Średni",
+    question: "Welche Präposition passt? Ich warte ____ dich.",
+    options: ["auf", "an", "mit", "zu"],
+    answer: "auf",
+    explanation: "Czasownik 'warten' łączy się z przyimkiem 'auf'.",
+  },
+  {
+    id: 17,
+    level: "Średni",
+    question: "Er sagte, er ____ später kommen.",
+    options: ["würde", "wird", "sei", "hat"],
+    answer: "würde",
+    explanation: "Mowa zależna w czasie przeszłym → używamy 'würde'.",
+  },
+  {
+    id: 18,
+    level: "Średni",
+    question: "Setze das richtige Modalverb: Du ____ mehr lernen.",
+    options: ["musst", "musstet", "müsste", "musste"],
+    answer: "musst",
+    explanation: "Wskazówka: powinność w teraźniejszości → 'musst'.",
+  },
+  {
+    id: 19,
+    level: "Średni",
+    question: "Welche Form ist richtig? 'Ich habe keine ____ Geld.'",
+    options: ["viel", "viele", "wenig", "mehr"],
+    answer: "viel",
+    explanation: "'Geld' jest niepoliczalne → używamy 'viel'.",
+  },
+  {
+    id: 20,
+    level: "Średni",
+    question: "Konjunktiv II: Wenn ich Zeit ____, würde ich reisen.",
+    options: ["habe", "hätte", "hatte", "haben"],
+    answer: "hätte",
+    explanation: "Tryb przypuszczający wymaga formy 'hätte'.",
+  },
+];
+
+const spanishTasks: Task[] = [
+  {
+    id: 1,
+    level: "Łatwy",
+    question: "Yo ____ café por la mañana.",
+    options: ["bebo", "bebes", "bebí", "bebido"],
+    answer: "bebo",
+    explanation: "Pierwsza osoba liczby pojedynczej w Presente → 'bebo'.",
+  },
+  {
+    id: 2,
+    level: "Łatwy",
+    question: "¿Cómo se dice 'dziękuję' en español?",
+    options: ["Hola", "Adiós", "Gracias", "Perdón"],
+    answer: "Gracias",
+    explanation: "'Gracias' oznacza 'dziękuję'.",
+  },
+  {
+    id: 3,
+    level: "Łatwy",
+    question: "El plural de 'libro' es ____.",
+    options: ["libros", "libres", "libras", "libra"],
+    answer: "libros",
+    explanation: "Dodajemy końcówkę -s → 'libros'.",
+  },
+  {
+    id: 4,
+    level: "Łatwy",
+    question: "Nosotros ____ en Madrid.",
+    options: ["vivimos", "vive", "vivís", "vivieron"],
+    answer: "vivimos",
+    explanation: "Pierwsza osoba liczby mnogiej w Presente → 'vivimos'.",
+  },
+  {
+    id: 5,
+    level: "Łatwy",
+    question: "Completa: Ella ____ una carta.",
+    options: ["escribe", "escribo", "escriben", "escrito"],
+    answer: "escribe",
+    explanation: "Trzecia osoba liczby pojedynczej → 'escribe'.",
+  },
+  {
+    id: 6,
+    level: "Łatwy",
+    question: "Selecciona el artículo correcto: ____ casa es grande.",
+    options: ["La", "El", "Los", "Un"],
+    answer: "La",
+    explanation: "'Casa' jest rodzaju żeńskiego → 'la'.",
+  },
+  {
+    id: 7,
+    level: "Łatwy",
+    question: "El contrario de 'frío' es ____.",
+    options: ["caliente", "corto", "grande", "viejo"],
+    answer: "caliente",
+    explanation: "Przeciwieństwo 'frío' to 'caliente'.",
+  },
+  {
+    id: 8,
+    level: "Łatwy",
+    question: "¿Qué significa 'amigo'?",
+    options: ["wróg", "przyjaciel", "dom", "dziecko"],
+    answer: "przyjaciel",
+    explanation: "'Amigo' oznacza 'przyjaciel'.",
+  },
+  {
+    id: 9,
+    level: "Łatwy",
+    question: "Ayer nosotros ____ al cine.",
+    options: ["vamos", "fuimos", "íbamos", "ir"],
+    answer: "fuimos",
+    explanation: "Czas Pretérito Indefinido od 'ir' → 'fuimos'.",
+  },
+  {
+    id: 10,
+    level: "Łatwy",
+    question: "¿Cómo se dice 'kot' en español?",
+    options: ["perro", "gato", "pájaro", "pez"],
+    answer: "gato",
+    explanation: "'Gato' oznacza 'kot'.",
+  },
+  {
+    id: 11,
+    level: "Średni",
+    question: "Yo ____ estudiando desde hace dos horas.",
+    options: ["estoy", "soy", "fui", "estaba"],
+    answer: "estoy",
+    explanation: "Konstrukcja 'estar + gerundio' wymaga czasownika 'estar' w Presente.",
+  },
+  {
+    id: 12,
+    level: "Średni",
+    question: "Ella ha ____ una carta.",
+    options: ["escrito", "escribido", "escribió", "escriba"],
+    answer: "escrito",
+    explanation: "Participio nieprawidłowe czasownika 'escribir' to 'escrito'.",
+  },
+  {
+    id: 13,
+    level: "Średni",
+    question: "Si tengo tiempo, ____ al gimnasio.",
+    options: ["voy", "fui", "iba", "iré"],
+    answer: "voy",
+    explanation: "Pierwszy tryb warunkowy używa Presente w zdaniu warunkowym.",
+  },
+  {
+    id: 14,
+    level: "Średni",
+    question: "Traduce: 'Oni mieszkają w Barcelonie'.",
+    options: ["Ellos viven en Barcelona.", "Ellos viven a Barcelona.", "Ellos vivan en Barcelona.", "Ellos vivieron en Barcelona."],
+    answer: "Ellos viven en Barcelona.",
+    explanation: "Czas teraźniejszy Presente de Indicativo: 'viven'.",
+  },
+  {
+    id: 15,
+    level: "Średni",
+    question: "Elige la forma correcta: Nosotros ____ terminado.",
+    options: ["hemos", "han", "habéis", "hayan"],
+    answer: "hemos",
+    explanation: "'Nosotros' w Perfekcie używa 'hemos'.",
+  },
+  {
+    id: 16,
+    level: "Średni",
+    question: "¿Qué preposición falta? Estoy esperando ____ ti.",
+    options: ["por", "a", "de", "con"],
+    answer: "a",
+    explanation: "'Esperar a alguien' – używamy przyimka 'a'.",
+  },
+  {
+    id: 17,
+    level: "Średni",
+    question: "Elige el tiempo correcto: Mañana ____ a estudiar.",
+    options: ["voy", "fui", "iba", "he ido"],
+    answer: "voy",
+    explanation: "Wyrażenie 'ir a + infinitivo' w przyszłości wymaga formy 'voy'.",
+  },
+  {
+    id: 18,
+    level: "Średni",
+    question: "Completa: Deberías ____ más.",
+    options: ["estudiar", "estudia", "estudiando", "estudiado"],
+    answer: "estudiar",
+    explanation: "Po 'deberías' używamy bezokolicznika.",
+  },
+  {
+    id: 19,
+    level: "Średni",
+    question: "Selecciona la opción correcta: No tengo ____ dinero.",
+    options: ["mucho", "muchos", "muchas", "muy"],
+    answer: "mucho",
+    explanation: "'Dinero' jest niepoliczalne → 'mucho'.",
+  },
+  {
+    id: 20,
+    level: "Średni",
+    question: "Condicional: Si yo ____ tiempo, viajaría más.",
+    options: ["tengo", "tuviera", "tuve", "tendré"],
+    answer: "tuviera",
+    explanation: "Drugi tryb warunkowy wymaga Imperfecto de Subjuntivo: 'tuviera'.",
+  },
+];
+
+export const TASK_BANKS: Record<LearningLanguage, Task[]> = {
+  en: englishTasks,
+  de: germanTasks,
+  es: spanishTasks,
+};
+

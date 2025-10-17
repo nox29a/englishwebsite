@@ -1,21 +1,89 @@
 
 import { supabase } from "@/lib/supabaseClient";
 
-export async function saveAttempt(userId: string, question: {
-  type: string;         // np. "flashcard"
-  id: number;           // id pytania/słówka
+type QuestionAttempt = {
+  type: string;
+  id: number | string;
   isCorrect: boolean;
-  timeTaken: number;    // w sekundach
-  difficulty?: string;  // opcjonalnie A1/B1 itp.
-}) {
-  const { error } = await supabase.from("question_attempts").insert([{
-    user_id: userId,
-    question_type: question.type,
-    question_id: question.id,
-    is_correct: question.isCorrect,
-    time_taken: question.timeTaken,
-    difficulty: question.difficulty || null,
-  }]);
+  timeTaken: number;
+  difficulty?: string;
+  skillTags?: string[];
+  prompt?: string;
+  expectedAnswer?: string;
+  userAnswer?: string;
+  metadata?: Record<string, unknown>;
+};
 
-  if (error) console.error("Error saving attempt:", error);
+export async function saveAttempt(userId: string, question: QuestionAttempt) {
+  const now = new Date();
+  const sessionStart = new Date(now.getTime() - Math.max(1, question.timeTaken) * 1000);
+
+  const sessionPayload = {
+    user_id: userId,
+    started_at: sessionStart.toISOString(),
+    ended_at: now.toISOString(),
+    source: question.type,
+  };
+
+  const { data: sessionData, error: sessionError } = await supabase
+    .from("exercise_sessions")
+    .insert([sessionPayload])
+    .select("id")
+    .single();
+
+  if (sessionError || !sessionData) {
+    console.error("Error creating exercise session:", sessionError?.message);
+    return;
+  }
+
+  const attemptPayload = {
+    session_id: sessionData.id,
+    user_id: userId,
+    template_id: null,
+    skill_tags: question.skillTags?.length ? question.skillTags : [question.type],
+    started_at: sessionStart.toISOString(),
+    completed_at: now.toISOString(),
+    total_questions: 1,
+    correct_answers: question.isCorrect ? 1 : 0,
+    incorrect_answers: question.isCorrect ? 0 : 1,
+    skipped_answers: 0,
+    score: question.isCorrect ? 100 : 0,
+    mastery: question.isCorrect ? 100 : 0,
+    metadata: {
+      difficulty: question.difficulty ?? null,
+      question_id: question.id,
+      ...question.metadata,
+    },
+  };
+
+  const { data: attemptData, error: attemptError } = await supabase
+    .from("exercise_attempts")
+    .insert([attemptPayload])
+    .select("id")
+    .single();
+
+  if (attemptError || !attemptData) {
+    console.error("Error creating exercise attempt:", attemptError?.message);
+    return;
+  }
+
+  const answerPayload = {
+    attempt_id: attemptData.id,
+    user_id: userId,
+    question_identifier: `${question.type}:${question.id}`,
+    prompt: question.prompt ?? null,
+    expected_answer: question.expectedAnswer ?? null,
+    user_answer: question.userAnswer ?? null,
+    is_correct: question.isCorrect,
+    latency_ms: Math.round(question.timeTaken * 1000),
+    skill_tag: question.skillTags?.[0] ?? question.type,
+  };
+
+  const { error: answerError } = await supabase
+    .from("answer_events")
+    .insert([answerPayload]);
+
+  if (answerError) {
+    console.error("Error saving answer event:", answerError.message);
+  }
 }

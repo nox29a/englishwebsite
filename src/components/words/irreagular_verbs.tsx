@@ -1,3 +1,5 @@
+import type { LearningLanguage } from "./language_packs";
+
 export interface Verb {
   index: number;
   base: string;
@@ -6,8 +8,7 @@ export interface Verb {
   translation: string;
 }
 
-export const verbs: Verb[] = [
-
+const englishVerbs: Verb[] = [
   { index: 1, base: "arise", past: "arose", participle: "arisen", translation: "powstawać" },
   { index: 2, base: "awake", past: "awoke", participle: "awoken", translation: "budzić się" },
   { index: 3, base: "be", past: "was/were", participle: "been", translation: "być" },
@@ -104,5 +105,67 @@ export const verbs: Verb[] = [
   { index: 94, base: "wake", past: "woke", participle: "woken", translation: "budzić się" },
   { index: 95, base: "wear", past: "wore", participle: "worn", translation: "nosić (ubranie)" },
   { index: 96, base: "win", past: "won", participle: "won", translation: "wygrywać" },
-  { index: 97, base: "write", past: "wrote", participle: "written", translation: "pisać" }
+  { index: 97, base: "write", past: "wrote", participle: "written", translation: "pisać" },
 ];
+
+const germanVerbs: Verb[] = [
+  { index: 1, base: "sein", past: "war", participle: "gewesen", translation: "być" },
+  { index: 2, base: "haben", past: "hatte", participle: "gehabt", translation: "mieć" },
+  { index: 3, base: "gehen", past: "ging", participle: "gegangen", translation: "iść" },
+  { index: 4, base: "kommen", past: "kam", participle: "gekommen", translation: "przychodzić" },
+  { index: 5, base: "sehen", past: "sah", participle: "gesehen", translation: "widzieć" },
+  { index: 6, base: "nehmen", past: "nahm", participle: "genommen", translation: "brać" },
+  { index: 7, base: "sprechen", past: "sprach", participle: "gesprochen", translation: "mówić" },
+  { index: 8, base: "finden", past: "fand", participle: "gefunden", translation: "znajdować" },
+  { index: 9, base: "geben", past: "gab", participle: "gegeben", translation: "dawać" },
+  { index: 10, base: "stehen", past: "stand", participle: "gestanden", translation: "stać" },
+  { index: 11, base: "fahren", past: "fuhr", participle: "gefahren", translation: "jechać" },
+  { index: 12, base: "schreiben", past: "schrieb", participle: "geschrieben", translation: "pisać" },
+  { index: 13, base: "lesen", past: "las", participle: "gelesen", translation: "czytać" },
+  { index: 14, base: "essen", past: "aß", participle: "gegessen", translation: "jeść" },
+  { index: 15, base: "trinken", past: "trank", participle: "getrunken", translation: "pić" },
+  { index: 16, base: "schlafen", past: "schlief", participle: "geschlafen", translation: "spać" },
+  { index: 17, base: "helfen", past: "half", participle: "geholfen", translation: "pomagać" },
+  { index: 18, base: "laufen", past: "lief", participle: "gelaufen", translation: "biec" },
+  { index: 19, base: "beginnen", past: "begann", participle: "begonnen", translation: "zaczynać" },
+  { index: 20, base: "bringen", past: "brachte", participle: "gebracht", translation: "przynosić" },
+  { index: 21, base: "denken", past: "dachte", participle: "gedacht", translation: "myśleć" },
+  { index: 22, base: "bleiben", past: "blieb", participle: "geblieben", translation: "pozostawać" },
+  { index: 23, base: "schwimmen", past: "schwamm", participle: "geschwommen", translation: "pływać" },
+  { index: 24, base: "singen", past: "sang", participle: "gesungen", translation: "śpiewać" },
+  { index: 25, base: "werden", past: "wurde", participle: "geworden", translation: "stawać się" },
+];
+
+const spanishVerbs: Verb[] = [
+  { index: 1, base: "ser", past: "fui", participle: "sido", translation: "być" },
+  { index: 2, base: "ir", past: "fui", participle: "ido", translation: "iść" },
+  { index: 3, base: "tener", past: "tuve", participle: "tenido", translation: "mieć" },
+  { index: 4, base: "hacer", past: "hice", participle: "hecho", translation: "robić" },
+  { index: 5, base: "decir", past: "dije", participle: "dicho", translation: "mówić" },
+  { index: 6, base: "poder", past: "pude", participle: "podido", translation: "móc" },
+  { index: 7, base: "poner", past: "puse", participle: "puesto", translation: "kłaść" },
+  { index: 8, base: "venir", past: "vine", participle: "venido", translation: "przychodzić" },
+  { index: 9, base: "ver", past: "vi", participle: "visto", translation: "widzieć" },
+  { index: 10, base: "dar", past: "di", participle: "dado", translation: "dawać" },
+  { index: 11, base: "querer", past: "quise", participle: "querido", translation: "chcieć" },
+  { index: 12, base: "saber", past: "supe", participle: "sabido", translation: "wiedzieć" },
+  { index: 13, base: "traer", past: "traje", participle: "traído", translation: "przynosić" },
+  { index: 14, base: "andar", past: "anduve", participle: "andado", translation: "chodzić" },
+  { index: 15, base: "estar", past: "estuve", participle: "estado", translation: "być (tymczasowo)" },
+  { index: 16, base: "traducir", past: "traduje", participle: "traducido", translation: "tłumaczyć" },
+  { index: 17, base: "conducir", past: "conduje", participle: "conducido", translation: "prowadzić" },
+  { index: 18, base: "producir", past: "produje", participle: "producido", translation: "produkować" },
+  { index: 19, base: "haber", past: "hube", participle: "habido", translation: "mieć (czasownik pomocniczy)" },
+  { index: 20, base: "oír", past: "oí", participle: "oído", translation: "słyszeć" },
+  { index: 21, base: "caer", past: "caí", participle: "caído", translation: "upadać" },
+  { index: 22, base: "creer", past: "creí", participle: "creído", translation: "wierzyć" },
+  { index: 23, base: "leer", past: "leí", participle: "leído", translation: "czytać" },
+  { index: 24, base: "dormir", past: "dormí", participle: "dormido", translation: "spać" },
+  { index: 25, base: "sentir", past: "sentí", participle: "sentido", translation: "czuć" },
+];
+
+export const VERB_SETS: Record<LearningLanguage, Verb[]> = {
+  en: englishVerbs,
+  de: germanVerbs,
+  es: spanishVerbs,
+};

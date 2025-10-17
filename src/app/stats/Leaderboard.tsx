@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
+
+import { statsCardClass, subtleTextClass } from "./cardStyles";
 
 interface Profile {
   id: string;
@@ -21,118 +24,80 @@ export default function Leaderboard() {
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      try {
-        console.log("Fetching leaderboard data...");
-        
-        // Pobierz dane leaderboard
-        const { data: leaderboardData, error: leaderboardError } = await supabase
-          .from("leaderboard")
-          .select("points, user_id")
-          .order("points", { ascending: false })
-          .limit(10);
+      const { data: leaderboardData, error: leaderboardError } = await supabase
+        .from("view_xp_leaderboard")
+        .select("total_xp, user_id")
+        .order("total_xp", { ascending: false })
+        .limit(10);
 
-        if (leaderboardError) {
-          console.error("Leaderboard error:", leaderboardError);
-          throw leaderboardError;
-        }
-
-        console.log("Leaderboard data:", leaderboardData);
-
-        if (!leaderboardData || leaderboardData.length === 0) {
-          console.log("No leaderboard data found");
-          setLeaders([]);
-          return;
-        }
-
-        // Pobierz profile użytkowników
-        const userIds = leaderboardData.map(entry => entry.user_id);
-        console.log("User IDs to fetch:", userIds);
-
-        const { data: profilesData, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, first_name, last_name")
-          .in("id", userIds);
-
-        if (profilesError) {
-          console.error("Profiles error:", profilesError);
-          throw profilesError;
-        }
-
-        console.log("Profiles data:", profilesData);
-
-        // Połącz dane - POPRAWIONE
-        const combinedData = leaderboardData.map(entry => {
-          const profile = profilesData?.find(profile => profile.id === entry.user_id) || null;
-          console.log(`User ${entry.user_id} profile:`, profile);
-          return {
-            points: entry.points,
-            user_id: entry.user_id,
-            profile: profile
-          };
-        });
-
-        console.log("Combined data:", combinedData);
-        setLeaders(combinedData);
-        
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      if (leaderboardError || !leaderboardData?.length) {
+        setLeaders([]);
+        return;
       }
+
+      const userIds = leaderboardData.map((entry) => entry.user_id);
+
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .in("id", userIds);
+
+      setLeaders(
+        leaderboardData.map((entry) => ({
+          points: entry.total_xp ?? 0,
+          user_id: entry.user_id,
+          profile: profilesData?.find((profile) => profile.id === entry.user_id) ?? null,
+        }))
+      );
     };
-    
+
     fetchLeaderboard();
   }, []);
 
-  // Funkcja do formatowania nazwy użytkownika - POPRAWIONA
   const formatUserName = (profile: Profile | null) => {
     if (!profile) {
-      console.log("No profile provided");
-      return "No Name";
+      return "Użytkownik";
     }
-    
-    console.log("Formatting profile:", profile);
-    
+
     const firstName = profile.first_name?.trim();
     const lastName = profile.last_name?.trim();
-    
-    console.log("First name:", firstName, "Last name:", lastName);
-    
-    if (!firstName && !lastName) {
-      console.log("Both names empty");
-      return "No Name";
-    }
-    if (!firstName) {
-      console.log("Only last name available");
-      return lastName || "No Name";
-    }
-    if (!lastName) {
-      console.log("Only first name available");
-      return firstName;
-    }
-    
-    console.log("Both names available");
+
+    if (!firstName && !lastName) return "Użytkownik";
+    if (!firstName) return lastName ?? "Użytkownik";
+    if (!lastName) return firstName;
     return `${firstName} ${lastName}`;
   };
 
   return (
-    <Card className="p-6 shadow-xl rounded-2xl bg-indigo-900">
-      <h2 className="text-xl font-bold mb-4 text-white">🏆 Ranking</h2>
+    <Card className={`${statsCardClass} overflow-hidden`}> 
+      <div className="absolute inset-x-6 top-0 h-[2px] bg-gradient-to-r from-[#1D4ED8] via-[#3B82F6] to-[#1E3A8A]" />
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold tracking-wide">🏆 Ranking</h2>
+        <span className="rounded-full border border-[#1D4ED8]/40 bg-[#1D4ED8]/20 px-3 py-1 text-xs uppercase tracking-wide text-[#93C5FD]">
+          Top 10
+        </span>
+      </div>
+      <p className={subtleTextClass}>Najlepsi uczniowie AxonAI z ostatnich tygodni.</p>
       <ul className="space-y-3">
-        {leaders.map((entry, i) => {
-          const userName = formatUserName(entry.profile);
-          console.log(`Rendering user ${entry.user_id}: ${userName}`);
-          
-          return (
-            <li
-              key={entry.user_id || i}
-              className="flex justify-between items-center text-white"
-            >
-              <span className="font-medium text-yellow-300">
-                {i + 1}. {userName}
+        {leaders.length === 0 && (
+          <li className="rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-center text-slate-300">
+            Brak danych leaderboardu.
+          </li>
+        )}
+        {leaders.map((entry, index) => (
+          <li
+            key={entry.user_id}
+            className="group flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-4 py-3 transition-all duration-300 hover:border-[#1D4ED8]/40 hover:bg-[#1D4ED8]/10"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1D4ED8]/30 text-sm font-semibold text-[#E2E8F0]">
+                {index + 1}
               </span>
-              <span className="text-yellow-300 font-bold">{entry.points} pkt</span>
-            </li>
-          );
-        })}
+              <span className="font-medium text-slate-100">{formatUserName(entry.profile)}</span>
+            </div>
+            <span className="text-sm font-semibold text-[#93C5FD]">{entry.points} pkt</span>
+          </li>
+        ))}
       </ul>
     </Card>
   );

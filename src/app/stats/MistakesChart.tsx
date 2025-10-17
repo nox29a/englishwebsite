@@ -1,57 +1,96 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { isAuthSessionMissingError } from "@/lib/authErrorUtils";
 
-const COLORS = ["#EF4444", "#10B981"]; // czerwony/błędy, zielony/poprawne
+import { statsCardClass, subtleTextClass } from "./cardStyles";
+
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+
+interface AttemptStat {
+  name: string;
+  value: number;
+}
+
+const COLORS = ["#EF4444", "#10B981"];
 
 export default function MistakesChart() {
-  const [stats, setStats] = useState<any[]>([]);
+  const [stats, setStats] = useState<AttemptStat[]>([]);
 
   useEffect(() => {
     const fetchAttempts = async () => {
-      const { data, error } = await supabase
-        .from("question_attempts")
-        .select("is_correct");
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-      if (!error && data) {
-        const correct = data.filter((d) => d.is_correct).length;
-        const incorrect = data.length - correct;
-        setStats([
-          { name: "Poprawne", value: incorrect },
-          { name: "Błędne", value: correct },
-        ]);
+      if (error) {
+        if (!isAuthSessionMissingError(error)) {
+          console.error("Nie udało się pobrać sesji użytkownika:", error);
+        }
+        return;
       }
+
+      if (!user) return;
+
+      const { data, error: mistakesError } = await supabase
+        .from("answer_events")
+        .select("is_correct")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      if (mistakesError || !data) {
+        setStats([]);
+        return;
+      }
+
+      const correct = data.filter((d) => d.is_correct).length;
+      const incorrect = data.length - correct;
+
+      setStats([
+        { name: "Poprawne", value: correct },
+        { name: "Błędne", value: incorrect },
+      ]);
     };
+
     fetchAttempts();
   }, []);
 
   return (
-    <Card className="p-6 shadow-xl rounded-2xl bg-indigo-900">
-      <h2 className="text-xl font-bold mb-4 text-center">✅ poprawne odpowiedzi vs ❌ błędne odpowiedzi</h2>
-      <ResponsiveContainer width="100%" height={250}>
+    <Card className={`${statsCardClass} gap-6`}>
+      <div>
+        <h2 className="text-xl font-semibold tracking-wide">Skuteczność odpowiedzi</h2>
+        <p className={subtleTextClass}>Porównanie poprawnych i błędnych odpowiedzi w quizach.</p>
+      </div>
+      <ResponsiveContainer width="100%" height={260}>
         <PieChart>
-          <Pie
-            data={stats}
-            dataKey="value"
-            outerRadius={100}
-            label
-          >
+          <Pie data={stats} dataKey="value" innerRadius={60} outerRadius={100} paddingAngle={4}>
             {stats.map((entry, index) => (
-              <Cell key={index} fill={COLORS[index % COLORS.length]} />
+              <Cell key={entry.name} fill={COLORS[index % COLORS.length]} opacity={0.85} />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "rgba(3, 7, 18, 0.9)",
+              borderRadius: "12px",
+              border: "1px solid rgba(148, 163, 184, 0.2)",
+              color: "#E2E8F0",
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
+      <div className="flex items-center justify-center gap-6 text-sm">
+        {stats.map((entry, index) => (
+          <div key={entry.name} className="flex items-center gap-2 text-slate-300">
+            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+            {entry.name}: <span className="font-semibold text-slate-100">{entry.value}</span>
+          </div>
+        ))}
+      </div>
     </Card>
   );
 }

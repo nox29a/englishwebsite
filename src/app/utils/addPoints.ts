@@ -1,46 +1,62 @@
 // utils/addPoints.ts
 import { supabase } from "@/lib/supabaseClient";
 
-export async function addPoints(userId: string, points: number) {
-  // spróbuj pobrać aktualne punkty
-  const { data, error } = await supabase
-    .from("leaderboard")
-    .select("points")
-    .eq("user_id", userId)
-    .maybeSingle(); // zwróci null, jeśli nie ma użytkownika
+export async function addPoints(userId: string, points: number, source = "lesson_reward") {
+  const occurredAt = new Date();
 
-  if (error) {
-    console.error("Błąd przy pobieraniu punktów:", error.message);
+  const { error: historyError } = await supabase.from("xp_history").insert([
+    {
+      user_id: userId,
+      amount: points,
+      source,
+      occurred_at: occurredAt.toISOString(),
+      metadata: { awarded_by: "app" },
+    },
+  ]);
+
+  if (historyError) {
+    console.error("Błąd przy zapisywaniu historii XP:", historyError.message);
     return;
   }
 
-  if (data) {
-    // user istnieje → zaktualizuj punkty
+  const metricsDate = occurredAt.toISOString().slice(0, 10);
+
+  const { data: dailyRow, error: fetchError } = await supabase
+    .from("daily_metrics")
+    .select("xp_gained")
+    .eq("user_id", userId)
+    .eq("metrics_date", metricsDate)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error("Błąd przy pobieraniu dziennych metryk:", fetchError.message);
+    return;
+  }
+
+  if (dailyRow) {
     const { error: updateError } = await supabase
-      .from("leaderboard")
+      .from("daily_metrics")
       .update({
-        points: data.points + points,
+        xp_gained: (dailyRow.xp_gained ?? 0) + points,
         updated_at: new Date().toISOString(),
       })
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("metrics_date", metricsDate);
 
     if (updateError) {
-      console.error("Błąd przy aktualizacji punktów:", updateError.message);
+      console.error("Błąd przy aktualizacji dziennych metryk:", updateError.message);
     }
   } else {
-    // user nie istnieje → wstaw nowy rekord
-    const { error: insertError } = await supabase
-      .from("leaderboard")
-      .insert([
-        {
-          user_id: userId,
-          points,
-          updated_at: new Date().toISOString(),
-        },
-      ]);
+    const { error: insertError } = await supabase.from("daily_metrics").insert([
+      {
+        user_id: userId,
+        metrics_date: metricsDate,
+        xp_gained: points,
+      },
+    ]);
 
     if (insertError) {
-      console.error("Błąd przy dodawaniu nowego usera:", insertError.message);
+      console.error("Błąd przy zapisie dziennych metryk:", insertError.message);
     }
   }
 }

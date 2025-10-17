@@ -1,138 +1,78 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
+import { isAuthSessionMissingError } from "@/lib/authErrorUtils";
 
-interface Profile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
+import { statsCardClass, subtleTextClass } from "./cardStyles";
+
+interface MistakeSummary {
+  incorrect: number;
+  total: number;
 }
 
-interface LeaderboardEntry {
-  points: number;
-  user_id: string;
-  profile: Profile | null;
-}
-
-export default function Leaderboard() {
-  const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
+export default function Mistakes() {
+  const [summary, setSummary] = useState<MistakeSummary>({ incorrect: 0, total: 0 });
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        console.log("Fetching leaderboard data...");
-        
-        // Pobierz dane leaderboard
-        const { data: leaderboardData, error: leaderboardError } = await supabase
-          .from("leaderboard")
-          .select("points, user_id")
-          .order("points", { ascending: false })
-          .limit(10);
+    const fetchMistakes = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-        if (leaderboardError) {
-          console.error("Leaderboard error:", leaderboardError);
-          throw leaderboardError;
+      if (error) {
+        if (!isAuthSessionMissingError(error)) {
+          console.error("Nie udało się pobrać sesji użytkownika:", error);
         }
-
-        console.log("Leaderboard data:", leaderboardData);
-
-        if (!leaderboardData || leaderboardData.length === 0) {
-          console.log("No leaderboard data found");
-          setLeaders([]);
-          return;
-        }
-
-        // Pobierz profile użytkowników
-        const userIds = leaderboardData.map(entry => entry.user_id);
-        console.log("User IDs to fetch:", userIds);
-
-        const { data: profilesData, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, first_name, last_name")
-          .in("id", userIds);
-
-        if (profilesError) {
-          console.error("Profiles error:", profilesError);
-          throw profilesError;
-        }
-
-        console.log("Profiles data:", profilesData);
-
-        // Połącz dane - POPRAWIONE
-        const combinedData = leaderboardData.map(entry => {
-          const profile = profilesData?.find(profile => profile.id === entry.user_id) || null;
-          console.log(`User ${entry.user_id} profile:`, profile);
-          return {
-            points: entry.points,
-            user_id: entry.user_id,
-            profile: profile
-          };
-        });
-
-        console.log("Combined data:", combinedData);
-        setLeaders(combinedData);
-        
-      } catch (error) {
-        console.error("Error fetching data:", error);
+        return;
       }
+
+      if (!user) return;
+
+      const { data, error: mistakesError } = await supabase
+        .from("answer_events")
+        .select("is_correct")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      if (mistakesError || !data?.length) return;
+
+      const incorrect = data.filter((attempt) => !attempt.is_correct).length;
+
+      setSummary({ incorrect, total: data.length });
     };
-    
-    fetchLeaderboard();
+
+    fetchMistakes();
   }, []);
 
-  // Funkcja do formatowania nazwy użytkownika - POPRAWIONA
-  const formatUserName = (profile: Profile | null) => {
-    if (!profile) {
-      console.log("No profile provided");
-      return "No Name";
-    }
-    
-    console.log("Formatting profile:", profile);
-    
-    const firstName = profile.first_name?.trim();
-    const lastName = profile.last_name?.trim();
-    
-    console.log("First name:", firstName, "Last name:", lastName);
-    
-    if (!firstName && !lastName) {
-      console.log("Both names empty");
-      return "No Name";
-    }
-    if (!firstName) {
-      console.log("Only last name available");
-      return lastName || "No Name";
-    }
-    if (!lastName) {
-      console.log("Only first name available");
-      return firstName;
-    }
-    
-    console.log("Both names available");
-    return `${firstName} ${lastName}`;
-  };
+  const accuracy = summary.total > 0 ? Math.round(((summary.total - summary.incorrect) / summary.total) * 100) : 0;
 
   return (
-    <Card className="p-6 shadow-xl rounded-2xl bg-indigo-900">
-      <h2 className="text-xl font-bold mb-4 text-white">🏆 Ranking</h2>
-      <ul className="space-y-3">
-        {leaders.map((entry, i) => {
-          const userName = formatUserName(entry.profile);
-          console.log(`Rendering user ${entry.user_id}: ${userName}`);
-          
-          return (
-            <li
-              key={entry.user_id || i}
-              className="flex justify-between items-center text-white"
-            >
-              <span className="font-medium text-yellow-300">
-                {i + 1}. {userName}
-              </span>
-              <span className="text-yellow-300 font-bold">{entry.points} pkt</span>
-            </li>
-          );
-        })}
+    <Card className={`${statsCardClass} gap-6`}>
+      <div>
+        <h2 className="text-xl font-semibold tracking-wide">Analiza błędów</h2>
+        <p className={subtleTextClass}>Szybki przegląd najczęstszych potknięć i rekomendacje dalszych działań.</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-slate-200">
+          <p className="text-xs uppercase tracking-[0.3em] text-[#94A3B8]">Błędne odpowiedzi</p>
+          <p className="mt-2 text-3xl font-semibold text-[#F87171]">{summary.incorrect}</p>
+          <p className="text-xs text-slate-400">odpowiedzi wymagają powtórki</p>
+        </div>
+        <div className="rounded-xl border border-[#1D4ED8]/40 bg-[#1D4ED8]/15 p-4 text-slate-100">
+          <p className="text-xs uppercase tracking-[0.3em] text-[#93C5FD]">Skuteczność</p>
+          <p className="mt-2 text-3xl font-semibold">{accuracy}%</p>
+          <p className="text-xs text-slate-300">ogólny wynik poprawności</p>
+        </div>
+      </div>
+      <ul className="list-disc space-y-2 pl-5 text-sm text-slate-300">
+        <li>Przejrzyj pytania z niską skutecznością w zakładce powtórek.</li>
+        <li>Ustal plan powtórek co 2-3 dni, aby utrwalić nowe informacje.</li>
+        <li>Wykorzystaj tryb ćwiczeń tematycznych, by skupić się na słabszych obszarach.</li>
       </ul>
     </Card>
   );

@@ -1,3 +1,5 @@
+import type { LearningLanguage } from "./language_packs";
+
 export type Question = {
   q: string
   options?: string[]   // tylko dla "choice"
@@ -6,7 +8,7 @@ export type Question = {
   explanation?: string // opcjonalne wyjaśnienie
 }
 
-export const questionsDB: Record<string, Question[]> = {
+const englishQuestions: Record<string, Question[]> = {
 "A1": [
     // Sekcja: Podstawowe zwroty i reakcje
     { q: "What's your name?", type: "choice", options: ["I'm fine, thanks.", "My name is Anna.", "Yes, I am.", "It's good."], answer: 1 },
@@ -632,3 +634,137 @@ export const questionsDB: Record<string, Question[]> = {
     { q: "Not only ___ he win, but he also broke the record.", answer: "did", type: "fill" },
   ]
 };
+
+
+const germanQuestions: Record<string, Question[]> = {
+  A1: [
+    { q: "Wie sagt man 'dzień dobry' auf Deutsch?", type: "choice", options: ["Guten Morgen", "Gute Nacht", "Auf Wiedersehen", "Bitte"], answer: 0 },
+    { q: "Er ___ aus Berlin.", type: "choice", options: ["ist", "bist", "sein", "seid"], answer: 0 },
+    { q: "Wähle den richtigen Artikel: ___ Tisch", type: "choice", options: ["Der", "Die", "Das", "Den"], answer: 0 },
+    { q: "Wie heißt 'kot' auf Deutsch?", type: "choice", options: ["Hund", "Katze", "Vogel", "Fisch"], answer: 1 },
+    { q: "Setze ein: Ich ___ Anna.", type: "fill", answer: "bin" },
+    { q: "Setze ein: Wir ___ müde.", type: "fill", answer: "sind" },
+    { q: "Übersetze: 'dziękuję'", type: "fill", answer: "danke" },
+    { q: "Übersetze: 'proszę'", type: "fill", answer: "bitte" },
+    { q: "Setze ein: Du ___ aus Polen.", type: "fill", answer: "kommst" },
+    { q: "Was bedeutet 'Freund'?", type: "choice", options: ["przyjaciel", "dom", "rodzina", "miasto"], answer: 0 },
+  ],
+  A2: [
+    { q: "Welches Wort passt? Er ___ seit zwei Jahren in Wien.", type: "choice", options: ["wohnen", "wohnt", "wohnte", "gewohnt"], answer: 1 },
+    { q: "Wähle die richtige Präposition: Ich warte ___ dich.", type: "choice", options: ["auf", "in", "mit", "zu"], answer: 0 },
+    { q: "Wie sagt man 'czasami' auf Deutsch?", type: "choice", options: ["immer", "manchmal", "nie", "bald"], answer: 1 },
+    { q: "Setze ein: Gestern ___ wir ins Kino.", type: "fill", answer: "gingen" },
+    { q: "Setze ein: Kannst du mir ___?", type: "fill", answer: "helfen" },
+    { q: "Übersetze: 'Ona pracuje w banku.'", type: "fill", answer: "Sie arbeitet in einer Bank." },
+    { q: "Welche Antwort ist richtig? Hast du Hunger?", type: "choice", options: ["Ja, ich habe Hunger.", "Nein, ich bin Hunger.", "Ja, ich bin Hunger.", "Nein, ich habe Hungern."], answer: 0 },
+    { q: "Setze ein: Wir haben gestern viel ___.", type: "fill", answer: "gelernt" },
+    { q: "Was bedeutet 'spät'?", type: "choice", options: ["późno", "wcześnie", "zawsze", "często"], answer: 0 },
+    { q: "Setze ein: Wenn es regnet, ___ ich zu Hause.", type: "fill", answer: "bleibe" },
+  ],
+  B1: [
+    { q: "Wähle die richtige Form: Ich ___ mich an das neue Leben.", type: "choice", options: ["gewöhnen", "gewöhne", "gewöhnte", "gewöhnt"], answer: 1 },
+    { q: "Setze ein: Er hat das Buch gestern ___.", type: "fill", answer: "gelesen" },
+    { q: "Welches Modalverb passt? Du ___ mehr üben.", type: "choice", options: ["musst", "magst", "darfst", "kannst"], answer: 0 },
+    { q: "Übersetze: 'Musiałem zostać w domu.'", type: "fill", answer: "Ich musste zu Hause bleiben." },
+    { q: "Setze ein: Wenn ich Zeit hätte, ___ ich reisen.", type: "fill", answer: "würde" },
+    { q: "Was bedeutet 'umweltfreundlich'?", type: "choice", options: ["ekologiczny", "niebezpieczny", "szybki", "głośny"], answer: 0 },
+    { q: "Wähle richtig: Obwohl es kalt war, ___ wir spazieren.", type: "choice", options: ["gehen", "gingen", "gegangen", "geht"], answer: 1 },
+    { q: "Setze ein: Sie hat vergessen, den Brief ___.", type: "fill", answer: "zu schicken" },
+    { q: "Setze ein: Er fragte, ob ich ihm ___ könne.", type: "fill", answer: "helfen" },
+    { q: "Was bedeutet 'Veranstaltung'?", type: "choice", options: ["wydarzenie", "pociąg", "rachunek", "mieszkanie"], answer: 0 },
+  ],
+  B2: [
+    { q: "Er behauptet, er ___ das Problem lösen können.", type: "choice", options: ["werde", "würde", "hätte", "habe"], answer: 1 },
+    { q: "Setze ein: Nachdem er gegessen hatte, ___ er spazieren.", type: "fill", answer: "ging" },
+    { q: "Was bedeutet 'nachhaltig'?", type: "choice", options: ["zrównoważony", "tymczasowy", "łatwy", "cichy"], answer: 0 },
+    { q: "Setze ein: Je mehr ich lerne, desto ___ verstehe ich.", type: "fill", answer: "mehr" },
+    { q: "Wähle richtig: Trotz des Regens ___ sie das Projekt fort.", type: "choice", options: ["setzen", "setzten", "setzt", "setze"], answer: 1 },
+    { q: "Übersetze: 'Zostało postanowione, że spotkanie odbędzie się jutro.'", type: "fill", answer: "Es wurde beschlossen, dass das Treffen morgen stattfindet." },
+    { q: "Setze ein: Er tut so, als ___ er alles wüsste.", type: "fill", answer: "ob" },
+    { q: "Was bedeutet 'Zuverlässigkeit'?", type: "choice", options: ["niezawodność", "szybkość", "leniwość", "oszczędność"], answer: 0 },
+    { q: "Setze ein: Hätte ich das gewusst, ___ ich anders entschieden.", type: "fill", answer: "hätte" },
+    { q: "Wähle richtig: Kaum war er angekommen, ___ das Telefon.", type: "choice", options: ["klingelte", "klingeln", "klingelt", "geklingelt"], answer: 0 },
+  ],
+  C1: [
+    { q: "Setze ein: Obgleich er viel Erfahrung hat, ___ er bescheiden.", type: "fill", answer: "bleibt" },
+    { q: "Wähle richtig: Die Ergebnisse, ___ Sie anfordern, liegen bereit.", type: "choice", options: ["die", "der", "welche", "dessen"], answer: 0 },
+    { q: "Was bedeutet 'überwältigend'?", type: "choice", options: ["przytłaczający", "nudny", "mały", "skromny"], answer: 0 },
+    { q: "Setze ein: Der Vortrag war so komplex, dass viele Zuhörer kaum etwas ___.", type: "fill", answer: "verstanden" },
+    { q: "Wähle richtig: Wäre er informiert worden, ___ er reagiert.", type: "choice", options: ["hätte", "würde", "war", "sei"], answer: 0 },
+    { q: "Setze ein: Sollte es weitere Fragen geben, ___ wir Ihnen zur Verfügung.", type: "fill", answer: "stehen" },
+    { q: "Was bedeutet 'Auseinandersetzung'?", type: "choice", options: ["spór", "spotkanie", "odpowiedzialność", "sprawozdanie"], answer: 0 },
+    { q: "Setze ein: Selbst wenn wir früher gegangen wären, ___ wir zu spät gekommen.", type: "fill", answer: "wären" },
+    { q: "Wähle richtig: Kaum hatte er ausgesprochen, ___ sie ihm zu.", type: "choice", options: ["stimmten", "stimmen", "stimmte", "zustimmen"], answer: 0 },
+    { q: "Setze ein: Alles in allem lässt sich sagen, dass das Projekt ___ war.", type: "fill", answer: "erfolgreich" },
+  ],
+};
+
+const spanishQuestions: Record<string, Question[]> = {
+  A1: [
+    { q: "¿Cómo se dice 'dzień dobry' en español?", type: "choice", options: ["Buenos días", "Buenas noches", "Adiós", "Por favor"], answer: 0 },
+    { q: "Yo ___ de Polonia.", type: "choice", options: ["soy", "eres", "es", "somos"], answer: 0 },
+    { q: "Selecciona el artículo correcto: ___ casa", type: "choice", options: ["La", "El", "Los", "Un"], answer: 0 },
+    { q: "¿Qué significa 'libro'?", type: "choice", options: ["książka", "stół", "miasto", "pies"], answer: 0 },
+    { q: "Completa: Tú ___ mi amigo.", type: "fill", answer: "eres" },
+    { q: "Completa: Nosotros ___ estudiantes.", type: "fill", answer: "somos" },
+    { q: "Traduce: 'dziękuję'", type: "fill", answer: "gracias" },
+    { q: "Traduce: 'proszę'", type: "fill", answer: "por favor" },
+    { q: "Completa: Ellos ___ en Madrid.", type: "fill", answer: "viven" },
+    { q: "¿Cómo se dice 'kot' en español?", type: "choice", options: ["perro", "gato", "pájaro", "pez"], answer: 1 },
+  ],
+  A2: [
+    { q: "Elige la opción correcta: Ayer nosotros ____ al cine.", type: "choice", options: ["vamos", "fuimos", "íbamos", "ir"], answer: 1 },
+    { q: "¿Cómo se dice 'czasami' en español?", type: "choice", options: ["siempre", "a veces", "nunca", "jamás"], answer: 1 },
+    { q: "Completa: Ella ha ____ una carta.", type: "fill", answer: "escrito" },
+    { q: "Completa: ¿Puedes ____ ayudarme?", type: "fill", answer: "ayudar" },
+    { q: "Traduce: 'Ona mieszka w Barcelonie.'", type: "fill", answer: "Ella vive en Barcelona." },
+    { q: "Elige la respuesta correcta: ¿Tienes hambre?", type: "choice", options: ["Sí, tengo hambre.", "No, soy hambre.", "Sí, soy hambre.", "No, tengo hambriento."], answer: 0 },
+    { q: "Completa: Nosotros hemos ____ mucho hoy.", type: "fill", answer: "estudiado" },
+    { q: "¿Qué significa 'pronto'?", type: "choice", options: ["późno", "wcześnie", "cicho", "wolno"], answer: 1 },
+    { q: "Completa: Si llueve, ___ en casa.", type: "fill", answer: "me quedo" },
+    { q: "Completa: Esta tarde vamos a ___ al museo.", type: "fill", answer: "ir" },
+  ],
+  B1: [
+    { q: "Elige la forma correcta: Yo ___ acostumbrándome al trabajo nuevo.", type: "choice", options: ["me estoy", "me estoy poniendo", "me acostumbro", "me acostumbré"], answer: 0 },
+    { q: "Completa: Él ha ____ el libro esta semana.", type: "fill", answer: "leído" },
+    { q: "¿Qué verbo modal falta? Debes ___ más.", type: "fill", answer: "estudiar" },
+    { q: "Traduce: 'Musiałem zostać w domu.'", type: "fill", answer: "Tuve que quedarme en casa." },
+    { q: "Completa: Si tuviera tiempo, ___ más.", type: "fill", answer: "viajaría" },
+    { q: "¿Qué significa 'medio ambiente'?", type: "choice", options: ["środowisko", "hałas", "prędkość", "pogoda"], answer: 0 },
+    { q: "Elige correcto: Aunque hacía frío, nosotros ___ a pasear.", type: "choice", options: ["fuimos", "vamos", "íbamos", "ir"], answer: 0 },
+    { q: "Completa: Ella ha olvidado ___ la carta.", type: "fill", answer: "enviar" },
+    { q: "Completa: Me preguntó si podía ___.", type: "fill", answer: "ayudarle" },
+    { q: "¿Qué significa 'evento'?", type: "choice", options: ["wydarzenie", "pociąg", "rachunek", "mieszkanie"], answer: 0 },
+  ],
+  B2: [
+    { q: "Él afirma que ___ resolver el problema.", type: "choice", options: ["podrá", "podría", "hubiera", "ha"], answer: 1 },
+    { q: "Completa: Después de que comió, ___ a pasear.", type: "fill", answer: "salió" },
+    { q: "¿Qué significa 'sostenible'?", type: "choice", options: ["zrównoważony", "tymczasowy", "łatwy", "cichy"], answer: 0 },
+    { q: "Completa: Cuanto más estudio, más ___ entiendo.", type: "fill", answer: "lo" },
+    { q: "Elige correcto: A pesar de la lluvia, ellos ___ con el proyecto.", type: "choice", options: ["siguieron", "siguen", "seguían", "seguir"], answer: 0 },
+    { q: "Traduce: 'Zdecydowano, że spotkanie odbędzie się jutro.'", type: "fill", answer: "Se decidió que la reunión será mañana." },
+    { q: "Completa: Hace como si ___ todo.", type: "fill", answer: "supiera" },
+    { q: "¿Qué significa 'fiable'?", type: "choice", options: ["niezawodny", "wolny", "leniwy", "oszczędny"], answer: 0 },
+    { q: "Completa: Si lo hubiera sabido, ___ diferente.", type: "fill", answer: "habría decidido" },
+    { q: "Elige correcto: Apenas llegó, el teléfono ___.", type: "choice", options: ["sonó", "sonar", "suena", "sonado"], answer: 0 },
+  ],
+  C1: [
+    { q: "Completa: Aunque tiene mucha experiencia, ___ humilde.", type: "fill", answer: "sigue" },
+    { q: "Elige correcto: Los resultados, ___ usted solicitó, están listos.", type: "choice", options: ["que", "cuyo", "de los que", "los cuales"], answer: 0 },
+    { q: "¿Qué significa 'abrumador'?", type: "choice", options: ["przytłaczający", "nudny", "mały", "skromny"], answer: 0 },
+    { q: "Completa: La conferencia fue tan compleja que muchos apenas ___ algo.", type: "fill", answer: "entendieron" },
+    { q: "Elige correcto: Si hubiera sido informado, ___ reaccionado.", type: "choice", options: ["habría", "hubiera", "fue", "sea"], answer: 0 },
+    { q: "Completa: Si hubiera más preguntas, ___ a su disposición.", type: "fill", answer: "estaríamos" },
+    { q: "¿Qué significa 'debate'?", type: "choice", options: ["debata", "raport", "odpowiedzialność", "analiza"], answer: 0 },
+    { q: "Completa: Incluso si hubiéramos salido antes, ___ tarde.", type: "fill", answer: "habríamos llegado" },
+    { q: "Elige correcto: Apenas terminó de hablar, ellos lo ___.", type: "choice", options: ["aplaudieron", "aplauden", "aplaudir", "aplaudía"], answer: 0 },
+    { q: "Completa: En resumen, se puede decir que el proyecto fue ___.", type: "fill", answer: "exitoso" },
+  ],
+};
+
+export const QUESTION_BANKS: Record<LearningLanguage, Record<string, Question[]>> = {
+  en: englishQuestions,
+  de: germanQuestions,
+  es: spanishQuestions,
+};
+

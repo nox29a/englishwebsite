@@ -4,7 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from '@/components/Navbar';
 
-import { tasks } from "@/components/words/tasks";
+import { TASK_BANKS } from "@/components/words/tasks";
+import { LANGUAGE_OPTIONS } from "@/components/words/language_packs";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { addPoints } from "../utils/addPoints";
 import { saveAttempt } from "../utils/saveAttempt";
 
@@ -32,7 +34,7 @@ const AchievementPopup = ({ achievement, onClose }) => {
 
   return (
     <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
+      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-[var(--foreground)] px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{achievement.icon}</span>
           <div>
@@ -75,6 +77,7 @@ const ParticleEffect = ({ x, y, color, onComplete }) => {
 };
 
 export default function ZadaniaPage() {
+  const { language } = useLanguage();
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [activeLevel, setActiveLevel] = useState("Wszystkie");
   const [shuffledTasks, setShuffledTasks] = useState([]);
@@ -86,6 +89,10 @@ export default function ZadaniaPage() {
   const [level, setLevel] = useState(1);
   const [energy, setEnergy] = useState(100);
 
+  const activeTasks = TASK_BANKS[language] || TASK_BANKS.en;
+  const currentLanguageOption = LANGUAGE_OPTIONS.find(option => option.code === language);
+  const targetLabel = currentLanguageOption?.label || "Angielski";
+
   // Gamifikacja - osiągnięcia
   const achievementTypes = {
     first_success: { name: "Pierwszy sukces!", icon: "🎯" },
@@ -95,12 +102,16 @@ export default function ZadaniaPage() {
   };
 
   useEffect(() => {
-    setShuffledTasks(shuffleArray(tasks));
-  }, []);
+    setShuffledTasks(shuffleArray(activeTasks));
+    setSelectedAnswers({});
+    setActiveLevel("Wszystkie");
+    setVisibleTasks(Math.min(20, activeTasks.length));
+    setStreak(0);
+  }, [language]);
 
   useEffect(() => {
-    setVisibleTasks(20);
-  }, [activeLevel]);
+    setVisibleTasks(Math.min(20, activeTasks.length));
+  }, [activeLevel, language]);
 
   // Funkcja do dodania cząsteczek
   const addParticles = (event, isCorrect) => {
@@ -127,8 +138,11 @@ export default function ZadaniaPage() {
 
   // Funkcja do sprawdzania osiągnięć
   const checkAchievements = (isCorrect, taskId) => {
-    const correctAnswers = Object.values(selectedAnswers).filter(
-      (answer, index) => tasks[index] && answer === tasks[index].answer
+    const correctAnswers = Object.entries(selectedAnswers).filter(
+      ([id, answer]) => {
+        const task = activeTasks.find(t => t.id === Number(id));
+        return task && answer === task.answer;
+      }
     ).length;
 
     if (correctAnswers === 1 && !achievements.some(a => a.type === 'first_success')) {
@@ -148,7 +162,7 @@ export default function ZadaniaPage() {
   };
 
   const handleAnswer = (taskId, selected, event) => {
-    const task = tasks.find(t => t.id === taskId);
+    const task = activeTasks.find(t => t.id === taskId);
     if (!task || selectedAnswers[taskId]) return;
     
     const isCorrect = selected === task.answer;
@@ -182,15 +196,15 @@ export default function ZadaniaPage() {
     }
   };
 
-  const filteredTasks = activeLevel === "Wszystkie" 
-    ? shuffledTasks 
+  const filteredTasks = activeLevel === "Wszystkie"
+    ? shuffledTasks
     : shuffledTasks.filter(task => task.level === activeLevel);
 
   const tasksToShow = filteredTasks.slice(0, visibleTasks);
 
   const correctAnswers = Object.entries(selectedAnswers).filter(
     ([taskId, answer]) => {
-      const task = tasks.find(t => t.id === parseInt(taskId));
+      const task = activeTasks.find(t => t.id === parseInt(taskId));
       return task && answer === task.answer;
     }
   ).length;
@@ -202,9 +216,9 @@ export default function ZadaniaPage() {
     <>
     <Navbar />
     
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white relative overflow-hidden">
+    <div className="axon-design min-h-screen bg-gradient-to-br from-[var(--cards-gradient-from)] via-[var(--cards-gradient-via)] to-[var(--cards-gradient-to)] text-[var(--foreground)] relative overflow-hidden">
       {/* Gradient overlay animowany */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1d4ed8]/15 via-[#1e3a8a]/15 to-transparent animate-pulse" />
       
       {/* Achievement Popups */}
       {achievements.map((achievement, index) => (
@@ -227,77 +241,7 @@ export default function ZadaniaPage() {
       ))}
 
       <div className="max-w-6xl mx-auto px-4 py-6 relative">
-        {/* Header z statystykami */}
-        <div className="text-center mb-8">
 
-          
-          {/* Paski postępu */}
-          <div className="max-w-2xl mx-auto mb-6 space-y-4">
-            {/* XP Bar */}
-            <div className="text-center">
-              <div className="flex justify-between text-sm mb-2">
-                <span>Poziom {level}</span>
-                <span>{totalXP % 100}/100 XP</span>
-              </div>
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-4 overflow-hidden border border-white/10">
-                <div 
-                  className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-4 rounded-full transition-all duration-1000 ease-out relative"
-                  style={{ width: `${(totalXP % 100)}%` }}
-                >
-                  <div className="absolute inset-0 bg-white/20 animate-pulse" />
-                </div>
-              </div>
-            </div>
-
-            {/* Energy Bar */}
-
-          </div>
-
-          {/* Statystyki */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto mb-8">
-            <div className="text-center group cursor-pointer">
-              <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-400/20 to-green-600/20 border border-green-500/30 backdrop-blur-sm rounded-xl mb-2 group-hover:scale-110 transition-transform">
-                <Trophy className="w-6 h-6 text-green-400" />
-              </div>
-              <div className="text-2xl font-bold text-white">{correctAnswers}</div>
-              <div className="text-xs text-gray-400">Poprawne</div>
-            </div>
-
-            <div className="text-center group cursor-pointer">
-              <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-400/20 to-blue-600/20 border border-blue-500/30 backdrop-blur-sm rounded-xl mb-2 group-hover:scale-110 transition-transform">
-                <Target className="w-6 h-6 text-blue-400" />
-              </div>
-              <div className="text-2xl font-bold text-white">{accuracy}%</div>
-              <div className="text-xs text-gray-400">Celność</div>
-            </div>
-
-            <div className="text-center group cursor-pointer">
-              <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-amber-400/20 to-amber-600/20 border border-amber-500/30 backdrop-blur-sm rounded-xl mb-2 group-hover:scale-110 transition-transform">
-                <Flame className="w-6 h-6 text-amber-400" />
-              </div>
-              <div className="text-2xl font-bold text-white">{streak}</div>
-              <div className="text-xs text-gray-400">Seria</div>
-            </div>
-
-            <div className="text-center group cursor-pointer">
-              <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-purple-400/20 to-purple-600/20 border border-purple-500/30 backdrop-blur-sm rounded-xl mb-2 group-hover:scale-110 transition-transform">
-                <Star className="w-6 h-6 text-purple-400" />
-              </div>
-              <div className="text-2xl font-bold text-white">{level}</div>
-              <div className="text-xs text-gray-400">Poziom</div>
-            </div>
-          </div>
-
-          {/* Streak indicator */}
-          {streak > 0 && (
-            <div className="inline-flex items-center bg-orange-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-orange-500/30 mb-6">
-              <Flame className="w-4 h-4 text-orange-300 mr-2" />
-              <span className="text-orange-300 font-bold">
-                {streak} z rzędu! {streak >= 5 && '🔥'} {streak >= 10 && '⚡'} {streak >= 15 && '💫'}
-              </span>
-            </div>
-          )}
-        </div>
 
         {/* Filtry poziomów */}
         <div className="flex justify-center gap-4 mb-8 flex-wrap">
@@ -307,8 +251,8 @@ export default function ZadaniaPage() {
               onClick={() => setActiveLevel(levelName)}
               className={`px-6 py-3 rounded-xl transition-all duration-300 shadow-lg transform hover:scale-105 font-medium ${
                 activeLevel === levelName
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                  : 'bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20'
+                  ? 'bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]'
+                  : 'bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] border border-[color:var(--border-translucent-strong)]'
               }`}
             >
               {levelName}
@@ -326,7 +270,7 @@ export default function ZadaniaPage() {
             return (
               <div
                 key={task.id}
-                className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15 animate-fade-in"
+                className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-[var(--overlay-light-soft)] animate-fade-in"
               >
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center gap-3">
@@ -345,13 +289,13 @@ export default function ZadaniaPage() {
                     )}
                   </div>
                   
-                  <div className="flex items-center text-purple-400">
+                  <div className="flex items-center text-[var(--icon-purple)]">
                     <Brain className="w-5 h-5 mr-2" />
                     <span className="text-sm">#{task.id}</span>
                   </div>
                 </div>
 
-                <p className="text-white text-lg mb-6 font-medium">
+                <p className="text-[var(--foreground)] text-lg mb-6 font-medium">
                   {task.question}
                 </p>
 
@@ -365,12 +309,12 @@ export default function ZadaniaPage() {
                         isAnswered
                           ? selected === option
                             ? isCorrect
-                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-400 text-white scale-105 shadow-lg shadow-green-500/30'
-                              : 'bg-gradient-to-r from-red-500 to-red-600 border-red-400 text-white'
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-400 text-[var(--foreground)] scale-105 shadow-lg shadow-green-500/30'
+                              : 'bg-gradient-to-r from-red-500 to-red-600 border-red-400 text-[var(--foreground)]'
                             : option === task.answer && selected !== option
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-400 text-white shadow-lg shadow-green-500/30'
-                            : 'bg-black/20 border-white/10 text-gray-400'
-                          : 'bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 hover:scale-105 hover:border-white/30 cursor-pointer'
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-400 text-[var(--foreground)] shadow-lg shadow-green-500/30'
+                          : 'bg-[var(--overlay-dark)] border-[color:var(--border-translucent)] text-[var(--muted-foreground)]'
+                          : 'bg-[var(--overlay-light)] backdrop-blur-sm border-[color:var(--border-translucent-strong)] text-[var(--foreground)] hover:bg-[var(--overlay-light-strong)] hover:scale-105 hover:border-[color:var(--border-translucent-bold)] cursor-pointer'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -404,7 +348,7 @@ export default function ZadaniaPage() {
                         {isCorrect ? 'Doskonale!' : `Poprawna odpowiedź: ${task.answer}`}
                       </span>
                     </div>
-                    <p className="text-white/90 text-sm">
+                    <p className="text-[var(--foreground)] opacity-90 text-sm">
                       💡 {task.explanation}
                     </p>
                   </div>
@@ -419,7 +363,7 @@ export default function ZadaniaPage() {
           <div className="flex justify-center mt-8">
             <button
               onClick={() => setVisibleTasks(prev => prev + 20)}
-              className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+              className="px-8 py-4 bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] hover:from-[var(--cta-gradient-hover-from)] hover:to-[var(--cta-gradient-hover-to)] text-[var(--foreground)] font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
             >
               <span>Pokaż więcej zadań</span>
               <ChevronRight className="w-5 h-5" />

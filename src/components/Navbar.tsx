@@ -1,27 +1,26 @@
 "use client"
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from "@/lib/supabaseClient";
-import { Brain } from "lucide-react";
-
-
-interface Profile {
-  id: string;
-  user_type: string;
-}
+import { isAuthSessionMissingError } from "@/lib/authErrorUtils";
+import { LANGUAGE_OPTIONS } from "@/components/words/language_packs";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Navbar() {
-  const [path, setPath] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [userType, setUserType] = useState<string>("basic");
   const [userPoints, setUserPoints] = useState<number>(0);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { language, setLanguage } = useLanguage();
+  const pathname = usePathname();
 
-  useEffect(() => {
-    setPath(window.location.pathname);
-  }, []);
+  const currentLanguageOption = useMemo(
+    () => LANGUAGE_OPTIONS.find(option => option.code === language),
+    [language]
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,8 +32,31 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    if (!mobileOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen]);
+
+  useEffect(() => {
     const getUser = async () => {
       const { data, error } = await supabase.auth.getUser();
+
+      if (error) {
+        if (!isAuthSessionMissingError(error)) {
+          console.error("Nie udało się pobrać danych użytkownika:", error);
+        }
+        return;
+      }
+
       if (data?.user) {
         setUser(data.user);
         
@@ -49,17 +71,16 @@ export default function Navbar() {
           setUserType(profileData.user_type);
         }
 
-        // Pobierz punkty użytkownika z leaderboard
+        // Pobierz punkty użytkownika z widoku XP
         const { data: leaderboardData, error: leaderboardError } = await supabase
-          .from('leaderboard')
-          .select('points')
+          .from('view_xp_leaderboard')
+          .select('total_xp')
           .eq('user_id', data.user.id)
-          .single();
-          
-        if (leaderboardData && !leaderboardError) {
-          setUserPoints(leaderboardData.points);
+          .maybeSingle();
+
+        if (!leaderboardError && leaderboardData) {
+          setUserPoints(leaderboardData.total_xp ?? 0);
         } else {
-          // Jeśli użytkownik nie ma jeszcze wpisów w leaderboard, ustaw 0 punktów
           setUserPoints(0);
         }
       }
@@ -68,38 +89,32 @@ export default function Navbar() {
     getUser();
   }, []);  
 
-  const navLinks = [
-    { 
-      href: "/cards", 
-      label: "Fiszki", 
-      gradient: "from-blue-500 to-cyan-600"
+  const navLinks = useMemo(() => [
+    {
+      href: "/cards",
+      label: "Fiszki"
     },
-    { 
-      href: "/flashcards", 
-      label: "Nauka słówek", 
-      gradient: "from-purple-500 to-pink-600"
+    {
+      href: "/flashcards",
+      label: "Nauka słówek"
     },
-    { 
-      href: "/vocabulary", 
-      label: "Dopasowanie słówek", 
-      gradient: "from-green-500 to-emerald-600"
+    {
+      href: "/vocabulary",
+      label: "Dopasowanie słówek"
     },
-    { 
-      href: "/conversation", 
-      label: "Rozmowa", 
-      gradient: "from-amber-500 to-orange-600"
+    {
+      href: "/conversation",
+      label: "Rozmowa"
     },
-    { 
-      href: "/exercises", 
-      label: "Zadania gramatyczne", 
-      gradient: "from-red-500 to-pink-600"
+    {
+      href: "/exercises",
+      label: "Zadania gramatyczne"
     },
-    { 
-      href: "/irregular-verbs", 
-      label: "Czasowniki nieregularne", 
-      gradient: "from-indigo-500 to-purple-600"
+    {
+      href: "/irregular-verbs",
+      label: "Czasowniki nieregularne"
     },
-  ];
+  ], []);
 
   // Funkcja do obliczania poziomu na podstawie punktów
   const calculateLevel = (points: number) => {
@@ -118,52 +133,85 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-black/30 backdrop-blur-lg border-b border-white/20 shadow-2xl' 
-          : 'bg-gradient-to-r from-purple-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-sm border-b border-white/10'
-      }`}>
-        <div className="max-w-7xl mx-auto px-6 py-4 relative">
+      <nav
+        className={`sticky top-0 z-50 transition-all duration-500 ${
+          isScrolled
+            ? 'bg-black/70 backdrop-blur-2xl border-b border-white/10 shadow-[0_20px_60px_rgba(2,6,23,0.45)]'
+            : 'bg-gradient-to-br from-[#030712]/95 via-[#05143A]/95 to-black/90 border-b border-white/5 shadow-[0_10px_40px_rgba(15,23,42,0.55)]'
+        }`}
+        aria-label="Główna nawigacja"
+      >
+        <div className="max-w-7xl mx-auto px-6 py-4 relative overflow-hidden">
           {/* Animated background overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 animate-pulse rounded-lg" />
-          
-          <div className="flex justify-between items-center relative z-10">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1D4ED8]/10 via-[#1E3A8A]/5 to-transparent opacity-80 blur-xl" />
+          <div className="absolute -top-24 -right-10 w-72 h-72 bg-[#1D4ED8]/20 rounded-full blur-3xl" aria-hidden="true" />
+
+          <div className="flex justify-between items-center relative z-10 gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="p-2 text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-all duration-300 shadow-lg ">
+              <div className="p-2 text-2xl font-semibold bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A] rounded-2xl flex items-center justify-center transform group-hover:scale-110 transition-all duration-300 shadow-[0_10px_30px_rgba(29,78,216,0.35)] text-slate-100">
                 AxonAI
               </div>
               <div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+                <div className="text-2xl font-bold tracking-wide text-slate-100">
                  
                 </div>
-                <div className="text-xs text-purple-300 -mt-1"></div>
+                <div className="text-xs text-slate-400 -mt-1">Empower your Language</div>
               </div>
             </Link>
 
             {/* Menu desktop */}
-            <div className="hidden lg:flex items-center space-x-2">
+            <div className="hidden lg:flex items-center space-x-2" role="menubar" aria-label="Główne obszary nauki">
               {navLinks.map((link) => {
-                const isActive = path === link.href;
-                
+                const isActive = pathname === link.href;
+
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
+                    role="menuitem"
                     className={`group relative px-4 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
                       isActive
-                        ? `bg-gradient-to-r ${link.gradient} text-white shadow-lg`
-                        : "text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-sm"
+                        ? 'bg-white/10 text-slate-100 shadow-[0_10px_30px_rgba(29,78,216,0.25)]'
+                        : 'text-slate-300 hover:text-slate-100 hover:bg-white/5 border border-transparent hover:border-white/10'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm hidden xl:block">{link.label}</span>
                     </div>
-                    
+
                     {isActive && (
-                      <div className="absolute inset-0 bg-white/20 rounded-xl animate-pulse" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#1D4ED8]/20 to-[#1E3A8A]/20 rounded-xl animate-pulse" />
                     )}
                   </Link>
+                );
+              })}
+            </div>
+
+            {/* Language selector desktop */}
+            <div className="hidden md:flex items-center gap-2">
+              {LANGUAGE_OPTIONS.map(option => {
+                const isActive = option.code === language;
+
+                return (
+                  <button
+                    key={option.code}
+                    type="button"
+                    onClick={() => setLanguage(option.code)}
+                    className={`relative flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-300 backdrop-blur-sm ${
+                      isActive
+                        ? 'border-white/40 bg-white/10 shadow-[0_8px_24px_rgba(29,78,216,0.35)]'
+                        : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                    }`}
+                    aria-label={`Ucz się: ${option.label}`}
+                    aria-pressed={isActive}
+                    title={option.label}
+                  >
+                    <span className="text-2xl" role="img" aria-hidden="true">
+                      {option.flag}
+                    </span>
+
+                  </button>
                 );
               })}
             </div>
@@ -173,27 +221,27 @@ export default function Navbar() {
               {user && (
                 <>
                   {/* User stats preview */}
-                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-full border border-white/20">
-                    <span className="text-sm font-bold text-white">Lvl {currentLevel}</span>
-                    <div className="w-px h-4 bg-white/20" />
-                    <span className="text-sm font-bold text-white">{userPoints} XP</span>
+                  <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-3 py-2 rounded-full border border-white/10">
+                    <span className="text-sm font-bold text-slate-100">Lvl {currentLevel}</span>
+                    <div className="w-px h-4 bg-white/10" />
+                    <span className="text-sm font-semibold text-slate-300">{userPoints} XP</span>
                   </div>
 
                   {/* Account button */}
                   <Link
                     href="/dashboard"
-                    className={`group relative px-6 py-3 rounded-xl font-bold text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
-                      userType === "premium" 
-                        ? "bg-gradient-to-r from-yellow-400 to-orange-500 border-2 border-yellow-300" 
-                        : "bg-gradient-to-r from-blue-500 to-purple-600"
+                    className={`group relative px-6 py-3 rounded-xl font-semibold text-slate-100 transition-all duration-300 shadow-[0_10px_30px_rgba(29,78,216,0.35)] hover:shadow-[0_14px_40px_rgba(29,78,216,0.45)] transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]/50 ${
+                      userType === "premium"
+                        ? 'bg-gradient-to-r from-[#FACC15] to-[#F97316] border border-yellow-300/50'
+                        : 'bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A]'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <span>Konto</span>
                     </div>
-                    
+
                     {userType === "premium" && (
-                      <div className="absolute inset-0 bg-white/20 rounded-xl animate-pulse" />
+                      <div className="absolute inset-0 bg-white/10 rounded-xl animate-pulse" />
                     )}
                   </Link>
                 </>
@@ -203,7 +251,7 @@ export default function Navbar() {
               {!user && (
                 <Link
                   href="/login"
-                  className="group px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl text-white font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  className="group px-6 py-3 bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A] hover:from-[#1E40AF] hover:to-[#172554] rounded-xl text-slate-100 font-semibold transition-all duration-300 shadow-[0_10px_30px_rgba(29,78,216,0.35)] hover:shadow-[0_14px_40px_rgba(29,78,216,0.45)] transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]/50"
                 >
                   <div className="flex items-center gap-2">
                     <span>Zaloguj się</span>
@@ -214,12 +262,15 @@ export default function Navbar() {
 
             {/* Hamburger mobile */}
             <button
-              className="md:hidden w-12 h-12 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-110 flex items-center justify-center"
-              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden w-12 h-12 bg-white/5 backdrop-blur-md hover:bg-white/10 text-slate-100 rounded-2xl transition-all duration-300 border border-white/10 transform hover:scale-110 flex items-center justify-center"
+              onClick={() => setMobileOpen((open) => !open)}
+              aria-label={mobileOpen ? "Zamknij menu" : "Otwórz menu"}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
             >
-              <div className="w-6 h-6 text-white font-bold">
-                {mobileOpen ? "X" : "≡"}
-              </div>
+              <span className="text-2xl font-bold" aria-hidden="true">
+                {mobileOpen ? "×" : "≡"}
+              </span>
             </button>
           </div>
         </div>
@@ -227,77 +278,119 @@ export default function Navbar() {
 
       {/* Mobile menu overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Menu nawigacyjne">
           {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          <div
+            className="absolute inset-0 bg-[rgba(3,7,18,0.7)] backdrop-blur"
             onClick={() => setMobileOpen(false)}
           />
-          
+
           {/* Menu panel */}
-          <div className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-gradient-to-b from-purple-900 via-blue-900 to-indigo-900 border-l border-white/20 shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10" />
-            
+          <div
+            id="mobile-menu"
+            className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-gradient-to-b from-[#030712]/98 via-[#05143A]/95 to-black/95 border-l border-white/10 shadow-[0_20px_60px_rgba(2,6,23,0.6)]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1D4ED8]/15 via-transparent to-[#1E3A8A]/10" />
+
             <div className="relative z-10 p-6 h-full flex flex-col">
               {/* Close button */}
               <div className="flex justify-end mb-6">
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="w-10 h-10 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-110 flex items-center justify-center"
+                  className="w-10 h-10 bg-white/5 backdrop-blur-md hover:bg-white/10 text-slate-100 rounded-2xl transition-all duration-300 border border-white/10 transform hover:scale-110 flex items-center justify-center"
+                  aria-label="Zamknij menu"
                 >
-                  <div className="w-5 h-5 font-bold">X</div>
+                  <span className="text-xl font-bold" aria-hidden="true">
+                    ×
+                  </span>
                 </button>
               </div>
 
               {/* User info mobile */}
               {user && (
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 mb-6">
+                <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 mb-6 shadow-[0_12px_30px_rgba(15,23,42,0.35)]">
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      userType === "premium" 
-                        ? "bg-gradient-to-r from-yellow-400 to-orange-500" 
-                        : "bg-gradient-to-r from-blue-500 to-purple-600"
+                      userType === "premium"
+                        ? 'bg-gradient-to-r from-[#FACC15] to-[#F97316]'
+                        : 'bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A]'
                     }`}>
-                      <div className="w-6 h-6 text-white font-bold">
+                      <div className="w-6 h-6 text-slate-100 font-bold">
                         {userType === "premium" ? "P" : "U"}
                       </div>
                     </div>
                     <div>
-                      <div className="font-bold text-white">{userType === "premium" ? "Premium User" : "Basic User"}</div>
-                      <div className="text-sm text-gray-300">Level {currentLevel} • {userPoints} XP</div>
+                      <div className="font-semibold text-slate-100">{userType === "premium" ? "Premium User" : "Basic User"}</div>
+                      <div className="text-sm text-slate-300">Level {currentLevel} • {userPoints} XP</div>
                     </div>
                   </div>
-                  
+
                   {/* Mini progress bar */}
-                  <div className="bg-gray-800/50 rounded-full h-2 overflow-hidden">
-                    <div 
-                      className="bg-gradient-to-r from-pink-500 to-purple-500 h-2 rounded-full transition-all duration-1000" 
+                  <div className="bg-white/10 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-[#1D4ED8] via-[#1E3A8A] to-[#0F172A] h-2 rounded-full transition-all duration-1000"
                       style={{ width: `${progress.progressPercent}%` }}
                     />
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">{progress.pointsToNext} XP do następnego poziomu</div>
+                  <div className="text-xs text-slate-400 mt-1">{progress.pointsToNext} XP do następnego poziomu</div>
                 </div>
               )}
 
+              {/* Language selector mobile */}
+              <div className="mb-6">
+                <div className="text-sm font-semibold uppercase tracking-wide text-slate-300/80 mb-3">
+                  Wybierz język
+                </div>
+                <div className="flex gap-3">
+                  {LANGUAGE_OPTIONS.map(option => {
+                    const isActive = option.code === language;
+
+                    return (
+                      <button
+                        key={option.code}
+                        type="button"
+                        onClick={() => setLanguage(option.code)}
+                        className={`flex h-14 w-14 items-center justify-center rounded-2xl border text-2xl transition-all duration-300 ${
+                          isActive
+                            ? 'border-white/30 bg-white/10 shadow-[0_10px_24px_rgba(29,78,216,0.35)]'
+                            : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                        }`}
+                        aria-label={`Ucz się: ${option.label}`}
+                        aria-pressed={isActive}
+                        title={option.label}
+                      >
+                        <span role="img" aria-hidden="true">
+                          {option.flag}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 text-xs text-slate-400">
+                  Aktualny język: <span className="font-semibold text-slate-200">{currentLanguageOption?.label}</span>
+                </div>
+              </div>
+
               {/* Navigation links */}
-              <div className="space-y-2 flex-1">
+              <div className="space-y-2 flex-1" role="menu" aria-label="Główne obszary nauki">
                 {navLinks.map((link) => {
-                  const isActive = path === link.href;
-                  
+                  const isActive = pathname === link.href;
+
                   return (
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] ${
+                      className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] ${
                         isActive
-                          ? `bg-gradient-to-r ${link.gradient} text-white shadow-lg`
-                          : "text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/10"
+                          ? 'bg-white/10 text-slate-100 shadow-[0_12px_30px_rgba(29,78,216,0.35)]'
+                          : 'text-slate-300 hover:text-slate-100 hover:bg-white/5 border border-transparent hover:border-white/10'
                       }`}
                       onClick={() => setMobileOpen(false)}
+                      role="menuitem"
                     >
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        isActive 
-                          ? 'bg-white/20' 
+                        isActive
+                          ? 'bg-[#1D4ED8]/20'
                           : 'bg-white/5 group-hover:bg-white/10'
                       }`}>
                         <div className="w-5 h-5 font-bold">
@@ -320,10 +413,10 @@ export default function Navbar() {
               <div className="pt-6 border-t border-white/10">
                 <Link
                   href={user ? "/dashboard" : "/login"}
-                  className={`w-full flex items-center justify-center gap-3 p-4 rounded-xl font-bold text-white transition-all duration-300 shadow-lg transform hover:scale-105 ${
-                    userType === "premium" 
-                      ? "bg-gradient-to-r from-yellow-400 to-orange-500" 
-                      : "bg-gradient-to-r from-blue-500 to-purple-600"
+                  className={`w-full flex items-center justify-center gap-3 p-4 rounded-2xl font-semibold text-slate-100 transition-all duration-300 shadow-[0_12px_30px_rgba(29,78,216,0.35)] transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]/40 ${
+                    userType === "premium"
+                      ? 'bg-gradient-to-r from-[#FACC15] to-[#F97316]'
+                      : 'bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A] hover:from-[#1E40AF] hover:to-[#172554]'
                   }`}
                   onClick={() => setMobileOpen(false)}
                 >

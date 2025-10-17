@@ -2,6 +2,7 @@
 import Navbar from "@/components/Navbar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { isAuthSessionMissingError } from "@/lib/authErrorUtils";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import ChartContainer from "@/components/ui/Chart";
@@ -64,101 +65,144 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
+        const { data: { user }, error } = await supabase.auth.getUser();
+
+        if (error) {
+          if (!isAuthSessionMissingError(error)) {
+            console.error('Błąd pobierania danych użytkownika:', error);
+          }
+          return;
+        }
+
         if (user) {
           const [
             { data: profile },
-            { data: tasksProgress },
-            { data: irregular_progress },
-            { data: flashcards },
-            { data: wordMatch },
+            { data: attempts },
+            { data: sessions },
+            { data: dailyMetrics },
             { data: streakInfo }
           ] = await Promise.all([
             supabase.from("profiles").select("*").eq("id", user.id).single(),
-            supabase.from("tasks_progress").select("*").eq("user_id", user.id).single(),
-            supabase.from("irregular_progress").select("*").eq("user_id", user.id),
-            supabase.from("flashcards_progress").select("*").eq("user_id", user.id),
-            supabase.from("word_match_progress").select("*").eq("user_id", user.id),
-            supabase.from("streaks").select("*").eq("user_id", user.id).single()
+            supabase
+              .from("exercise_attempts")
+              .select("id, skill_tags, correct_answers, incorrect_answers, total_questions, started_at, completed_at, score, metadata")
+              .eq("user_id", user.id)
+              .order("completed_at", { ascending: false })
+              .limit(200),
+            supabase
+              .from("exercise_sessions")
+              .select("started_at, ended_at, duration_seconds, source")
+              .eq("user_id", user.id)
+              .order("started_at", { ascending: false })
+              .limit(200),
+            supabase
+              .from("daily_metrics")
+              .select("metrics_date, total_time_seconds, total_attempts, total_sessions, correct_answers, incorrect_answers")
+              .eq("user_id", user.id)
+              .order("metrics_date", { ascending: false })
+              .limit(90),
+            supabase.from("streaks").select("*").eq("user_id", user.id).maybeSingle()
           ]);
 
           setUserData(profile);
-          setTasksProgressData(tasksProgress);
-          setirregularProgressData(irregular_progress);
-          setFlashcardsData(flashcards);
-          setWordMatchData(wordMatch);
-          setStreakData(streakInfo);
-          
-          // Przygotowanie danych o czasie z różnych źródeł
-          const allTimeData: any[] = [];
-          
-          // Pobieranie danych z irregular_progress
-          if (irregular_progress) {
-            irregular_progress.forEach((item: any) => {
-              if (item.updated_at) {
-                allTimeData.push({
-                  date: new Date(item.updated_at),
-                  time: Math.round(item.time_spent / 60),
-                  source: 'irregular_progress'
-                });
-              }
-            });
-          }
-          
-          // Pobieranie danych z flashcards_progress
-          if (flashcards) {
-            flashcards.forEach((item: any) => {
-              if (item.updated_at) {
-                allTimeData.push({
-                  date: new Date(item.updated_at),
-                  time: Math.round((item.time_spend || 0) / 60),
-                  source: 'Flashcards'
-                });
-              }
-            });
-          }
-          
-          // Pobieranie danych z word_match_progress
-          if (wordMatch) {
-            wordMatch.forEach((item: any) => {
-              if (item.updated_at) {
-                allTimeData.push({
-                  date: new Date(item.updated_at),
-                  time: Math.round(item.time_spent / 60),
-                  source: 'Word Match'
-                });
-              }
-            });
-          }
-          
-          // Sortowanie danych po dacie
-          allTimeData.sort((a, b) => b.date - a.date);
-          
-          // Grupowanie danych po dacie (bez godzin)
-          const groupedByDate: {[key: string]: any} = {};
-          allTimeData.forEach(item => {
-            const dateKey = item.date.toDateString();
-            if (!groupedByDate[dateKey]) {
-              groupedByDate[dateKey] = {
-                date: item.date,
-                time: 0,
-                activities: new Set()
+
+          const sessionTime = (sessions ?? []).reduce((acc, session) => acc + (session.duration_seconds ?? 0), 0);
+
+          const aggregate = (attempts ?? []).reduce(
+            (acc, attempt) => {
+              const total = attempt.total_questions ?? 0;
+              const correct = attempt.correct_answers ?? 0;
+              const incorrect = attempt.incorrect_answers ?? 0;
+              const duration = attempt.completed_at && attempt.started_at
+                ? Math.max(0, (new Date(attempt.completed_at).getTime() - new Date(attempt.started_at).getTime()) / 1000)
+                : 0;
+
+              return {
+                correct: acc.correct + correct,
+                total: acc.total + total,
+                incorrect: acc.incorrect + incorrect,
+                time: acc.time + duration,
+                completed: acc.completed + ((attempt.score ?? 0) >= 80 ? 1 : 0),
+                remainingVerbs: acc.remainingVerbs + ((attempt.metadata as any)?.remaining_verbs?.length ?? 0),
               };
-            }
-            groupedByDate[dateKey].time += item.time;
-            groupedByDate[dateKey].activities.add(item.source);
+            },
+            { correct: 0, total: 0, incorrect: 0, time: 0, completed: 0, remainingVerbs: 0 }
+          );
+
+          setCombinedProgress({
+            correct_answers: aggregate.correct,
+            total_answers: aggregate.total,
+            total_attempts: aggregate.total,
+            time_spent: sessionTime || aggregate.time,
+            completed_tasks: aggregate.completed,
+            remaining_verbs: aggregate.remainingVerbs,
           });
-          
-          // Konwersja na tablicę
-          const timeDataArray = Object.values(groupedByDate).map((item: any) => ({
-            date: item.date.toLocaleDateString("pl-PL"),
-            time: item.time,
-            activities: Array.from(item.activities).join(', '),
-            dateObj: item.date
-          }));
-          
-          setTimeData(timeDataArray.slice(0, 30)); // Ostatnie 30 dni
+
+          setTasksProgressData({
+            correct_answers: aggregate.correct,
+            total_attempts: aggregate.total,
+            incorrect_answers: aggregate.incorrect,
+          });
+
+          const irregularAttempts = (attempts ?? []).filter((attempt) => attempt.skill_tags?.includes("irregular_verbs"));
+          setirregularProgressData(
+            irregularAttempts.map((attempt) => ({
+              correct_answers: attempt.correct_answers ?? 0,
+              total_answers: attempt.total_questions ?? 0,
+              time_spent:
+                attempt.completed_at && attempt.started_at
+                  ? Math.max(0, (new Date(attempt.completed_at).getTime() - new Date(attempt.started_at).getTime()) / 1000)
+                  : 0,
+              remaining_verbs: (attempt.metadata as any)?.remaining_verbs ?? [],
+            }))
+          );
+
+          const flashcardAttempts = (attempts ?? []).filter((attempt) => attempt.skill_tags?.includes("flashcards"));
+          setFlashcardsData(
+            flashcardAttempts.map((attempt) => ({
+              level: (attempt.metadata as any)?.level ?? "Ogólny",
+              direction: (attempt.metadata as any)?.direction ?? "dwustronne",
+              remaining_ids: (attempt.metadata as any)?.remaining_ids ?? [],
+              correct_answers: attempt.correct_answers ?? 0,
+              total_answers: attempt.total_questions ?? 0,
+              time_spend:
+                (attempt.metadata as any)?.time_spent ??
+                (attempt.completed_at && attempt.started_at
+                  ? Math.max(0, (new Date(attempt.completed_at).getTime() - new Date(attempt.started_at).getTime()) / 1000)
+                  : 0),
+            }))
+          );
+
+          const wordMatchAttempts = (attempts ?? []).filter((attempt) => attempt.skill_tags?.includes("word_match"));
+          setWordMatchData(
+            wordMatchAttempts.map((attempt) => ({
+              difficulty: (attempt.metadata as any)?.difficulty ?? "Standard",
+              learned_ids: (attempt.metadata as any)?.learned_ids ?? [],
+              score: (attempt.metadata as any)?.score ?? attempt.correct_answers ?? 0,
+              errors: (attempt.metadata as any)?.errors ?? attempt.incorrect_answers ?? 0,
+              time_spent:
+                (attempt.metadata as any)?.time_spent ??
+                (attempt.completed_at && attempt.started_at
+                  ? Math.max(0, (new Date(attempt.completed_at).getTime() - new Date(attempt.started_at).getTime()) / 1000)
+                  : 0),
+            }))
+          );
+
+          setStreakData(streakInfo);
+
+          const timeDataArray = (dailyMetrics ?? [])
+            .map((metric) => {
+              const dateObj = new Date(metric.metrics_date);
+              return {
+                date: dateObj.toLocaleDateString("pl-PL"),
+                time: Math.round((metric.total_time_seconds ?? 0) / 60),
+                activities: `Sesje: ${metric.total_sessions ?? 0}`,
+                dateObj,
+              };
+            })
+            .sort((a, b) => b.dateObj.getTime() - a.dateObj.getTime());
+
+          setTimeData(timeDataArray.slice(0, 30));
 
           // Obliczanie streak
           if (streakInfo) {
@@ -197,74 +241,13 @@ export default function DashboardPage() {
           }
 
           // Obliczanie łącznego postępu
-          let combinedCorrect = 0;
-          let combinedTotal = 0;
-          let combinedTime = 0;
-          let completedTasks = 0;
-          let remainingVerbs = 0;
-
-          // Tasks progress
-          if (tasksProgress) {
-            combinedCorrect += tasksProgress.correct_answers || 0;
-            combinedTotal += tasksProgress.total_attempts || 0;
-            // Liczenie ukończonych zadań
-            if (tasksProgress.completed_tasks) {
-              try {
-                const completed = tasksProgress.completed_tasks;
-                completedTasks = Array.isArray(completed) ? completed.length : 0;
-              } catch (e) {
-                console.error("Error parsing completed_tasks", e);
-              }
-            }
-          }
-
-          // Irregular progress
-          if (irregular_progress && irregular_progress.length > 0) {
-            irregular_progress.forEach((item: any) => {
-              combinedCorrect += item.correct_answers || 0;
-              combinedTotal += item.total_answers || 0;
-              combinedTime += item.time_spent || 0;
-              
-              // Liczenie pozostałych czasowników
-              if (item.remaining_verbs) {
-                try {
-                  const verbs = item.remaining_verbs;
-                  remainingVerbs += Array.isArray(verbs) ? verbs.length : 0;
-                } catch (e) {
-                  console.error("Error parsing remaining_verbs", e);
-                }
-              }
-            });
-          }
-
-          // Flashcards progress
-          if (flashcards) {
-            flashcards.forEach((item: any) => {
-              combinedCorrect += item.correct_answers || 0;
-              combinedTotal += item.total_answers || 0;
-              combinedTime += item.time_spend || 0;
-            });
-          }
-
-          // Word match progress
-          if (wordMatch) {
-            wordMatch.forEach((item: any) => {
-              combinedCorrect += item.score || 0;
-              combinedTotal += (item.score || 0) + (item.errors || 0);
-              combinedTime += item.time_spent || 0;
-            });
-          }
-
-          setCombinedProgress({
-            correct_answers: combinedCorrect,
-            total_answers: combinedTotal,
-            time_spent: combinedTime,
-            completed_tasks: completedTasks,
-            remaining_verbs: remainingVerbs
-          });
+        } else {
+          return;
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        if (!isAuthSessionMissingError(error)) {
+          console.error("Error fetching data:", error);
+        }
       } finally {
         setLoading(false);
       }
@@ -275,16 +258,16 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-[var(--cards-gradient-from)] via-[var(--cards-gradient-via)] to-[var(--cards-gradient-to)] flex items-center justify-center relative overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse"></div>
         
         {/* Loading Card */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-8 text-center">
+        <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-8 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl mb-4 shadow-lg">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
           </div>
-          <h2 className="text-2xl font-bold text-white">Ładowanie danych...</h2>
+          <h2 className="text-2xl font-bold text-[var(--foreground)]">Ładowanie danych...</h2>
           <p className="text-gray-300 mt-2">Przygotowujemy Twój dashboard</p>
         </div>
       </div>
@@ -318,7 +301,7 @@ export default function DashboardPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 md:p-8 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-[var(--cards-gradient-from)] via-[var(--cards-gradient-via)] to-[var(--cards-gradient-to)] p-4 md:p-8 relative overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 animate-pulse"></div>
         
@@ -332,7 +315,7 @@ export default function DashboardPage() {
           {/* Header with streak */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Twój Dashboard</h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-[var(--foreground)] mb-2">Twój Dashboard</h1>
               <p className="text-gray-300 text-lg">Śledź swój postęp w nauce</p>
               {streak > 0 && (
                 <div className="inline-flex items-center bg-orange-500/20 backdrop-blur-sm px-4 py-2 rounded-full border border-orange-500/30 mt-3">
@@ -345,20 +328,20 @@ export default function DashboardPage() {
             <nav className="flex gap-3">
               <Link 
                 href="/" 
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-[var(--foreground)] font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 <BookOpen className="w-5 h-5 inline mr-2" />
                 Kontynuuj naukę
               </Link>
               <Link 
                 href="/settings" 
-                className="px-6 py-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-xl transition-all duration-300 border border-white/20 transform hover:scale-105"
+                className="px-6 py-3 bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] rounded-xl transition-all duration-300 border border-[color:var(--border-translucent-strong)] transform hover:scale-105"
               >
                 Ustawienia
               </Link>
               <button 
                 onClick={handleLogout}
-                className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-[var(--foreground)] font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 Wyloguj
               </button>
@@ -367,19 +350,19 @@ export default function DashboardPage() {
 
           {/* User Profile Card */}
           {userData && (
-            <div className="mb-8 bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-8 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15">
+            <div className="mb-8 bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-8 transition-all duration-300 transform hover:scale-[1.02] hover:bg-[var(--overlay-light-soft)]">
               <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
+                  <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl font-bold text-[var(--foreground)] shadow-lg">
                     {userData.first_name?.[0]}{userData.last_name?.[0]}
                   </div>
                   <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                    <Sparkles className="w-3 h-3 text-white" />
+                    <Sparkles className="w-3 h-3 text-[var(--foreground)]" />
                   </div>
                 </div>
                 
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white mb-1">
+                  <h2 className="text-2xl font-bold text-[var(--foreground)] mb-1">
                     {userData.first_name} {userData.last_name}
                   </h2>
                   <p className="text-gray-300 text-lg">{userData.email}</p>
@@ -475,22 +458,22 @@ export default function DashboardPage() {
               {irregularProgressData?.length > 0 ? (
                 <div className="space-y-4">
                   {irregularProgressData.map((item: any, index: number) => (
-                    <div key={`irregular_progress-${index}`} className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                      <h4 className="font-bold text-white mb-2">
+                    <div key={`irregular_progress-${index}`} className="bg-[var(--overlay-dark)] backdrop-blur-sm rounded-xl p-4 border border-[color:var(--border-translucent)]">
+                      <h4 className="font-bold text-[var(--foreground)] mb-2">
                         Postęp czasowników
                       </h4>
                       <div className="flex justify-between text-sm text-gray-300 mb-2">
                         <span>Poprawne: {item.correct_answers}/{item.total_answers}</span>
                         <span>Pozostało: {item.remaining_verbs ? item.remaining_verbs.length : 0}</span>
                       </div>
-                      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-3 overflow-hidden border border-white/10">
+                      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-3 overflow-hidden border border-[color:var(--border-translucent)]">
                         <div 
-                          className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-1000 ease-out relative"
+                          className="bg-gradient-to-r from-[var(--progress-gradient-from)] via-[var(--progress-gradient-via)] to-[var(--progress-gradient-to)] h-3 rounded-full transition-all duration-1000 ease-out relative"
                           style={{ 
                             width: `${item.total_answers > 0 ? Math.round((item.correct_answers / item.total_answers) * 100) : 0}%` 
                           }}
                         >
-                          <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                          <div className="absolute inset-0 bg-[var(--overlay-light-strong)] animate-pulse"></div>
                         </div>
                       </div>
                     </div>
@@ -509,22 +492,22 @@ export default function DashboardPage() {
             >
               {tasksProgressData ? (
                 <div className="space-y-4">
-                  <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                    <h4 className="font-bold text-white mb-2">
+                  <div className="bg-[var(--overlay-dark)] backdrop-blur-sm rounded-xl p-4 border border-[color:var(--border-translucent)]">
+                    <h4 className="font-bold text-[var(--foreground)] mb-2">
                       Ogólny postęp zadań
                     </h4>
                     <div className="flex justify-between text-sm text-gray-300 mb-2">
                       <span>Poprawne: {tasksProgressData.correct_answers}/320</span>
                       <span>Ukończone: {combinedProgress?.completed_tasks || 0}</span>
                     </div>
-                    <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-3 overflow-hidden border border-white/10">
+                    <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-3 overflow-hidden border border-[color:var(--border-translucent)]">
                       <div 
-                        className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-1000 ease-out relative"
+                        className="bg-gradient-to-r from-[var(--progress-gradient-from)] via-[var(--progress-gradient-via)] to-[var(--progress-gradient-to)] h-3 rounded-full transition-all duration-1000 ease-out relative"
                         style={{ 
                           width: `${tasksProgressData.total_attempts > 0 ? Math.round((tasksProgressData.correct_answers / 320) * 100) : 0}%` 
                         }}
                       >
-                        <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                        <div className="absolute inset-0 bg-[var(--overlay-light-strong)] animate-pulse"></div>
                       </div>
                     </div>
                   </div>
@@ -577,9 +560,9 @@ export default function DashboardPage() {
                   {flashcardsData.map((item: any, index: number) => (
                     <div 
                       key={`flashcard-${index}-${item.level}-${item.direction}`}
-                      className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10 transition-all duration-300 hover:bg-black/30"
+                      className="bg-[var(--overlay-dark)] backdrop-blur-sm rounded-xl p-4 border border-[color:var(--border-translucent)] transition-all duration-300 hover:bg-black/30"
                     >
-                      <h4 className="font-bold text-white mb-2">
+                      <h4 className="font-bold text-[var(--foreground)] mb-2">
                         {item.level} ({item.direction})
                       </h4>
                       <div className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-3">
@@ -588,9 +571,9 @@ export default function DashboardPage() {
                         <span>Dokładność: {item.total_answers > 0 ? Math.round((item.correct_answers / item.total_answers) * 100) : 0}%</span>
                         <span>Czas: {Math.round((item.time_spend || 0) / 60)} min</span>
                       </div>
-                      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-2 overflow-hidden border border-white/10">
+                      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-2 overflow-hidden border border-[color:var(--border-translucent)]">
                         <div 
-                          className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-2 rounded-full transition-all duration-1000 ease-out"
+                          className="bg-gradient-to-r from-[var(--progress-gradient-from)] via-[var(--progress-gradient-via)] to-[var(--progress-gradient-to)] h-2 rounded-full transition-all duration-1000 ease-out"
                           style={{ 
                             width: `${item.total_answers > 0 ? Math.round((item.correct_answers / item.total_answers) * 100) : 0}%` 
                           }}
@@ -614,9 +597,9 @@ export default function DashboardPage() {
                   {wordMatchData.map((item: any, index: number) => (
                     <div 
                       key={`wordmatch-${index}-${item.difficulty}`}
-                      className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10 transition-all duration-300 hover:bg-black/30"
+                      className="bg-[var(--overlay-dark)] backdrop-blur-sm rounded-xl p-4 border border-[color:var(--border-translucent)] transition-all duration-300 hover:bg-black/30"
                     >
-                      <h4 className="font-bold text-white mb-2">
+                      <h4 className="font-bold text-[var(--foreground)] mb-2">
                         Poziom: {item.difficulty}
                       </h4>
                       <div className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-3">
@@ -626,9 +609,9 @@ export default function DashboardPage() {
                         <span>Czas: {Math.round(item.time_spent / 60)} min</span>
                         <span className="col-span-2">Dokładność: {(item.score + item.errors) > 0 ? Math.round((item.score / (item.score + item.errors)) * 100) : 0}%</span>
                       </div>
-                      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-2 overflow-hidden border border-white/10">
+                      <div className="bg-gray-800/50 backdrop-blur-sm rounded-full h-2 overflow-hidden border border-[color:var(--border-translucent)]">
                         <div 
-                          className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-2 rounded-full transition-all duration-1000 ease-out"
+                          className="bg-gradient-to-r from-[var(--progress-gradient-from)] via-[var(--progress-gradient-via)] to-[var(--progress-gradient-to)] h-2 rounded-full transition-all duration-1000 ease-out"
                           style={{ 
                             width: `${(item.score + item.errors) > 0 ? Math.round((item.score / (item.score + item.errors)) * 100) : 0}%` 
                           }}
@@ -656,12 +639,12 @@ function StatCard({ title, icon, children, bgColor }: {
   bgColor?: string;
 }) {
   return (
-    <div className={`bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15 h-full ${bgColor || ''}`}>
+    <div className={`bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-[var(--overlay-light-soft)] h-full ${bgColor || ''}`}>
       <div className="flex items-center gap-3 mb-6">
-        <div className="flex items-center justify-center w-12 h-12 backdrop-blur-sm rounded-xl border border-white/20 group-hover:scale-110 transition-transform bg-gradient-to-br from-white/10 to-white/5">
+        <div className="flex items-center justify-center w-12 h-12 backdrop-blur-sm rounded-xl border border-[color:var(--border-translucent-strong)] group-hover:scale-110 transition-transform bg-gradient-to-br from-white/10 to-[var(--overlay-light-faint)]">
           {icon}
         </div>
-        <h3 className="text-xl font-bold text-white">{title}</h3>
+        <h3 className="text-xl font-bold text-[var(--foreground)]">{title}</h3>
       </div>
       {children}
     </div>
@@ -680,7 +663,7 @@ function StatMiniCard({ icon, value, label, bgColor }: {
       <div className={`flex items-center justify-center w-14 h-14 backdrop-blur-sm rounded-xl mb-2 group-hover:scale-110 transition-transform ${bgColor}`}>
         {icon}
       </div>
-      <div className="text-2xl font-bold text-white">{value}</div>
+      <div className="text-2xl font-bold text-[var(--foreground)]">{value}</div>
       <div className="text-xs text-gray-400">{label}</div>
     </div>
   );
@@ -693,8 +676,8 @@ function DetailedStatCard({ title, icon, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl border border-white/20 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/15">
-      <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+    <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-[var(--overlay-light-soft)]">
+      <h3 className="text-lg font-bold text-[var(--foreground)] mb-4 flex items-center gap-2">
         {icon}
         {title}
       </h3>
@@ -712,7 +695,7 @@ function ProgressItem({ label, value, color }: {
   return (
     <div className="flex justify-between items-center">
       <span className="text-gray-300">{label}</span>
-      <span className={`font-bold ${color || 'text-white'}`}>{value}</span>
+      <span className={`font-bold ${color || 'text-[var(--foreground)]'}`}>{value}</span>
     </div>
   );
 }

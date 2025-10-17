@@ -3158,6 +3158,78 @@ export const Categories: Category[] = [
     { "id": 1790, "pl": "sen", "en": "dream", "level": "easy" },
     { "id": 1791, "pl": "emocja", "en": "emotion", "level": "easy" },
     { "id": 1792, "pl": "tradycja", "en": "tradition", "level": "medium" }
-]
-}
-]
+  ]
+    },
+    {
+      "name": "Podróże i turystyka",
+      "description": "Słowa przydatne podczas planowania podróży, zwiedzania i wypoczynku.",
+      "words": [
+        { "id": 1793, "pl": "bilet", "en": "ticket", "level": "easy" },
+        { "id": 1794, "pl": "walizka", "en": "suitcase", "level": "easy" },
+        { "id": 1795, "pl": "podróżnik", "en": "traveler", "level": "easy" },
+        { "id": 1796, "pl": "zwiedzanie", "en": "sightseeing", "level": "medium" },
+        { "id": 1797, "pl": "plan podróży", "en": "itinerary", "level": "medium" },
+        { "id": 1798, "pl": "rezerwacja", "en": "reservation", "level": "easy" },
+        { "id": 1799, "pl": "plecak", "en": "backpack", "level": "easy" },
+        { "id": 1800, "pl": "paszport", "en": "passport", "level": "easy" },
+        { "id": 1801, "pl": "wiza", "en": "visa", "level": "easy" },
+        { "id": 1802, "pl": "odprawa", "en": "check-in", "level": "easy" },
+        { "id": 1803, "pl": "odlot", "en": "departure", "level": "easy" },
+        { "id": 1804, "pl": "przylot", "en": "arrival", "level": "easy" },
+        { "id": 1805, "pl": "terminal", "en": "terminal", "level": "easy" },
+        { "id": 1806, "pl": "karta pokładowa", "en": "boarding pass", "level": "easy" },
+        { "id": 1807, "pl": "bagaż", "en": "luggage", "level": "easy" },
+        { "id": 1808, "pl": "bramka", "en": "gate", "level": "easy" },
+        { "id": 1809, "pl": "kontrola bezpieczeństwa", "en": "security check", "level": "medium" },
+        { "id": 1810, "pl": "odprawa celna", "en": "customs", "level": "medium" },
+        { "id": 1811, "pl": "zakwaterowanie", "en": "accommodation", "level": "medium" },
+        { "id": 1812, "pl": "turysta", "en": "tourist", "level": "easy" },
+        { "id": 1813, "pl": "atrakcja", "en": "attraction", "level": "easy" },
+        { "id": 1814, "pl": "zabytek", "en": "landmark", "level": "medium" },
+        { "id": 1815, "pl": "wycieczka", "en": "excursion", "level": "medium" },
+        { "id": 1816, "pl": "rejs", "en": "cruise", "level": "medium" },
+        { "id": 1817, "pl": "wędrówka", "en": "hike", "level": "easy" },
+        { "id": 1818, "pl": "biwak", "en": "camping", "level": "easy" },
+        { "id": 1819, "pl": "schronisko", "en": "hostel", "level": "easy" },
+        { "id": 1820, "pl": "pamiątka", "en": "souvenir", "level": "easy" },
+        { "id": 1821, "pl": "kurort", "en": "resort", "level": "medium" },
+        { "id": 1822, "pl": "nadmorski", "en": "seaside", "level": "medium" }
+      ]
+    },
+    {
+      "name": "Praca i kariera",
+      "description": "Słownictwo związane z zatrudnieniem, rozwojem zawodowym i miejscem pracy.",
+      "words": [
+        { "id": 1823, "pl": "stanowisko", "en": "position", "level": "easy" },
+        { "id": 1824, "pl": "zawód", "en": "profession", "level": "medium" },
+        { "id": 1825, "pl": "zatrudnienie", "en": "employment", "level": "medium" },
+        { "id": 1826, "pl": "kariera", "en": "career", "level": "easy" },
+        { "id": 1827, "pl": "doświadczenie zawodowe", "en": "work experience", "level": "medium" },
+        { "id": 1828, "pl": "CV", "en": "résumé", "level": "medium" },
+        { "id": 1829, "pl": "list motywacyjny", "en": "cover letter", "level": "medium" },
+        { "id": 1830, "pl": "rozmowa kwalifikacyjna", "en": "job interview", "level": "medium" },
+        { "id": 1831, "pl": "pracodawca", "en": "employer", "level": "easy" },
+        { "id": 1832, "pl": "pracownik", "en": "employee", "level": "easy" },
+        { "id": 1833, "pl": "rekrutacja", "en": "recruitment", "level": "medium" },
+        { "id": 1834, "pl": "awans", "en": "promotion", "level": "medium" },
+        { "id": 1835, "pl": "pensja", "en": "salary", "level": "easy" },
+        { "id": 1836, "pl": "premia", "en": "bonus", "level": "easy" },
+        { "id": 1837, "pl": "benefity", "en": "benefits", "level": "medium" },
+        { "id": 1838, "pl": "umowa", "en": "contract", "level": "easy" },
+        { "id": 1839, "pl": "etat", "en": "full-time", "level": "easy" },
+        { "id": 1840, "pl": "pół etatu", "en": "part-time", "level": "easy" },
+        { "id": 1841, "pl": "zespół", "en": "team", "level": "easy" },
+        { "id": 1842, "pl": "spotkanie", "en": "meeting", "level": "easy" },
+        { "id": 1843, "pl": "telepraca", "en": "remote work", "level": "medium" },
+        { "id": 1844, "pl": "biuro", "en": "office", "level": "easy" },
+        { "id": 1845, "pl": "kierownik", "en": "manager", "level": "easy" },
+        { "id": 1846, "pl": "staż", "en": "internship", "level": "medium" },
+        { "id": 1847, "pl": "zadanie", "en": "assignment", "level": "medium" },
+        { "id": 1848, "pl": "projekt", "en": "project", "level": "easy" },
+        { "id": 1849, "pl": "termin", "en": "deadline", "level": "medium" },
+        { "id": 1850, "pl": "ocena pracownicza", "en": "performance review", "level": "medium" },
+        { "id": 1851, "pl": "podwyżka", "en": "raise", "level": "medium" },
+        { "id": 1852, "pl": "zwolnienie", "en": "layoff", "level": "medium" }
+      ]
+    }
+];
