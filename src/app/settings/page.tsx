@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { isAuthSessionMissingError } from "@/lib/authErrorUtils";
 import Navbar from "@/components/Navbar";
 
 export default function Settings() {
-  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -18,20 +16,7 @@ export default function Settings() {
   // hasło
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const hash = window.location.hash;
-    if (hash && hash.includes("type=recovery")) {
-      setIsPasswordRecovery(true);
-      const { pathname, search } = window.location;
-      router.replace(`${pathname}${search}`);
-    }
-  }, [router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,7 +47,7 @@ export default function Settings() {
           .from("profiles")
           .select("first_name, last_name")
           .eq("id", user.id)
-          .maybeSingle();
+          .single();
 
         if (profileError) {
           setErrorMsg(profileError.message);
@@ -104,7 +89,7 @@ export default function Settings() {
     if (!user) return;
 
     // jeśli konto przez Google → nie pozwól zmienić
-    if (!isPasswordRecovery && user.app_metadata?.provider === "google") {
+    if (user.app_metadata?.provider === "google") {
       setPasswordMsg(
         "🔒 Konto Google – hasło jest zarządzane przez Google, nie możesz go zmienić tutaj."
       );
@@ -116,27 +101,14 @@ export default function Settings() {
       return;
     }
 
-    if (isPasswordRecovery && newPassword !== confirmPassword) {
-      setPasswordMsg("Hasła muszą być identyczne.");
-      return;
-    }
-
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
       setPasswordMsg("❌ " + error.message);
     } else {
-      setPasswordMsg(
-        isPasswordRecovery
-          ? "✅ Hasło zostało ustawione. Możesz się teraz zalogować przy użyciu nowych danych."
-          : "✅ Hasło zostało zmienione."
-      );
+      setPasswordMsg("✅ Hasło zostało zmienione.");
       setCurrentPassword("");
       setNewPassword("");
-      setConfirmPassword("");
-      if (isPasswordRecovery) {
-        setIsPasswordRecovery(false);
-      }
     }
   };
 
@@ -191,72 +163,43 @@ export default function Settings() {
                 {successMsg && <p className="text-sm text-emerald-300">{successMsg}</p>}
               </section>
 
-                {/* Zmiana hasła */}
-                <section className="space-y-4">
-                  <h2 className="text-lg font-semibold text-slate-100">Zmiana hasła</h2>
+              {/* Zmiana hasła */}
+              <section className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-100">Zmiana hasła</h2>
 
-                  {isPasswordRecovery ? (
-                    <>
-                      <p className="text-sm text-slate-400">
-                        Otrzymaliśmy prośbę o zresetowanie hasła. Ustaw nowe hasło, a następnie zaloguj się ponownie.
-                      </p>
+                {user.app_metadata?.provider === "google" ? (
+                  <p className="text-sm text-slate-400">
+                    🔒 Zalogowałeś się przez Google – zmiana hasła dostępna jest tylko w ustawieniach konta Google.
+                  </p>
+                ) : (
+                  <>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Aktualne hasło"
+                      className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+                    />
 
-                      <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Nowe hasło"
-                        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
-                      />
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Nowe hasło"
+                      className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
+                    />
 
-                      <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Potwierdź nowe hasło"
-                        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
-                      />
+                    <button
+                      onClick={handlePasswordChange}
+                      className="w-full rounded-2xl bg-[#1D4ED8]/20 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-[#1D4ED8]/30"
+                    >
+                      Zmień hasło
+                    </button>
+                  </>
+                )}
 
-                      <button
-                        onClick={handlePasswordChange}
-                        className="w-full rounded-2xl bg-[#1D4ED8]/20 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-[#1D4ED8]/30"
-                      >
-                        Ustaw nowe hasło
-                      </button>
-                    </>
-                  ) : user.app_metadata?.provider === "google" ? (
-                    <p className="text-sm text-slate-400">
-                      🔒 Zalogowałeś się przez Google – zmiana hasła dostępna jest tylko w ustawieniach konta Google.
-                    </p>
-                  ) : (
-                    <>
-                      <input
-                        type="password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        placeholder="Aktualne hasło"
-                        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
-                      />
-
-                      <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Nowe hasło"
-                        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]/60"
-                      />
-
-                      <button
-                        onClick={handlePasswordChange}
-                        className="w-full rounded-2xl bg-[#1D4ED8]/20 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-[#1D4ED8]/30"
-                      >
-                        Zmień hasło
-                      </button>
-                    </>
-                  )}
-
-                  {passwordMsg && <p className="text-sm text-slate-300">{passwordMsg}</p>}
-                </section>
+                {passwordMsg && <p className="text-sm text-slate-300">{passwordMsg}</p>}
+              </section>
             </div>
           </div>
         </div>

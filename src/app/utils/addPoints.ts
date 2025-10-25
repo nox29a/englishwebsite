@@ -19,14 +19,6 @@ export async function addPoints(userId: string, points: number, source = "lesson
     return;
   }
 
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(
-      new CustomEvent("xp-updated", {
-        detail: { delta: points },
-      })
-    );
-  }
-
   const metricsDate = occurredAt.toISOString().slice(0, 10);
 
   const { data: dailyRow, error: fetchError } = await supabase

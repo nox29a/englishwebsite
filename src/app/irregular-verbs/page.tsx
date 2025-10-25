@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, type KeyboardEvent } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
@@ -12,7 +12,6 @@ import {
 } from "@/components/words/language_packs";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { addPoints } from "../utils/addPoints";
-import { saveAttempt } from "../utils/saveAttempt";
 import { Mic, Trophy, Clock, Target, CheckCircle2, XCircle, Flame, Star, Crown, Sparkles, Zap, Brain } from "lucide-react";
 
 interface Achievement {
@@ -84,26 +83,12 @@ export default function IrregularVerbsTrainer() {
 
     return matchesSupportedLanguage ? selectedLanguage : "en";
   }, [selectedLanguage]);
-  const verbList = useMemo(
-    () => VERB_SETS[activeLanguage] ?? VERB_SETS.en,
-    [activeLanguage]
-  );
   const [remainingVerbs, setRemainingVerbs] = useState<Verb[]>(() => [
-    ...verbList,
+    ...VERB_SETS[activeLanguage],
   ]);
-  const [currentVerb, setCurrentVerb] = useState<Verb>(() => {
-    const fallbackVerb = verbList[0] ?? VERB_SETS.en[0];
-
-    return (
-      fallbackVerb ?? {
-        index: -1,
-        base: "",
-        past: "",
-        participle: "",
-        translation: "",
-      }
-    );
-  });
+  const [currentVerb, setCurrentVerb] = useState<Verb>(() =>
+    getRandomVerb(VERB_SETS[activeLanguage])
+  );
   const [inputBase, setInputBase] = useState("");
   const [inputPast, setInputPast] = useState("");
   const [inputParticiple, setInputParticiple] = useState("");
@@ -128,7 +113,6 @@ export default function IrregularVerbsTrainer() {
   const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [feedbackState, setFeedbackState] = useState("");
-  const lastAnswerTimestampRef = useRef<number>(Date.now());
 
   const currentLanguageOption = useMemo(
     () => LANGUAGE_OPTIONS.find((option) => option.code === activeLanguage),
@@ -231,7 +215,6 @@ export default function IrregularVerbsTrainer() {
       .eq("user_id", id)
       .eq("metadata->>progress_type", "irregular_verbs_state")
       .order("completed_at", { ascending: false })
-      .limit(1)
       .maybeSingle();
 
     if (error) {
@@ -414,7 +397,7 @@ export default function IrregularVerbsTrainer() {
   }, [showAchievement]);
 
   useEffect(() => {
-    const freshVerbs = [...verbList];
+    const freshVerbs = [...VERB_SETS[activeLanguage]];
     const randomVerb = getRandomVerb(freshVerbs);
     setRemainingVerbs(freshVerbs);
     setCurrentVerb(randomVerb);
@@ -430,10 +413,10 @@ export default function IrregularVerbsTrainer() {
     setTimeSpent(0);
     setStreak(0);
     setFeedbackState("");
-  }, [activeLanguage, verbList]);
+  }, [activeLanguage]);
 
   const resetTrainer = async () => {
-    const freshVerbs = [...verbList];
+    const freshVerbs = [...VERB_SETS[activeLanguage]];
     const randomVerb = getRandomVerb(freshVerbs);
     setRemainingVerbs(freshVerbs);
     setCurrentVerb(randomVerb);
@@ -467,9 +450,7 @@ export default function IrregularVerbsTrainer() {
     const isCorrect = isBaseCorrect && isPastCorrect && isParticipleCorrect;
     
     // Zapisz czas odpowiedzi
-    const now = Date.now();
-    const timeTaken = Math.max(0.5, (now - lastAnswerTimestampRef.current) / 1000);
-    lastAnswerTimestampRef.current = now;
+    const timeTaken = sessionTime; // lub inny sposób mierzenia czasu odpowiedzi
 
     setTotalAnswers((prev) => prev + 1);
 
@@ -479,32 +460,6 @@ export default function IrregularVerbsTrainer() {
       } catch (error) {
         console.error("Error while adding points:", error);
       }
-    }
-
-    if (isAuthenticated && userId) {
-      const expectedAnswer = `${currentVerb.base} | ${currentVerb.past} | ${currentVerb.participle}`;
-      const userCombinedAnswer = `${inputBase.trim()} | ${inputPast.trim()} | ${inputParticiple.trim()}`;
-
-      await saveAttempt(userId, {
-        type: "irregular_verbs",
-        id: currentVerb.index,
-        isCorrect,
-        timeTaken,
-        difficulty: "core",
-        skillTags: ["irregular_verbs", activeLanguage],
-        prompt: `Podaj formy dla czasownika "${currentVerb.translation}"`,
-        expectedAnswer,
-        userAnswer: userCombinedAnswer,
-        metadata: {
-          language: activeLanguage,
-          verb: currentVerb,
-          attempts: totalAnswers + 1,
-        },
-        source: "irregular_verbs_trainer",
-        mistakeNote: isCorrect
-          ? undefined
-          : `Poprawne formy: ${expectedAnswer}. Użytkownik podał: ${userCombinedAnswer}`,
-      });
     }
 
     if (isCorrect) {
@@ -540,13 +495,6 @@ export default function IrregularVerbsTrainer() {
     }
   };
 
-  const revealAnswer = () => {
-    if (!showAnswer && !answeredCorrectly) {
-      setTotalAnswers((prev) => prev + 1);
-    }
-    setShowAnswer(true);
-  };
-
   const nextVerb = () => {
     if (remainingVerbs.length === 0) {
       setResult("🎉 Wszystkie czasowniki zostały rozwiązane!");
@@ -575,27 +523,19 @@ export default function IrregularVerbsTrainer() {
   };
 
   // 🔑 Obsługa klawiatury
-  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
       if (showAnswer || answeredCorrectly) {
         nextVerb();
       } else {
         checkAnswers();
       }
-      return;
+    } else if (e.key === " ") {
+      e.preventDefault();
+      setShowAnswer(true);
     }
-
-    if (
-      event.key === " " &&
-      !event.shiftKey &&
-      !event.altKey &&
-      !event.ctrlKey &&
-      !event.metaKey
-    ) {
-      event.preventDefault();
-      revealAnswer();
-    }
+    // ⚠️ nie przechwytujemy Taba — zostaje domyślne przechodzenie
   };
 
   const getAccuracy = () => {
@@ -612,7 +552,7 @@ export default function IrregularVerbsTrainer() {
   };
 
   const totalTimeSpent = timeSpent + sessionTime;
-  const totalVerbs = verbList.length;
+  const totalVerbs = VERB_SETS[activeLanguage].length;
   const masteredCount = totalVerbs - remainingVerbs.length;
   const progressPercentage =
     totalVerbs > 0 ? (masteredCount / totalVerbs) * 100 : 0;
@@ -646,7 +586,20 @@ export default function IrregularVerbsTrainer() {
           ))}
         </div>
 
-
+        {/* Achievement Popup */}
+        {showAchievement && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-[var(--foreground)] px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
+              <div className="flex items-center space-x-3">
+                <div className="text-3xl">{showAchievement.icon}</div>
+                <div>
+                  <div className="font-bold text-lg">{showAchievement.name}</div>
+                  <div className="text-sm opacity-90">{showAchievement.description}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="max-w-4xl mx-auto px-4 py-6 relative">
 
@@ -689,7 +642,6 @@ export default function IrregularVerbsTrainer() {
                     ref={baseInputRef}
                     value={inputBase}
                     onChange={(e) => setInputBase(e.target.value)}
-                    onKeyDown={handleInputKeyDown}
                     placeholder={placeholders.base}
                     className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-[var(--focus-ring-strong)] focus:border-transparent transition-all duration-300 text-lg font-medium ${
                       feedbackClasses[feedbackState] || feedbackClasses.default
@@ -697,7 +649,6 @@ export default function IrregularVerbsTrainer() {
                   />
                   <button
                     onClick={() => startRecognition(setInputBase)}
-                    tabIndex={-1}
                     className="px-4 py-4 rounded-xl bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] border border-[color:var(--border-translucent-strong)] transition-all duration-300 transform hover:scale-110"
                   >
                     <Mic className="w-5 h-5" />
@@ -712,7 +663,6 @@ export default function IrregularVerbsTrainer() {
                   <input
                     value={inputPast}
                     onChange={(e) => setInputPast(e.target.value)}
-                    onKeyDown={handleInputKeyDown}
                     placeholder={placeholders.past}
                     className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-[var(--focus-ring-strong)] focus:border-transparent transition-all duration-300 text-lg font-medium ${
                       feedbackClasses[feedbackState] || feedbackClasses.default
@@ -720,7 +670,6 @@ export default function IrregularVerbsTrainer() {
                   />
                   <button
                     onClick={() => startRecognition(setInputPast)}
-                    tabIndex={-1}
                     className="px-4 py-4 rounded-xl bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] border border-[color:var(--border-translucent-strong)] transition-all duration-300 transform hover:scale-110"
                   >
                     <Mic className="w-5 h-5" />
@@ -735,7 +684,6 @@ export default function IrregularVerbsTrainer() {
                   <input
                     value={inputParticiple}
                     onChange={(e) => setInputParticiple(e.target.value)}
-                    onKeyDown={handleInputKeyDown}
                     placeholder={placeholders.participle}
                     className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-[var(--focus-ring-strong)] focus:border-transparent transition-all duration-300 text-lg font-medium ${
                       feedbackClasses[feedbackState] || feedbackClasses.default
@@ -743,7 +691,6 @@ export default function IrregularVerbsTrainer() {
                   />
                   <button
                     onClick={() => startRecognition(setInputParticiple)}
-                    tabIndex={-1}
                     className="px-4 py-4 rounded-xl bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] border border-[color:var(--border-translucent-strong)] transition-all duration-300 transform hover:scale-110"
                   >
                     <Mic className="w-5 h-5" />
@@ -778,7 +725,12 @@ export default function IrregularVerbsTrainer() {
               </button>
 
               <button
-                onClick={revealAnswer}
+                onClick={() => {
+                  if (!showAnswer && !answeredCorrectly) {
+                    setTotalAnswers((prev) => prev + 1);
+                  }
+                  setShowAnswer(true);
+                }}
                 className="px-6 py-3 bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] rounded-xl transition-all duration-300 border border-[color:var(--border-translucent-strong)] transform hover:scale-105"
               >
                 Pokaż odpowiedź

@@ -231,12 +231,27 @@ export default function Flashcards() {
           ))}
         </div>
 
+        {/* Achievement Popup */}
+        {showAchievement && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+            <div className="bg-gradient-to-r from-[var(--achievement-gradient-from)] to-[var(--achievement-gradient-to)] text-[var(--foreground)] px-6 py-4 rounded-xl shadow-2xl border-2 border-[color:var(--achievement-border)]">
+              <div className="flex items-center space-x-3">
+                <div className="text-3xl">{showAchievement.icon}</div>
+                <div>
+                  <div className="font-bold text-lg">{showAchievement.name}</div>
+                  <div className="text-sm opacity-90">{showAchievement.description}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 py-6 relative">
           
 
 
 
+          {/* Progress Bar */}
 
           
           {/* Controls */}

@@ -15,7 +15,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { ChevronRight, Mic, Volume2, RotateCcw, CheckCircle2, XCircle, Trophy, Brain, Clock, Target, Star, Zap, Flame, Award, TrendingUp, Battery, Crown, Sparkles, Globe } from 'lucide-react';
 import { supabase } from "@/lib/supabaseClient";
 import { addPoints } from "../utils/addPoints";
-import { saveAttempt } from "../utils/saveAttempt";
 import type { User } from "@supabase/supabase-js";
 
 // Definicje typów dla Speech Recognition API
@@ -107,28 +106,14 @@ interface Achievement {
   icon: string;
 }
 
-const LEVEL_LABELS: Record<"easy" | "medium" | "hard", string> = {
-  easy: "Łatwy",
-  medium: "Średni",
-  hard: "Trudny",
-};
-
-const LEVEL_MARKERS: Record<"easy" | "medium" | "hard", string> = {
-  easy: "●",
-  medium: "●●",
-  hard: "●●●",
-};
-
-const LEVEL_OPTIONS: Array<keyof typeof LEVEL_LABELS> = ["easy", "medium", "hard"];
-
 export default function FlashcardGame() {
   const { language, setLanguage } = useLanguage();
   const languageCategories = useMemo(
     () => LANGUAGE_DATASETS[language] ?? LANGUAGE_DATASETS.en,
     [language]
   );
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
-    languageCategories[0]?.name ? [languageCategories[0].name] : []
+  const [category, setCategory] = useState(
+    () => languageCategories[0]?.name ?? ""
   );
   const [level, setLevel] = useState("easy");
   const [direction, setDirection] = useState<
@@ -144,7 +129,6 @@ export default function FlashcardGame() {
   const [totalTimeSpent, setTotalTimeSpent] = useState(0);
   const [availableLevels, setAvailableLevels] = useState<string[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState(Date.now());
-  const questionStartRef = useRef(Date.now());
 
   const targetLanguageOption = useMemo(
     () => LANGUAGE_OPTIONS.find((option) => option.code === language),
@@ -157,48 +141,10 @@ export default function FlashcardGame() {
   const targetShortLabel = targetLanguageOption?.shortLabel ?? "EN";
 
   useEffect(() => {
-    if (!languageCategories.length) {
-      setSelectedCategories([]);
-      return;
+    if (languageCategories[0]?.name) {
+      setCategory(languageCategories[0].name);
     }
-
-    setSelectedCategories((prev) => {
-      const valid = prev.filter((name) =>
-        languageCategories.some((category) => category.name === name)
-      );
-
-      if (valid.length > 0) {
-        const ordered = languageCategories
-          .map((category) => category.name)
-          .filter((name) => valid.includes(name));
-
-        const isSameLength = ordered.length === prev.length;
-        const isSameOrder = ordered.every((name, index) => name === prev[index]);
-
-        return isSameLength && isSameOrder ? prev : ordered;
-      }
-
-      return [languageCategories[0].name];
-    });
   }, [languageCategories]);
-
-  const toggleCategory = (name: string) => {
-    setSelectedCategories((prev) => {
-      if (prev.includes(name)) {
-        if (prev.length === 1) {
-          return prev;
-        }
-        return prev.filter((categoryName) => categoryName !== name);
-      }
-
-      const next = [...prev, name];
-      return languageCategories
-        .map((category) => category.name)
-        .filter((categoryName) => next.includes(categoryName));
-    });
-  };
-
-  const selectedCategoriesLabel = selectedCategories.join(", ");
   
   // Dopaminowe elementy
   const [streak, setStreak] = useState(0);
@@ -365,35 +311,20 @@ export default function FlashcardGame() {
     speak(prompt, lang);
   };
 
-  const getWords = (levelToUse = level): Word[] => {
-    if (!selectedCategories.length) return [];
-
-    const selected = languageCategories.filter((category) =>
-      selectedCategories.includes(category.name)
+  const getWords = (): Word[] => {
+    const selectedCategory = languageCategories.find(
+      (c) => c.name === category
     );
-
-    const words = selected.flatMap((category) =>
-      category.words.filter((word) => word.level === levelToUse)
-    );
-
-    const uniqueWords = new Map<number, Word>();
-    for (const word of words) {
-      uniqueWords.set(word.id, word);
-    }
-
-    return Array.from(uniqueWords.values());
+    if (!selectedCategory) return [];
+    return selectedCategory.words.filter((word) => word.level === level);
   };
 
   const getAvailableLevels = (): string[] => {
-    if (!selectedCategories.length) return [];
-
-    const levels = new Set<string>();
-    languageCategories
-      .filter((category) => selectedCategories.includes(category.name))
-      .forEach((category) => {
-        category.words.forEach((word) => levels.add(word.level));
-      });
-
+    const selectedCategory = languageCategories.find(
+      (c) => c.name === category
+    );
+    if (!selectedCategory) return [];
+    const levels = new Set(selectedCategory.words.map((word) => word.level));
     return Array.from(levels);
   };
 
@@ -415,7 +346,7 @@ export default function FlashcardGame() {
       setLevel(currentLevel);
     }
 
-    const words = getWords(currentLevel);
+    const words = getWords().filter(word => word.level === currentLevel);
     const randomWord = words.length > 0 ? getRandomWord(words) : { id: -1, pl: "Brak fiszek", en: "No flashcards", level: "" };
     
     setRemaining(words);
@@ -423,7 +354,6 @@ export default function FlashcardGame() {
     setScore(0);
     setTotalTimeSpent(0);
     setSessionStartTime(Date.now());
-    questionStartRef.current = Date.now();
     setLoading(false);
   };
 
@@ -439,20 +369,10 @@ export default function FlashcardGame() {
 
   useEffect(() => {
     loadProgress();
-  }, [selectedCategories, level, language]);
+  }, [category, level, language]);
 
-  useEffect(() => {
-    if (current.id !== -1) {
-      questionStartRef.current = Date.now();
-    }
-  }, [current.id]);
-
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (current.id === -1) return;
-
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
 
     const wordToCheck = remaining.find((w) => w.id === current.id) || current;
     const correct =
@@ -461,9 +381,6 @@ export default function FlashcardGame() {
         : wordToCheck.pl.toLowerCase().trim();
     const userAnswer = input.trim().toLowerCase();
     const isCorrect = userAnswer === correct;
-    const now = Date.now();
-    const timeTaken = Math.max(0.5, (now - questionStartRef.current) / 1000);
-    questionStartRef.current = now;
 
     let updatedList = remaining;
 
@@ -523,34 +440,6 @@ export default function FlashcardGame() {
       setMaxStreak(streak);
     }
 
-    if (user) {
-      await saveAttempt(user.id, {
-        type: "flashcards",
-        id: current.id,
-        isCorrect,
-        timeTaken,
-        difficulty: current.level,
-        skillTags: [
-          "flashcards",
-          direction,
-          language,
-          ...selectedCategories.map((name) => `category:${name}`),
-        ],
-        prompt: direction === "native-to-target" ? wordToCheck.pl : wordToCheck.en,
-        expectedAnswer: correct,
-        userAnswer,
-        metadata: {
-          language,
-          category: selectedCategoriesLabel,
-          categories: selectedCategories,
-          level,
-          direction,
-          remaining_ids: updatedList.map((word) => word.id),
-        },
-        source: "flashcards",
-      });
-    }
-
     if (updatedList.length === 0) {
       // Perfect completion bonus
       if (streak === getWords().length) {
@@ -600,7 +489,6 @@ export default function FlashcardGame() {
     setTotalTimeSpent(0);
     setSessionStartTime(Date.now());
     setEnergy(100);
-    questionStartRef.current = Date.now();
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -659,7 +547,20 @@ export default function FlashcardGame() {
         ))}
       </div>
 
-
+      {/* Achievement Popup */}
+      {showAchievement && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-[var(--foreground)] px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
+            <div className="flex items-center space-x-3">
+              <div className="text-3xl">{showAchievement.icon}</div>
+              <div>
+                <div className="font-bold text-lg">{showAchievement.name}</div>
+                <div className="text-sm opacity-90">{showAchievement.description}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Streak Bonus Popup */}
       
@@ -855,42 +756,68 @@ export default function FlashcardGame() {
 
 
           <aside className="mt-8 space-y-6 lg:mt-0 lg:pl-2 lg:sticky lg:top-24">
+
+
+            <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5">
+              <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
+                <Brain className="w-5 h-5 mr-2 text-[var(--icon-blue)]" />
+                Kategoria
+              </h3>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {languageCategories.map((cat) => (
+                  <button
+                    key={cat.name}
+                    onClick={() => setCategory(cat.name)}
+                    className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                      category === cat.name
+                        ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
+                        : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid gap-6 md:grid-cols-2">
               <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5">
                 <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
                   <Target className="w-5 h-5 mr-2 text-green-400" />
                   Poziom
                 </h3>
-                <label className="sr-only" htmlFor="level-select">
-                  Wybierz poziom trudności
-                </label>
-                <div className="relative">
-                  <select
-                    id="level-select"
-                    value={level}
-                    onChange={(event) => {
-                      const nextLevel = event.target.value as typeof level;
-                      if (availableLevels.includes(nextLevel)) {
-                        setLevel(nextLevel);
-                      }
-                    }}
-                    className="w-full appearance-none rounded-xl border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-dark)]/70 px-4 py-3 text-sm font-medium text-[var(--foreground)] transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-strong)]"
-                  >
-                    {LEVEL_OPTIONS.map((lvl) => (
-                      <option key={lvl} value={lvl} disabled={!availableLevels.includes(lvl)}>
-                        {`${LEVEL_MARKERS[lvl]} ${LEVEL_LABELS[lvl]}`}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-[var(--muted-foreground)]">
-                    <ChevronRight className="h-4 w-4 rotate-90" />
-                  </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {["easy", "medium", "hard"].map((lvl) => {
+                    const isAvailable = availableLevels.includes(lvl);
+                    const isSelected = level === lvl;
+                    const levelLabels: Record<string, string> = { easy: "Łatwy", medium: "Średni", hard: "Trudny" };
+                    const levelColors: Record<string, string> = {
+                      easy: "from-green-400 to-green-600",
+                      medium: "from-amber-400 to-amber-600",
+                      hard: "from-red-400 to-red-600"
+                    };
+
+                    return (
+                      <button
+                        key={lvl}
+                        onClick={() => isAvailable && setLevel(lvl)}
+                        disabled={!isAvailable}
+                        className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                          isSelected
+                            ? `bg-gradient-to-r ${levelColors[lvl]} text-[var(--foreground)] shadow-lg`
+                            : isAvailable
+                            ? "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
+                            : "bg-[var(--overlay-dark)] text-[var(--muted-foreground)] opacity-60 cursor-not-allowed"
+                        }`}
+                      >
+                        <div className="text-lg">
+                          {lvl === 'easy' ? '●' : lvl === 'medium' ? '●●' : '●●●'}
+                        </div>
+                        {levelLabels[lvl]}
+                      </button>
+                    );
+                  })}
                 </div>
-                {!availableLevels.includes(level) && (
-                  <p className="mt-3 rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-100">
-                    Ten poziom nie jest dostępny dla wybranej kategorii. Wybierz inny poziom, aby kontynuować.
-                  </p>
-                )}
               </div>
 
               <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5">
@@ -898,62 +825,33 @@ export default function FlashcardGame() {
                   <ChevronRight className="w-5 h-5 mr-2 text-[var(--icon-purple)]" />
                   Kierunek
                 </h3>
-                <label className="sr-only" htmlFor="direction-select">
-                  Wybierz kierunek nauki
-                </label>
-                <div className="relative">
-                  <select
-                    id="direction-select"
-                    value={direction}
-                    onChange={(event) =>
-                      setDirection(
-                        event.target.value as "native-to-target" | "target-to-native"
-                      )
-                    }
-                    className="w-full appearance-none rounded-xl border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-dark)]/70 px-4 py-3 text-sm font-medium text-[var(--foreground)] transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-strong)]"
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setDirection("native-to-target")}
+                    className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                      direction === "native-to-target"
+                        ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
+                        : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
+                    }`}
                   >
-                    <option value="native-to-target">
-                      {`PL → ${targetShortLabel} · Polski → ${targetLabel}`}
-                    </option>
-                    <option value="target-to-native">
-                      {`${targetShortLabel} → PL · ${targetLabel} → Polski`}
-                    </option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-[var(--muted-foreground)]">
-                    <ChevronRight className="h-4 w-4 rotate-90" />
-                  </div>
+                    <div className="text-lg">PL → {targetShortLabel}</div>
+                    <div className="text-xs text-[var(--muted-foreground)] sm:text-sm">Polski → {targetLabel}</div>
+                  </button>
+                  <button
+                    onClick={() => setDirection("target-to-native")}
+                    className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                      direction === "target-to-native"
+                        ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
+                        : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
+                    }`}
+                  >
+                    <div className="text-lg">{targetShortLabel} → PL</div>
+                    <div className="text-xs text-[var(--muted-foreground)] sm:text-sm">{targetLabel} → Polski</div>
+                  </button>
                 </div>
               </div>
             </div>
           </aside>
-        </div>
-      </div>
-      <div className="mt-10">
-        <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-2xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5 sm:p-6">
-          <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
-            <Brain className="w-5 h-5 mr-2 text-[var(--icon-blue)]" />
-            Kategoria
-          </h3>
-          <div className="mb-4 text-xs text-[var(--muted-foreground)] sm:text-sm">
-            Kliknij, aby zaznaczyć jedną lub kilka kategorii. Aktualnie wybrane: {selectedCategoriesLabel || "brak"}.
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {languageCategories.map((cat) => (
-              <button
-                key={cat.name}
-                type="button"
-                onClick={() => toggleCategory(cat.name)}
-                aria-pressed={selectedCategories.includes(cat.name)}
-                className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
-                  selectedCategories.includes(cat.name)
-                    ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
-                    : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     </div></div>

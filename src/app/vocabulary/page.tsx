@@ -255,19 +255,6 @@ export default function WordMatchGame() {
   };
 
   const gameTime = Math.floor((now - startTime) / 1000);
-  const totalAttempts = score + errors;
-  const accuracy = totalAttempts > 0 ? Math.round((score / totalAttempts) * 100) : 0;
-  const remainingPairs = Math.max(words.length - score, 0);
-  const progress = words.length > 0 ? Math.round((score / words.length) * 100) : 0;
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-      .toString()
-      .padStart(2, "0");
-    const secs = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${minutes}:${secs}`;
-  };
   const currentLanguageOption = useMemo(
     () => LANGUAGE_OPTIONS.find((option) => option.code === language),
     [language]
@@ -341,55 +328,7 @@ export default function WordMatchGame() {
           </div>
 
           {/* Statystyki */}
-          <div className="mt-12 grid w-full max-w-5xl gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <div className="flex flex-col gap-2 rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-6 shadow-[0_10px_30px_rgba(16,185,129,0.25)]">
-              <span className="text-xs font-semibold uppercase tracking-[0.4em] text-emerald-300/80">
-                Poprawne pary
-              </span>
-              <div className="flex items-end justify-between">
-                <span className="text-4xl font-semibold text-emerald-200">{score}</span>
-                <span className="text-sm text-emerald-100/70">Łącznie {words.length}</span>
-              </div>
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-emerald-500/20">
-                <div
-                  className="h-full rounded-full bg-emerald-400 transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
 
-            <div className="flex flex-col gap-2 rounded-3xl border border-rose-500/20 bg-rose-500/10 p-6 shadow-[0_10px_30px_rgba(244,63,94,0.25)]">
-              <span className="text-xs font-semibold uppercase tracking-[0.4em] text-rose-200/80">
-                Błędne próby
-              </span>
-              <div className="text-4xl font-semibold text-rose-100">{errors}</div>
-              <p className="text-sm text-rose-100/70">
-                Pozostało {remainingPairs} par do odkrycia
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2 rounded-3xl border border-indigo-500/20 bg-indigo-500/10 p-6 shadow-[0_10px_30px_rgba(99,102,241,0.25)]">
-              <span className="text-xs font-semibold uppercase tracking-[0.4em] text-indigo-200/80">
-                Skuteczność
-              </span>
-              <div className="text-4xl font-semibold text-indigo-100">{accuracy}%</div>
-              <p className="text-sm text-indigo-100/70">
-                {totalAttempts === 0
-                  ? "Rozpocznij łączenie, aby zobaczyć skuteczność"
-                  : `${score} poprawnych z ${totalAttempts} prób`}
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2 rounded-3xl border border-amber-500/20 bg-amber-500/10 p-6 shadow-[0_10px_30px_rgba(245,158,11,0.25)]">
-              <span className="text-xs font-semibold uppercase tracking-[0.4em] text-amber-200/80">
-                Czas gry
-              </span>
-              <div className="text-4xl font-semibold text-amber-100">{formatTime(gameTime)}</div>
-              <p className="text-sm text-amber-100/70">
-                Gra rozpoczęta {new Date(startTime).toLocaleTimeString()}
-              </p>
-            </div>
-          </div>
 
           {/* Wybór kategorii */}
           <div className="mt-12 w-full max-w-3xl rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_15px_40px_rgba(15,23,42,0.45)] backdrop-blur-xl">
