@@ -1,7 +1,7 @@
 'use client';
 
 import Navbar from '@/components/Navbar';
-import { useState, useEffect, useMemo, type FormEvent } from 'react';
+import { useState, useEffect, useMemo, useRef, type FormEvent } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { isAuthSessionMissingError } from '@/lib/authErrorUtils';
 import {
@@ -9,6 +9,7 @@ import {
   type LearningLanguage,
 } from '@/components/words/language_packs';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { saveAttempt } from '../utils/saveAttempt';
 
 type Message = {
   text: string;
@@ -495,6 +496,7 @@ export default function GamePage() {
   const [messageCount, setMessageCount] = useState(0);
   const [isCheckingLimit, setIsCheckingLimit] = useState(true);
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('intermediate');
+  const messageTimerRef = useRef<number>(Date.now());
 
   const currentLanguageOption = useMemo(
     () => LANGUAGE_OPTIONS.find((option) => option.code === language),
@@ -565,6 +567,7 @@ export default function GamePage() {
     setCorrections({});
     setMessageCount(0);
     setInput('');
+    messageTimerRef.current = Date.now();
   };
 
   const sendMessage = async () => {
@@ -638,8 +641,12 @@ export default function GamePage() {
         }),
       });
 
+      let correctionReply = '';
+      let correctionStatus = 0;
       if (correctionResponse.ok) {
-        const { reply: correctionReply, status: correctionStatus } = await correctionResponse.json();
+        const correctionPayload = await correctionResponse.json();
+        correctionReply = correctionPayload.reply ?? '';
+        correctionStatus = correctionPayload.status ?? 0;
         const userMessageIndex = newMessages.length - 1;
         const hasErrors =
           correctionStatus !== 0 &&
@@ -655,6 +662,39 @@ export default function GamePage() {
             return updated;
           });
         }
+      }
+
+      const now = Date.now();
+      const timeTaken = Math.max(0.5, (now - messageTimerRef.current) / 1000);
+      messageTimerRef.current = now;
+
+      if (!authError && user && user.id !== 'anonymous' && user.id !== 'error') {
+        const hasErrors =
+          correctionStatus !== 0 &&
+          correctionReply.trim() !== '' &&
+          correctionReply.trim() !== cleanedInput;
+
+        await saveAttempt(user.id, {
+          type: 'conversation',
+          id: `${selectedScenario.id}-${Date.now()}`,
+          isCorrect: !hasErrors,
+          timeTaken,
+          difficulty: selectedDifficulty,
+          skillTags: ['conversation', selectedScenario.id, selectedDifficulty],
+          prompt: selectedScenario.start_message,
+
+          userAnswer: cleanedInput,
+          metadata: {
+            scenario: selectedScenario.id,
+            difficulty: selectedDifficulty,
+            npc_reply: reply,
+            correction: correctionReply,
+            language,
+            message_count: messageCount + 1,
+          },
+          source: 'conversation_trainer',
+          mistakeNote: hasErrors ? correctionReply : undefined,
+        });
       }
     } catch (error) {
       console.error('Error sending message:', error);

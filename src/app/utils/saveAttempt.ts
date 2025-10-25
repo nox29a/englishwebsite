@@ -12,6 +12,12 @@ type QuestionAttempt = {
   expectedAnswer?: string;
   userAnswer?: string;
   metadata?: Record<string, unknown>;
+  lessonId?: string;
+  templateId?: string;
+  source?: string;
+  mistakeTaxonomyId?: string;
+  mistakeSeverity?: "low" | "medium" | "high";
+  mistakeNote?: string;
 };
 
 export async function saveAttempt(userId: string, question: QuestionAttempt) {
@@ -20,9 +26,10 @@ export async function saveAttempt(userId: string, question: QuestionAttempt) {
 
   const sessionPayload = {
     user_id: userId,
+    lesson_id: question.lessonId ?? null,
     started_at: sessionStart.toISOString(),
     ended_at: now.toISOString(),
-    source: question.type,
+    source: question.source ?? question.type,
   };
 
   const { data: sessionData, error: sessionError } = await supabase
@@ -39,7 +46,7 @@ export async function saveAttempt(userId: string, question: QuestionAttempt) {
   const attemptPayload = {
     session_id: sessionData.id,
     user_id: userId,
-    template_id: null,
+    template_id: question.templateId ?? null,
     skill_tags: question.skillTags?.length ? question.skillTags : [question.type],
     started_at: sessionStart.toISOString(),
     completed_at: now.toISOString(),
@@ -52,6 +59,8 @@ export async function saveAttempt(userId: string, question: QuestionAttempt) {
     metadata: {
       difficulty: question.difficulty ?? null,
       question_id: question.id,
+      source: question.source ?? question.type,
+      recorded_at: now.toISOString(),
       ...question.metadata,
     },
   };
@@ -79,11 +88,34 @@ export async function saveAttempt(userId: string, question: QuestionAttempt) {
     skill_tag: question.skillTags?.[0] ?? question.type,
   };
 
-  const { error: answerError } = await supabase
+  const { data: answerData, error: answerError } = await supabase
     .from("answer_events")
-    .insert([answerPayload]);
+    .insert([answerPayload])
+    .select("id")
+    .single();
 
   if (answerError) {
     console.error("Error saving answer event:", answerError.message);
+    return;
+  }
+
+  if (!question.isCorrect) {
+    if (question.mistakeTaxonomyId && answerData?.id) {
+      const { error: mistakeError } = await supabase.from("mistakes").insert([
+        {
+          answer_event_id: answerData.id,
+          taxonomy_id: question.mistakeTaxonomyId,
+          user_id: userId,
+          severity: question.mistakeSeverity ?? "medium",
+          note: question.mistakeNote ?? null,
+        },
+      ]);
+
+      if (mistakeError) {
+        console.error("Error recording mistake:", mistakeError.message);
+      }
+    } else {
+      // TODO: Map domain-specific błędy do identyfikatorów taxonomy w bazie
+    }
   }
 }

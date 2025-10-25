@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from '@/components/Navbar';
@@ -88,6 +88,9 @@ export default function ZadaniaPage() {
   const [totalXP, setTotalXP] = useState(0);
   const [level, setLevel] = useState(1);
   const [energy, setEnergy] = useState(100);
+  const [user, setUser] = useState(null);
+
+  const lastAnswerTimestampRef = useRef(Date.now());
 
   const activeTasks = TASK_BANKS[language] || TASK_BANKS.en;
   const currentLanguageOption = LANGUAGE_OPTIONS.find(option => option.code === language);
@@ -112,6 +115,27 @@ export default function ZadaniaPage() {
   useEffect(() => {
     setVisibleTasks(Math.min(20, activeTasks.length));
   }, [activeLevel, language]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchUser = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (!error && user && isMounted) {
+        setUser(user);
+      }
+    };
+
+    fetchUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Funkcja do dodania cząsteczek
   const addParticles = (event, isCorrect) => {
@@ -161,12 +185,15 @@ export default function ZadaniaPage() {
     }
   };
 
-  const handleAnswer = (taskId, selected, event) => {
+  const handleAnswer = async (taskId, selected, event) => {
     const task = activeTasks.find(t => t.id === taskId);
     if (!task || selectedAnswers[taskId]) return;
-    
+
     const isCorrect = selected === task.answer;
-    
+    const now = Date.now();
+    const timeTaken = Math.max(0.5, (now - lastAnswerTimestampRef.current) / 1000);
+    lastAnswerTimestampRef.current = now;
+
     setSelectedAnswers(prev => ({ ...prev, [taskId]: selected }));
 
     // Animacje cząsteczek
@@ -193,6 +220,26 @@ export default function ZadaniaPage() {
     } else {
       setStreak(0);
       setEnergy(prev => Math.max(0, prev - 10));
+    }
+
+    if (user) {
+      await saveAttempt(user.id, {
+        type: "grammar_exercise",
+        id: taskId,
+        isCorrect,
+        timeTaken,
+        difficulty: task.level,
+        skillTags: ["exercises", task.level.toLowerCase(), language],
+        prompt: task.question,
+        expectedAnswer: task.answer,
+        userAnswer: selected,
+        metadata: {
+          explanation: task.explanation,
+          options: task.options,
+          language,
+        },
+        source: "grammar_exercises",
+      });
     }
   };
 

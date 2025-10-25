@@ -13,9 +13,11 @@ export default function Navbar() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [userType, setUserType] = useState<string>("basic");
   const [userPoints, setUserPoints] = useState<number>(0);
+  const [userStreak, setUserStreak] = useState<number>(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage } = useLanguage();
   const pathname = usePathname();
+  const userId = user?.id ?? null;
 
   const currentLanguageOption = useMemo(
     () => LANGUAGE_OPTIONS.find(option => option.code === language),
@@ -83,11 +85,116 @@ export default function Navbar() {
         } else {
           setUserPoints(0);
         }
+
+        // Pobierz aktualny streak
+        const { data: streakData, error: streakError } = await supabase
+          .from('streaks')
+          .select('current_streak')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (!streakError && streakData) {
+          setUserStreak(streakData.current_streak ?? 0);
+        } else {
+          setUserStreak(0);
+        }
       }
     };
 
     getUser();
-  }, []);  
+  }, []);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const xpChannel = supabase
+      .channel(`xp-updates-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'xp_history',
+          filter: `user_id=eq.${userId}`,
+        },
+        async () => {
+          const { data: leaderboardData, error: leaderboardError } = await supabase
+            .from('view_xp_leaderboard')
+            .select('total_xp')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (!leaderboardError && leaderboardData) {
+            setUserPoints(leaderboardData.total_xp ?? 0);
+          } else if (!leaderboardError && !leaderboardData) {
+            setUserPoints(0);
+          }
+        }
+      );
+
+    const streakChannel = supabase
+      .channel(`streak-updates-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'streaks',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            setUserStreak(0);
+            return;
+          }
+
+          const newRow = payload.new as { current_streak?: number } | null;
+
+          if (typeof newRow?.current_streak === 'number') {
+            setUserStreak(newRow.current_streak);
+          }
+        }
+      );
+
+    void xpChannel.subscribe();
+    void streakChannel.subscribe();
+
+    return () => {
+      supabase.removeChannel(xpChannel);
+      supabase.removeChannel(streakChannel);
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleXpUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<{ delta?: number; total?: number }>).detail;
+
+      if (!detail) {
+        return;
+      }
+
+      if (typeof detail.total === "number") {
+        setUserPoints(detail.total);
+        return;
+      }
+
+      if (typeof detail.delta === "number") {
+        setUserPoints((prev) => Math.max(prev + detail.delta, 0));
+      }
+    };
+
+    window.addEventListener("xp-updated", handleXpUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener("xp-updated", handleXpUpdate as EventListener);
+    };
+  }, []);
 
   const navLinks = useMemo(() => [
     {
@@ -116,16 +223,40 @@ export default function Navbar() {
     },
   ], []);
 
+  const baseLevelXp = 250;
+
+  // Funkcja pomocnicza do obliczania całkowitej liczby punktów
+  // wymaganych do osiągnięcia danego poziomu.
+  const getTotalXpForLevel = (level: number) => {
+    if (level <= 1) {
+      return 0;
+    }
+
+    return (baseLevelXp * (level - 1) * level) / 2;
+  };
+
   // Funkcja do obliczania poziomu na podstawie punktów
   const calculateLevel = (points: number) => {
-    return Math.floor(points / 250) + 1; // Każde 250 punktów = 1 poziom
+    let level = 1;
+
+    while (points >= getTotalXpForLevel(level + 1)) {
+      level += 1;
+    }
+
+    return level;
   };
 
   // Funkcja do obliczania postępu do następnego poziomu
   const calculateProgress = (points: number) => {
-    const currentLevelPoints = points % 250;
-    const pointsToNext = 250 - currentLevelPoints;
-    return { currentLevelPoints, pointsToNext, progressPercent: (currentLevelPoints / 250) * 100 };
+    const currentLevel = calculateLevel(points);
+    const currentLevelXp = getTotalXpForLevel(currentLevel);
+    const nextLevelXp = getTotalXpForLevel(currentLevel + 1);
+    const xpIntoCurrentLevel = points - currentLevelXp;
+    const xpForLevel = nextLevelXp - currentLevelXp || baseLevelXp;
+    const pointsToNext = Math.max(nextLevelXp - points, 0);
+    const progressPercent = Math.min((xpIntoCurrentLevel / xpForLevel) * 100, 100);
+
+    return { currentLevelPoints: xpIntoCurrentLevel, pointsToNext, progressPercent };
   };
 
   const currentLevel = calculateLevel(userPoints);
@@ -225,6 +356,12 @@ export default function Navbar() {
                     <span className="text-sm font-bold text-slate-100">Lvl {currentLevel}</span>
                     <div className="w-px h-4 bg-white/10" />
                     <span className="text-sm font-semibold text-slate-300">{userPoints} XP</span>
+                    <div className="w-px h-4 bg-white/10" />
+                    <span className="text-sm font-semibold text-slate-300 flex items-center gap-1">
+                      <span aria-hidden="true">🔥</span>
+                      <span className="sr-only">Streak:</span>
+                      <span>{userStreak} dni</span>
+                    </span>
                   </div>
 
                   {/* Account button */}
@@ -321,7 +458,7 @@ export default function Navbar() {
                     </div>
                     <div>
                       <div className="font-semibold text-slate-100">{userType === "premium" ? "Premium User" : "Basic User"}</div>
-                      <div className="text-sm text-slate-300">Level {currentLevel} • {userPoints} XP</div>
+                      <div className="text-sm text-slate-300">Level {currentLevel} • {userPoints} XP • 🔥 {userStreak} dni</div>
                     </div>
                   </div>
 
