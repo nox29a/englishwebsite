@@ -508,131 +508,22 @@ export default function SciagaPage() {
           ))}
         </div>
 
-        {/* Achievement Popup */}
-        {showAchievement && (
-          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-[var(--foreground)] px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
-              <div className="flex items-center space-x-3">
-                <div className="text-3xl">{showAchievement.icon}</div>
-                <div>
-                  <div className="font-bold text-lg">{showAchievement.name}</div>
-                  <div className="text-sm opacity-90">{showAchievement.description}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         <div className="max-w-4xl mx-auto px-4 py-6 relative">
           
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-5xl font-bold text-[var(--foreground)] mb-4 flex items-center justify-center">
-              <BookOpen className="w-12 h-12 mr-4 text-purple-400" />
-              Ściąga z {LANGUAGE_GENITIVE_LABELS[language]}
-            </h1>
-            <p className="text-[var(--muted-foreground)] text-xl">
-              Opanuj gramatykę {LANGUAGE_GENITIVE_LABELS[language]} krok po kroku
-            </p>
-          </div>
 
-          <div className="text-center text-[var(--foreground)] opacity-80 mb-8">
-            Uczysz się: <span className="font-semibold text-[var(--foreground)]">{currentLanguageOption?.label ?? "Angielski"}</span>
-            <div className="mt-2 text-sm text-[color:var(--foreground-translucent-strong)]">
-              Aby zmienić język, wybierz flagę w pasku nawigacji.
-            </div>
-          </div>
 
-          {/* Stats Bar */}
-          <div className="mb-6 bg-[var(--overlay-dark)] backdrop-blur-sm rounded-xl p-4 border border-[color:var(--border-translucent)]">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center space-x-2">
-                  <Brain className="w-6 h-6 text-purple-400" />
-                  <div>
-                    <div className="text-[var(--foreground)] font-bold">{masteredCount} opanowanych</div>
-                    <div className="text-[var(--muted-foreground)] text-sm">z {totalCount} zagadnień</div>
-                  </div>
-                </div>
 
-                <div className="flex items-center space-x-2">
-                  <Star className="w-6 h-6 text-yellow-400" />
-                  <div>
-                    <div className="text-[var(--foreground)] font-bold">{Math.round(progressPercentage)}%</div>
-                    <div className="text-[var(--muted-foreground)] text-sm">Postęp</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Progress Bar */}
-          <div className="mb-6">
-          <div className="bg-[var(--progress-track)] backdrop-blur-sm rounded-full h-4 mb-2 overflow-hidden border border-[color:var(--border-translucent)]">
-              <div 
-                className="bg-gradient-to-r from-[var(--progress-gradient-from)] via-[var(--progress-gradient-via)] to-[var(--progress-gradient-to)] h-4 rounded-full transition-all duration-1000 ease-out relative"
-                style={{ width: `${progressPercentage}%` }}
-              >
-                <div className="absolute inset-0 bg-[var(--overlay-light-strong)] animate-pulse"></div>
-              </div>
-            </div>
-          <div className="flex justify-between text-sm text-[var(--muted-foreground)]">
-              <span>Twój postęp w nauce gramatyki</span>
-              <span>{totalCount - masteredCount} pozostało</span>
-            </div>
-          </div>
+ 
 
-          {/* Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            
-            {/* Difficulty Filter */}
-            <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl p-4 border border-[color:var(--border-translucent-strong)]">
-              <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">
-                <Lightbulb className="w-4 h-4 inline mr-2" />
-                Poziom trudności:
-              </label>
-              <select
-                value={selectedDifficulty}
-                onChange={(e) => setSelectedDifficulty(e.target.value as DifficultyFilter)}
-                className="block w-full py-2 px-3 border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--foreground)] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="all" className="bg-[var(--select-option-bg)] text-[var(--foreground)]">Wszystkie poziomy</option>
-                <option value="easy" className="bg-[var(--select-option-bg)] text-[var(--foreground)]">Łatwy</option>
-                <option value="medium" className="bg-[var(--select-option-bg)] text-[var(--foreground)]">Średni</option>
-                <option value="hard" className="bg-[var(--select-option-bg)] text-[var(--foreground)]">Trudny</option>
-              </select>
-            </div>
-
-            {/* Show/Hide Mastered */}
-            <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl p-4 border border-[color:var(--border-translucent-strong)]">
-              <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">
-                {showMastered ? <Eye className="w-4 h-4 inline mr-2" /> : <EyeOff className="w-4 h-4 inline mr-2" />}
-                Filtr:
-              </label>
-              <button
-                onClick={() => setShowMastered(!showMastered)}
-                className={`w-full py-2 px-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center ${
-                  !showMastered
-                    ? 'bg-gradient-to-r from-[var(--toggle-gradient-from)] to-[var(--toggle-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[var(--toggle-shadow)]'
-                    : 'bg-[var(--overlay-light-strong)] text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-hover)]'
-                }`}
-              >
-                {!showMastered ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                {!showMastered ? 'Ukryj opanowane' : 'Pokaż wszystkie'}
-              </button>
-            </div>
-          </div>
+   
 
           {/* Tenses Section */}
           {filteredTimes.length > 0 && (
             <>
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-[var(--foreground)] mb-2 flex items-center justify-center">
-                  <Clock className="w-8 h-8 mr-3 text-blue-400" />
-                  Czasy gramatyczne
-                </h2>
-                <p className="text-[var(--muted-foreground)]">Opanuj wszystkie czasy angielskie</p>
-              </div>
+
 
               <div className="grid gap-6 mb-16">
                 {filteredTimes.map((time) => {

@@ -4,40 +4,40 @@ import PageHeader from "@/components/navigation/PageHeader";
 
 const HIGHLIGHTS = [
   {
-    title: "Spersonalizowane ścieżki",
+    title: "Projekt zrodzony z potrzeby",
     description:
-      "Każdy kurs rozpoczynamy od analizy Twoich celów. Dzięki temu moduły i materiały dopasowują się do Twoich nawyków nauki.",
-    id: "misja-personalizacja",
+      "AxonAI powstało, gdy szukałem sposobu na uporządkowaną naukę angielskiego dla siebie. Każdy moduł odzwierciedla realne wyzwania, z którymi mierzyłem się w codziennej nauce.",
+    id: "misja-poczatek",
   },
   {
-    title: "Zespół mentorów i twórców",
+    title: "Społeczność, która rośnie",
     description:
-      "AxonAI łączy doświadczenie lektorów, lingwistów i inżynierów AI. Tworzymy treści, które są aktualne, angażujące i skuteczne.",
-    id: "zespol-mentorzy",
+      "Po pierwszych tygodniach udostępniłem prototyp znajomym. Do dziś to ich sugestie oraz potrzeby kolejnych użytkowników decydują o kierunku rozwoju platformy.",
+    id: "spolecznosc",
   },
   {
-    title: "Technologia, która wspiera",
+    title: "Kod tworzony w vibe-codingu",
     description:
-      "Wykorzystujemy modele językowe i adaptacyjny feedback, aby natychmiast reagować na Twoje odpowiedzi i proponować kolejne kroki.",
-    id: "technologia-feedback",
+      "Większość funkcji powstała przy pomocy vibe-codingu — swobodnych sesji tworzenia z AI, które pozwoliły szybko eksperymentować i dopracowywać doświadczenie nauki.",
+    id: "vibe-coding",
   },
 ];
 
 const TIMELINE = [
   {
     year: "2022",
-    title: "Pierwszy prototyp",
-    description: "Powstaje wersja AxonAI z interaktywnymi konwersacjami w języku angielskim.",
+    title: "Potrzebuję własnego narzędzia",
+    description: "Powstaje prywatny zestaw ćwiczeń, który ma pomóc mi przełamać barierę w mówieniu po angielsku.",
   },
   {
     year: "2023",
-    title: "Rozszerzenie modułów",
-    description: "Dodajemy fiszki, ćwiczenia gramatyczne i system monitorowania postępów.",
+    title: "Dzielę się z innymi",
+    description: "Znajomi proszą o dostęp do aplikacji, a ich feedback pozwala uporządkować ścieżki i materiały.",
   },
   {
     year: "2024",
-    title: "Społeczność AxonAI",
-    description: "Wprowadzamy wspólne sesje nauki oraz programy premium prowadzone przez mentorów.",
+    title: "Vibe-coding napędza rozwój",
+    description: "Wspólnie z AI dopracowujemy kolejne moduły i automatyzujemy powtórki, dzięki czemu społeczność rośnie szybciej niż kiedykolwiek.",
   },
 ];
 
@@ -49,7 +49,7 @@ export default function ONas() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-16">
           <PageHeader
             title="Poznaj AxonAI"
-            description="Budujemy ekosystem nauki języka angielskiego, który wspiera Cię od pierwszej lekcji po pewną konwersację."
+            description="Zaczęło się od mojej potrzeby nauki angielskiego. Zbudowałem narzędzie dla siebie, a dziś korzystają z niego tysiące osób."
             anchors={[
               { href: "#misja", label: "Misja i wartości" },
               { href: "#zespol", label: "Zespół" },
@@ -60,10 +60,10 @@ export default function ONas() {
 
           <section id="misja" className="grid gap-8 rounded-3xl border border-white/10 bg-white/5 p-8 text-indigo-50 shadow-xl backdrop-blur">
             <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">Nasza misja</h2>
+              <h2 className="text-2xl font-semibold">Dlaczego powstało AxonAI?</h2>
               <p className="text-lg text-indigo-100/80">
-                Chcemy, aby nauka języków była intuicyjna i stała się nawykiem. AxonAI wspiera Cię w planowaniu zajęć,
-                proponuje krótkie wyzwania i przypomina o postępach, aby każdego dnia robić mały krok naprzód.
+                Szukałem sposobu, by uczyć się angielskiego konsekwentnie i bez poczucia chaosu. Brakowało mi narzędzia, które łączy plan,
+                natychmiastową informację zwrotną i motywujący rytm nauki. AxonAI jest odpowiedzią na te potrzeby — najpierw moją, a teraz również Twoją.
               </p>
             </div>
             <div className="grid gap-6 md:grid-cols-3">
@@ -87,8 +87,8 @@ export default function ONas() {
             <div className="space-y-4">
               <h2 className="text-2xl font-semibold">Ludzie, którzy stoją za AxonAI</h2>
               <p className="text-lg text-indigo-100/80">
-                Nasz zespół to eksperci od dydaktyki, projektowania doświadczeń i inżynierii danych. Regularnie konsultujemy
-                program z nauczycielami i uczniami, aby zachować równowagę między teorią a praktyką.
+                Projekt wciąż prowadzi osoba, która stworzyła go dla siebie, ale jego rozwój jest efektem pracy wielu wolontariuszy, mentorów
+                i testerów. Każda nowa funkcja zaczyna się od rzeczywistego wyzwania z nauki i kończy na wspólnej iteracji z użytkownikami.
               </p>
               <ul className="grid gap-3 text-sm text-indigo-100/90">
                 <li className="flex items-start gap-3">
@@ -121,8 +121,9 @@ export default function ONas() {
               <div className="space-y-4">
                 <h2 className="text-2xl font-semibold">Technologia AxonAI</h2>
                 <p className="text-lg text-indigo-100/80">
-                  System analizuje Twoje odpowiedzi, dobiera trudność zadań i natychmiast udziela informacji zwrotnej. Dzięki temu
-                  masz poczucie ciągłego progresu bez przytłoczenia.
+                  Większość kodu pisaliśmy w vibe-codingu — improwizowanych sesjach z AI, które pozwoliły błyskawicznie prototypować,
+                  testować i poprawiać kluczowe funkcje. Dzięki temu system analizuje odpowiedzi, dobiera trudność zadań i natychmiast udziela informacji zwrotnej,
+                  dając poczucie ciągłego progresu bez przytłoczenia.
                 </p>
                 <p className="text-sm text-indigo-100/80">
                   Wszystkie dane traktujemy z najwyższą ostrożnością. Użytkownik decyduje, co przechowywać i jak długo korzystać z historii nauki.

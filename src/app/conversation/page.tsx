@@ -1,7 +1,11 @@
 'use client';
 
 import Navbar from '@/components/Navbar';
-import { useState, useEffect, useMemo, type FormEvent } from 'react';
+import LevelSelector, {
+  LEVEL_STYLE_PRESETS,
+  type LevelOption,
+} from '@/components/LevelSelector';
+import { useState, useEffect, useMemo, useRef, type FormEvent } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { isAuthSessionMissingError } from '@/lib/authErrorUtils';
 import {
@@ -9,6 +13,7 @@ import {
   type LearningLanguage,
 } from '@/components/words/language_packs';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { saveAttempt } from '../utils/saveAttempt';
 
 type Message = {
   text: string;
@@ -480,6 +485,33 @@ const DIFFICULTY_DETAILS: Record<DifficultyLevel, { label: string; helper: strin
   },
 };
 
+const CONVERSATION_DIFFICULTY_OPTIONS: LevelOption<DifficultyLevel>[] = [
+  {
+    value: 'beginner',
+    label: DIFFICULTY_DETAILS.beginner.label,
+    helper: DIFFICULTY_DETAILS.beginner.helper,
+    helperClassName: 'text-slate-400',
+    selectedHelperClassName: 'text-white/80',
+    selectedClass: LEVEL_STYLE_PRESETS.easy,
+  },
+  {
+    value: 'intermediate',
+    label: DIFFICULTY_DETAILS.intermediate.label,
+    helper: DIFFICULTY_DETAILS.intermediate.helper,
+    helperClassName: 'text-slate-400',
+    selectedHelperClassName: 'text-slate-800/80',
+    selectedClass: LEVEL_STYLE_PRESETS.medium,
+  },
+  {
+    value: 'advanced',
+    label: DIFFICULTY_DETAILS.advanced.label,
+    helper: DIFFICULTY_DETAILS.advanced.helper,
+    helperClassName: 'text-slate-400',
+    selectedHelperClassName: 'text-white/80',
+    selectedClass: LEVEL_STYLE_PRESETS.hard,
+  },
+];
+
 const MODEL = 'gpt-4o-mini';
 const FREE_MESSAGE_LIMIT = 3;
 const LIMIT_NOTIFICATION = 'Limit darmowych wiadomości został wyczerpany. Skontaktuj się z nami, aby odblokować pełny dostęp.';
@@ -495,6 +527,7 @@ export default function GamePage() {
   const [messageCount, setMessageCount] = useState(0);
   const [isCheckingLimit, setIsCheckingLimit] = useState(true);
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('intermediate');
+  const messageTimerRef = useRef<number>(Date.now());
 
   const currentLanguageOption = useMemo(
     () => LANGUAGE_OPTIONS.find((option) => option.code === language),
@@ -565,6 +598,7 @@ export default function GamePage() {
     setCorrections({});
     setMessageCount(0);
     setInput('');
+    messageTimerRef.current = Date.now();
   };
 
   const sendMessage = async () => {
@@ -638,8 +672,12 @@ export default function GamePage() {
         }),
       });
 
+      let correctionReply = '';
+      let correctionStatus = 0;
       if (correctionResponse.ok) {
-        const { reply: correctionReply, status: correctionStatus } = await correctionResponse.json();
+        const correctionPayload = await correctionResponse.json();
+        correctionReply = correctionPayload.reply ?? '';
+        correctionStatus = correctionPayload.status ?? 0;
         const userMessageIndex = newMessages.length - 1;
         const hasErrors =
           correctionStatus !== 0 &&
@@ -655,6 +693,39 @@ export default function GamePage() {
             return updated;
           });
         }
+      }
+
+      const now = Date.now();
+      const timeTaken = Math.max(0.5, (now - messageTimerRef.current) / 1000);
+      messageTimerRef.current = now;
+
+      if (!authError && user && user.id !== 'anonymous' && user.id !== 'error') {
+        const hasErrors =
+          correctionStatus !== 0 &&
+          correctionReply.trim() !== '' &&
+          correctionReply.trim() !== cleanedInput;
+
+        await saveAttempt(user.id, {
+          type: 'conversation',
+          id: `${selectedScenario.id}-${Date.now()}`,
+          isCorrect: !hasErrors,
+          timeTaken,
+          difficulty: selectedDifficulty,
+          skillTags: ['conversation', selectedScenario.id, selectedDifficulty],
+          prompt: selectedScenario.start_message,
+
+          userAnswer: cleanedInput,
+          metadata: {
+            scenario: selectedScenario.id,
+            difficulty: selectedDifficulty,
+            npc_reply: reply,
+            correction: correctionReply,
+            language,
+            message_count: messageCount + 1,
+          },
+          source: 'conversation_trainer',
+          mistakeNote: hasErrors ? correctionReply : undefined,
+        });
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -738,27 +809,13 @@ export default function GamePage() {
               </div>
 
               <div className='space-y-3'>
-                <div className='flex flex-wrap gap-3'>
-                  {(['beginner', 'intermediate', 'advanced'] as DifficultyLevel[]).map((level) => (
-                    <button
-                      key={level}
-                      type='button'
-                      onClick={() => setSelectedDifficulty(level)}
-                      className={`rounded-xl border px-4 py-3 text-left transition ${
-                        selectedDifficulty === level
-                          ? 'border-[#1D4ED8] bg-[#1D4ED8]/20 text-slate-100'
-                          : 'border-white/10 bg-black/40 text-slate-300 hover:border-white/20'
-                      }`}
-                    >
-                      <span className='block text-sm font-semibold text-slate-100'>
-                        {DIFFICULTY_DETAILS[level].label}
-                      </span>
-                      <span className='block text-xs text-slate-400'>
-                        {DIFFICULTY_DETAILS[level].helper}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                <LevelSelector
+                  options={CONVERSATION_DIFFICULTY_OPTIONS}
+                  value={selectedDifficulty}
+                  onChange={setSelectedDifficulty}
+                  className='flex flex-wrap gap-3'
+                  buttonClassName='min-w-[12rem] text-left'
+                />
                 <p className='text-sm text-slate-400'>{DIFFICULTY_DETAILS[selectedDifficulty].description}</p>
               </div>
 

@@ -13,9 +13,11 @@ export default function Navbar() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [userType, setUserType] = useState<string>("basic");
   const [userPoints, setUserPoints] = useState<number>(0);
+  const [userStreak, setUserStreak] = useState<number>(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage } = useLanguage();
   const pathname = usePathname();
+  const userId = user?.id ?? null;
 
   const currentLanguageOption = useMemo(
     () => LANGUAGE_OPTIONS.find(option => option.code === language),
@@ -83,11 +85,118 @@ export default function Navbar() {
         } else {
           setUserPoints(0);
         }
+
+        // Pobierz aktualny streak
+        const { data: streakData, error: streakError } = await supabase
+          .from('streaks')
+          .select('current_streak')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (!streakError && streakData) {
+          setUserStreak(streakData.current_streak ?? 0);
+        } else {
+          setUserStreak(0);
+        }
       }
     };
 
     getUser();
-  }, []);  
+  }, []);
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const xpChannel = supabase
+      .channel(`xp-updates-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'xp_history',
+          filter: `user_id=eq.${userId}`,
+        },
+        async () => {
+          const { data: leaderboardData, error: leaderboardError } = await supabase
+            .from('view_xp_leaderboard')
+            .select('total_xp')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (!leaderboardError && leaderboardData) {
+            setUserPoints(leaderboardData.total_xp ?? 0);
+          } else if (!leaderboardError && !leaderboardData) {
+            setUserPoints(0);
+          }
+        }
+      );
+
+    const streakChannel = supabase
+      .channel(`streak-updates-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'streaks',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            setUserStreak(0);
+            return;
+          }
+
+          const newRow = payload.new as { current_streak?: number } | null;
+
+          if (typeof newRow?.current_streak === 'number') {
+            setUserStreak(newRow.current_streak);
+          }
+        }
+      );
+
+    void xpChannel.subscribe();
+    void streakChannel.subscribe();
+
+    return () => {
+      supabase.removeChannel(xpChannel);
+      supabase.removeChannel(streakChannel);
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleXpUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<{ delta?: number; total?: number }>).detail;
+
+      if (!detail) {
+        return;
+      }
+
+      const { total, delta } = detail;
+
+      if (typeof total === "number") {
+        setUserPoints(total);
+        return;
+      }
+
+      if (typeof delta === "number") {
+        setUserPoints((prev) => Math.max(prev + delta, 0));
+      }
+    };
+
+    window.addEventListener("xp-updated", handleXpUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener("xp-updated", handleXpUpdate as EventListener);
+    };
+  }, []);
 
   const navLinks = useMemo(() => [
     {
@@ -116,16 +225,40 @@ export default function Navbar() {
     },
   ], []);
 
+  const baseLevelXp = 250;
+
+  // Funkcja pomocnicza do obliczania całkowitej liczby punktów
+  // wymaganych do osiągnięcia danego poziomu.
+  const getTotalXpForLevel = (level: number) => {
+    if (level <= 1) {
+      return 0;
+    }
+
+    return (baseLevelXp * (level - 1) * level) / 2;
+  };
+
   // Funkcja do obliczania poziomu na podstawie punktów
   const calculateLevel = (points: number) => {
-    return Math.floor(points / 250) + 1; // Każde 250 punktów = 1 poziom
+    let level = 1;
+
+    while (points >= getTotalXpForLevel(level + 1)) {
+      level += 1;
+    }
+
+    return level;
   };
 
   // Funkcja do obliczania postępu do następnego poziomu
   const calculateProgress = (points: number) => {
-    const currentLevelPoints = points % 250;
-    const pointsToNext = 250 - currentLevelPoints;
-    return { currentLevelPoints, pointsToNext, progressPercent: (currentLevelPoints / 250) * 100 };
+    const currentLevel = calculateLevel(points);
+    const currentLevelXp = getTotalXpForLevel(currentLevel);
+    const nextLevelXp = getTotalXpForLevel(currentLevel + 1);
+    const xpIntoCurrentLevel = points - currentLevelXp;
+    const xpForLevel = nextLevelXp - currentLevelXp || baseLevelXp;
+    const pointsToNext = Math.max(nextLevelXp - points, 0);
+    const progressPercent = Math.min((xpIntoCurrentLevel / xpForLevel) * 100, 100);
+
+    return { currentLevelPoints: xpIntoCurrentLevel, pointsToNext, progressPercent };
   };
 
   const currentLevel = calculateLevel(userPoints);
@@ -141,10 +274,10 @@ export default function Navbar() {
         }`}
         aria-label="Główna nawigacja"
       >
-        <div className="max-w-7xl mx-auto px-6 py-4 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 py-4 relative">
           {/* Animated background overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1D4ED8]/10 via-[#1E3A8A]/5 to-transparent opacity-80 blur-xl" />
-          <div className="absolute -top-24 -right-10 w-72 h-72 bg-[#1D4ED8]/20 rounded-full blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -inset-6 bg-gradient-to-r from-[#1D4ED8]/10 via-[#1E3A8A]/5 to-transparent opacity-80 blur-2xl" />
+          <div className="pointer-events-none absolute -top-24 -right-10 w-72 h-72 bg-[#1D4ED8]/20 rounded-full blur-3xl" aria-hidden="true" />
 
           <div className="flex justify-between items-center relative z-10 gap-4">
             {/* Logo */}
@@ -161,7 +294,7 @@ export default function Navbar() {
             </Link>
 
             {/* Menu desktop */}
-            <div className="hidden lg:flex items-center space-x-2" role="menubar" aria-label="Główne obszary nauki">
+            <div className="hidden md:flex items-center space-x-2" role="menubar" aria-label="Główne obszary nauki">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
 
@@ -177,7 +310,7 @@ export default function Navbar() {
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm hidden xl:block">{link.label}</span>
+                      <span className="font-medium text-sm">{link.label}</span>
                     </div>
 
                     {isActive && (
@@ -189,31 +322,38 @@ export default function Navbar() {
             </div>
 
             {/* Language selector desktop */}
-            <div className="hidden md:flex items-center gap-2">
-              {LANGUAGE_OPTIONS.map(option => {
-                const isActive = option.code === language;
+            <div className="hidden md:flex flex-col items-center gap-3">
+              <div className="leading-tight text-right">
+                <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-300/80">
+                  Wybierz język nauki
+                </span>
 
-                return (
-                  <button
-                    key={option.code}
-                    type="button"
-                    onClick={() => setLanguage(option.code)}
-                    className={`relative flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-300 backdrop-blur-sm ${
-                      isActive
-                        ? 'border-white/40 bg-white/10 shadow-[0_8px_24px_rgba(29,78,216,0.35)]'
-                        : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                    }`}
-                    aria-label={`Ucz się: ${option.label}`}
-                    aria-pressed={isActive}
-                    title={option.label}
-                  >
-                    <span className="text-2xl" role="img" aria-hidden="true">
-                      {option.flag}
-                    </span>
+              </div>
+              <div className="flex items-center gap-3">
+                {LANGUAGE_OPTIONS.map(option => {
+                  const isActive = option.code === language;
 
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={option.code}
+                      type="button"
+                      onClick={() => setLanguage(option.code)}
+                      className={`relative flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-300 backdrop-blur-sm ${
+                        isActive
+                          ? 'border-white/40 bg-white/10 shadow-[0_8px_24px_rgba(29,78,216,0.35)]'
+                          : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                      }`}
+                      aria-label={`Ucz się: ${option.label}`}
+                      aria-pressed={isActive}
+                      title={option.label}
+                    >
+                      <span className="text-2xl" role="img" aria-hidden="true">
+                        {option.flag}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* User section desktop */}
@@ -225,6 +365,12 @@ export default function Navbar() {
                     <span className="text-sm font-bold text-slate-100">Lvl {currentLevel}</span>
                     <div className="w-px h-4 bg-white/10" />
                     <span className="text-sm font-semibold text-slate-300">{userPoints} XP</span>
+                    <div className="w-px h-4 bg-white/10" />
+                    <span className="text-sm font-semibold text-slate-300 flex items-center gap-1">
+                      <span aria-hidden="true">🔥</span>
+                      <span className="sr-only">Streak:</span>
+                      <span>{userStreak} dni</span>
+                    </span>
                   </div>
 
                   {/* Account button */}
@@ -292,9 +438,9 @@ export default function Navbar() {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-[#1D4ED8]/15 via-transparent to-[#1E3A8A]/10" />
 
-            <div className="relative z-10 p-6 h-full flex flex-col">
+            <div className="relative z-10 p-4 h-full flex flex-col overflow-y-auto">
               {/* Close button */}
-              <div className="flex justify-end mb-6">
+              <div className="flex justify-end mb-4">
                 <button
                   onClick={() => setMobileOpen(false)}
                   className="w-10 h-10 bg-white/5 backdrop-blur-md hover:bg-white/10 text-slate-100 rounded-2xl transition-all duration-300 border border-white/10 transform hover:scale-110 flex items-center justify-center"
@@ -308,20 +454,20 @@ export default function Navbar() {
 
               {/* User info mobile */}
               {user && (
-                <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 mb-6 shadow-[0_12px_30px_rgba(15,23,42,0.35)]">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/10 mb-4 shadow-[0_12px_30px_rgba(15,23,42,0.35)]">
+                  <div className="flex items-center gap-3 mb-2.5">
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
                       userType === "premium"
                         ? 'bg-gradient-to-r from-[#FACC15] to-[#F97316]'
                         : 'bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A]'
                     }`}>
-                      <div className="w-6 h-6 text-slate-100 font-bold">
+                      <div className="w-5 h-5 text-slate-100 font-bold">
                         {userType === "premium" ? "P" : "U"}
                       </div>
                     </div>
                     <div>
                       <div className="font-semibold text-slate-100">{userType === "premium" ? "Premium User" : "Basic User"}</div>
-                      <div className="text-sm text-slate-300">Level {currentLevel} • {userPoints} XP</div>
+                      <div className="text-sm text-slate-300">Level {currentLevel} • {userPoints} XP • 🔥 {userStreak} dni</div>
                     </div>
                   </div>
 
@@ -337,11 +483,14 @@ export default function Navbar() {
               )}
 
               {/* Language selector mobile */}
-              <div className="mb-6">
-                <div className="text-sm font-semibold uppercase tracking-wide text-slate-300/80 mb-3">
+              <div className="mb-4">
+                <div className="text-sm font-semibold uppercase tracking-wide text-slate-300/80">
                   Wybierz język
                 </div>
-                <div className="flex gap-3">
+                <div className="text-xs text-slate-400 mb-3">
+                  Wybierz flagę języka, którego chcesz się uczyć
+                </div>
+                <div className="flex gap-2.5">
                   {LANGUAGE_OPTIONS.map(option => {
                     const isActive = option.code === language;
 
@@ -350,7 +499,7 @@ export default function Navbar() {
                         key={option.code}
                         type="button"
                         onClick={() => setLanguage(option.code)}
-                        className={`flex h-14 w-14 items-center justify-center rounded-2xl border text-2xl transition-all duration-300 ${
+                        className={`flex h-12 w-12 items-center justify-center rounded-2xl border text-2xl transition-all duration-300 ${
                           isActive
                             ? 'border-white/30 bg-white/10 shadow-[0_10px_24px_rgba(29,78,216,0.35)]'
                             : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
@@ -372,7 +521,7 @@ export default function Navbar() {
               </div>
 
               {/* Navigation links */}
-              <div className="space-y-2 flex-1" role="menu" aria-label="Główne obszary nauki">
+              <div className="space-y-1.5 flex-1" role="menu" aria-label="Główne obszary nauki">
                 {navLinks.map((link) => {
                   const isActive = pathname === link.href;
 
@@ -380,7 +529,7 @@ export default function Navbar() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] ${
+                      className={`flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] ${
                         isActive
                           ? 'bg-white/10 text-slate-100 shadow-[0_12px_30px_rgba(29,78,216,0.35)]'
                           : 'text-slate-300 hover:text-slate-100 hover:bg-white/5 border border-transparent hover:border-white/10'
@@ -388,7 +537,7 @@ export default function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       role="menuitem"
                     >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
                         isActive
                           ? 'bg-[#1D4ED8]/20'
                           : 'bg-white/5 group-hover:bg-white/10'
@@ -410,10 +559,10 @@ export default function Navbar() {
               </div>
 
               {/* Action button mobile */}
-              <div className="pt-6 border-t border-white/10">
+              <div className="pt-4 border-t border-white/10">
                 <Link
                   href={user ? "/dashboard" : "/login"}
-                  className={`w-full flex items-center justify-center gap-3 p-4 rounded-2xl font-semibold text-slate-100 transition-all duration-300 shadow-[0_12px_30px_rgba(29,78,216,0.35)] transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]/40 ${
+                  className={`w-full flex items-center justify-center gap-3 p-3 rounded-2xl font-semibold text-slate-100 transition-all duration-300 shadow-[0_12px_30px_rgba(29,78,216,0.35)] transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8]/40 ${
                     userType === "premium"
                       ? 'bg-gradient-to-r from-[#FACC15] to-[#F97316]'
                       : 'bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A] hover:from-[#1E40AF] hover:to-[#172554]'

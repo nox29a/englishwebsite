@@ -10,7 +10,7 @@ export default function PageHeader({ title, description, anchors }: PageHeaderPr
   return (
     <header className="mb-12 space-y-6">
       <Breadcrumbs />
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 shadow-lg shadow-indigo-500/10 backdrop-blur">
+      <div className="relative overflow-hidden rounded-3xl bg-white/5 p-8 borders border-4s shadow-lg shadow-indigo-500/10 backdrop-blur">
         <div
           className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.35),_transparent_55%)]"
           aria-hidden="true"

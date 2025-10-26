@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect, useMemo } from 'react';
-import type { Category, Word } from "@/components/words/flashcards_words";
+
 import {
   LANGUAGE_DATASETS,
   LANGUAGE_OPTIONS,
+  type Word,
+  type Category,
 } from "@/components/words/language_packs";
 import Navbar from "@/components/Navbar";
 import { Check, X, Eye, EyeOff, Brain, Trophy, Star, Sparkles, Flame, Crown } from 'lucide-react';
@@ -196,6 +198,11 @@ export default function Flashcards() {
     return levels;
   };
 
+  const selectedCategoryData = useMemo(
+    () => languageCategories.find((cat) => cat.name === selectedCategory) ?? null,
+    [languageCategories, selectedCategory]
+  );
+
   const knownCount = knownCards.size;
   const progressPercentage = cards.length > 0 ? (knownCount / cards.length) * 100 : 0;
 
@@ -206,6 +213,22 @@ export default function Flashcards() {
 
   const targetLanguageLabel = currentLanguageOption?.label ?? 'Język docelowy';
   const targetLanguageFlag = currentLanguageOption?.flag ?? '🏳️';
+
+  const directionOptions = useMemo(
+    () => [
+      {
+        value: 'targetToNative' as const,
+        label: `${targetLanguageFlag} → 🇵🇱`,
+        helper: `${targetLanguageLabel} → Polski`,
+      },
+      {
+        value: 'nativeToTarget' as const,
+        label: `🇵🇱 → ${targetLanguageFlag}`,
+        helper: `Polski → ${targetLanguageLabel}`,
+      },
+    ],
+    [targetLanguageFlag, targetLanguageLabel]
+  );
 
   // Reszta kodu pozostaje bez zmian...
   return (
@@ -231,48 +254,16 @@ export default function Flashcards() {
           ))}
         </div>
 
-        {/* Achievement Popup */}
-        {showAchievement && (
-          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-            <div className="bg-gradient-to-r from-[var(--achievement-gradient-from)] to-[var(--achievement-gradient-to)] text-[var(--foreground)] px-6 py-4 rounded-xl shadow-2xl border-2 border-[color:var(--achievement-border)]">
-              <div className="flex items-center space-x-3">
-                <div className="text-3xl">{showAchievement.icon}</div>
-                <div>
-                  <div className="font-bold text-lg">{showAchievement.name}</div>
-                  <div className="text-sm opacity-90">{showAchievement.description}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="max-w-7xl mx-auto px-4 py-6 relative">
           
 
 
 
-          {/* Progress Bar */}
 
           
           {/* Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            
-            {/* Category Selection */}
-            <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl p-4 border border-[color:var(--border-translucent-strong)]">
-              <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">Kategoria:</label>
-              <select 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="block w-full py-2 px-3 border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--foreground)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-strong)]"
-              >
-                {languageCategories.map(category => (
-                  <option key={category.name} value={category.name} className="bg-[var(--select-option-bg)] text-[var(--foreground)]">
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {/* Difficulty Selection */}
             <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl p-4 border border-[color:var(--border-translucent-strong)]">
               <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">Poziom:</label>
@@ -291,15 +282,32 @@ export default function Flashcards() {
 
             {/* Direction Selection */}
             <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl p-4 border border-[color:var(--border-translucent-strong)]">
-              <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">Kierunek:</label>
-              <select 
-                value={direction}
-                onChange={(e) => setDirection(e.target.value as Direction)}
-                className="block w-full py-2 px-3 border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--foreground)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-strong)]"
-              >
-                <option value="targetToNative" className="bg-[var(--select-option-bg)] text-[var(--foreground)]">{`${targetLanguageFlag} → 🇵🇱`}</option>
-                <option value="nativeToTarget" className="bg-[var(--select-option-bg)] text-[var(--foreground)]">{`🇵🇱 → ${targetLanguageFlag}`}</option>
-              </select>
+              <span className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">Kierunek:</span>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {directionOptions.map(option => {
+                  const isSelected = direction === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setDirection(option.value)}
+                      aria-pressed={isSelected}
+                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm font-semibold transition-all duration-300 ${
+                        isSelected
+                          ? 'border-transparent bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]'
+                          : 'border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)] text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)]'
+                      }`}
+                    >
+                      <span className="block">{option.label}</span>
+                      <span className={`mt-1 block text-xs font-medium transition-colors duration-300 ${
+                        isSelected ? 'text-[var(--foreground)]/80' : 'text-[var(--muted-foreground)]'
+                      }`}>
+                        {option.helper}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Hide Known Toggle */}
@@ -318,7 +326,39 @@ export default function Flashcards() {
               </button>
             </div>
           </div>
-          
+
+          <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-2xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5 sm:p-6 mb-8">
+            <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
+              <Brain className="w-5 h-5 mr-2 text-[var(--icon-blue)]" />
+              Kategoria
+            </h3>
+            <div className="mb-4 text-xs text-[var(--muted-foreground)] sm:text-sm">
+              Wybierz kategorię, aby dopasować słownictwo do swoich potrzeb. Aktualnie wybrana: {selectedCategoryData?.name ?? 'brak'}.
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              {languageCategories.map((cat) => (
+                <button
+                  key={cat.name}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.name)}
+                  aria-pressed={selectedCategory === cat.name}
+                  className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                    selectedCategory === cat.name
+                      ? 'bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]'
+                      : 'bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+            {selectedCategoryData?.description && (
+              <p className="mt-4 text-xs text-[var(--muted-foreground)] sm:text-sm">
+                {selectedCategoryData.description}
+              </p>
+            )}
+          </div>
+
           {/* Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {filteredCards.slice(0, visibleCount).map((card: Flashcard, index: number) => {

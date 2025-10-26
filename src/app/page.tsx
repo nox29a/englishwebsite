@@ -5,11 +5,11 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from "@/lib/supabaseClient";
 import { isAuthSessionMissingError } from "@/lib/authErrorUtils";
 import Navbar from "@/components/Navbar";
-import axonImage from '@/axonai.png'; // lub './assets/axon.png'
+import EarthCanvas from "@/components/EarthCanvas";
 
-import { 
-  Brain, 
-  BookOpen, 
+import {
+  Brain,
+  BookOpen,
   Zap, 
   TrendingUp, 
   MessageCircle, 
@@ -30,7 +30,8 @@ import {
   Award,
   Rocket,
   ArrowRight,
-  Play
+  Play,
+  type LucideIcon,
 } from "lucide-react";
 
 export default function Home() {
@@ -89,16 +90,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Prawa strona - obrazek */}
+      {/* Prawa strona - wizualizacja 3D */}
       <div className="lg:w-1/2 flex justify-center lg:justify-end">
-        <div className="relative w-full max-w-md">
-          <img
-            src={axonImage.src}
-            alt="AxonAI"
-            className="w-full h-auto rounded-2xl shadow-[0_25px_60px_rgba(15,23,42,0.65)]"
-          />
-          {/* Opcjonalny efekt wizualny */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#1D4ED8]/20 via-transparent to-black/40" />
+        <div className="w-full">
+          <EarthCanvas />
         </div>
       </div>
     </div>
@@ -345,10 +340,10 @@ export default function Home() {
 
 // Component for feature cards
 function FeatureCard({ icon: IconComponent, title, description, gradient }: {
-  icon: React.ElementType,
+  icon: LucideIcon,
   title: string,
   description: string,
-  gradient: string
+  gradient: string,
 }) {
   return (
     <div className="group bg-white/5 backdrop-blur-lg rounded-xl border border-white/10 p-6 transition-all duration-300 transform hover:scale-[1.02] hover:bg-white/10">
@@ -362,12 +357,12 @@ function FeatureCard({ icon: IconComponent, title, description, gradient }: {
 }
 
 // Component for tool cards
-function ToolCard({ title, description, href, icon: IconComponent, gradient }: { 
-  title: string, 
-  description: string, 
-  href: string, 
-  icon: React.ElementType,
-  gradient: string
+function ToolCard({ title, description, href, icon: IconComponent, gradient }: {
+  title: string,
+  description: string,
+  href: string,
+  icon: LucideIcon,
+  gradient: string,
 }) {
   return (
     <Link

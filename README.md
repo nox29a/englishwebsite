@@ -42,3 +42,4 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
 Polecenie zwróci sekret webhooka, który należy ustawić jako `STRIPE_WEBHOOK_SECRET`.
+# try

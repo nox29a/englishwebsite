@@ -5,16 +5,23 @@ import type { KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
-import { Category, Word } from "@/components/words/flashcards_words";
+import LevelSelector, {
+  LEVEL_STYLE_PRESETS,
+  type LevelOption,
+} from "@/components/LevelSelector";
 import {
   LANGUAGE_DATASETS,
   LANGUAGE_OPTIONS,
   type LearningLanguage,
+  type Category,
+  type Word,
 } from "@/components/words/language_packs";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ChevronRight, Mic, Volume2, RotateCcw, CheckCircle2, XCircle, Trophy, Brain, Clock, Target, Star, Zap, Flame, Award, TrendingUp, Battery, Crown, Sparkles, Globe } from 'lucide-react';
+import { ArrowLeftRight, Mic, RotateCcw, CheckCircle2, XCircle, Trophy, Brain, Clock, Target, Star, Zap, Flame, Award, TrendingUp, Battery, Crown, Sparkles, Globe } from 'lucide-react';
 import { supabase } from "@/lib/supabaseClient";
+import { cn } from "@/lib/utils";
 import { addPoints } from "../utils/addPoints";
+import { saveAttempt } from "../utils/saveAttempt";
 import type { User } from "@supabase/supabase-js";
 
 // Definicje typów dla Speech Recognition API
@@ -106,14 +113,41 @@ interface Achievement {
   icon: string;
 }
 
+const LEVEL_LABELS: Record<"easy" | "medium" | "hard", string> = {
+  easy: "Łatwy",
+  medium: "Średni",
+  hard: "Trudny",
+};
+
+const LEVEL_MARKERS: Record<"easy" | "medium" | "hard", string> = {
+  easy: "",
+  medium: "",
+  hard: "",
+};
+
+const LEVEL_OPTIONS: Array<keyof typeof LEVEL_LABELS> = ["easy", "medium", "hard"];
+
+const NATIVE_LANGUAGE = {
+  flag: "🇵🇱",
+  label: "Polski",
+  shortLabel: "PL",
+};
+
+const createPlaceholderWord = (pl: string, en: string): Word => ({
+  id: -1,
+  pl,
+  en,
+  level: "easy",
+});
+
 export default function FlashcardGame() {
   const { language, setLanguage } = useLanguage();
   const languageCategories = useMemo(
     () => LANGUAGE_DATASETS[language] ?? LANGUAGE_DATASETS.en,
     [language]
   );
-  const [category, setCategory] = useState(
-    () => languageCategories[0]?.name ?? ""
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
+    languageCategories[0]?.name ? [languageCategories[0].name] : []
   );
   const [level, setLevel] = useState("easy");
   const [direction, setDirection] = useState<
@@ -121,7 +155,7 @@ export default function FlashcardGame() {
   >("native-to-target");
   const [input, setInput] = useState("");
   const [remaining, setRemaining] = useState<Word[]>([]);
-  const [current, setCurrent] = useState<Word>({ id: -1, pl: "", en: "", level: "" });
+  const [current, setCurrent] = useState<Word>(createPlaceholderWord("", ""));
   const [score, setScore] = useState(0);
   const [feedbackState, setFeedbackState] = useState<"correct" | "incorrect" | "">("");
   const [correctAnswer, setCorrectAnswer] = useState("");
@@ -129,6 +163,24 @@ export default function FlashcardGame() {
   const [totalTimeSpent, setTotalTimeSpent] = useState(0);
   const [availableLevels, setAvailableLevels] = useState<string[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState(Date.now());
+  const questionStartRef = useRef(Date.now());
+
+  const levelOptions = useMemo<
+    LevelOption<(typeof LEVEL_OPTIONS)[number]>[]
+  >(
+    () =>
+      LEVEL_OPTIONS.map((lvl) => ({
+        value: lvl,
+        label: LEVEL_LABELS[lvl],
+        helper: LEVEL_MARKERS[lvl],
+        helperClassName: "text-slate-400",
+        selectedHelperClassName:
+          lvl === "medium" ? "text-slate-800/80" : "text-white/80",
+        selectedClass: LEVEL_STYLE_PRESETS[lvl],
+        disabled: !availableLevels.includes(lvl),
+      })),
+    [availableLevels]
+  );
 
   const targetLanguageOption = useMemo(
     () => LANGUAGE_OPTIONS.find((option) => option.code === language),
@@ -136,15 +188,71 @@ export default function FlashcardGame() {
   );
   const targetRecognitionLocale =
     targetLanguageOption?.recognitionLocale ?? "en-US";
-  const targetSpeechLocale = targetLanguageOption?.speechLocale ?? "en-US";
   const targetLabel = targetLanguageOption?.label ?? "Angielski";
   const targetShortLabel = targetLanguageOption?.shortLabel ?? "EN";
+  const targetFlag = targetLanguageOption?.flag ?? "🏳️";
+
+  const leftLanguage =
+    direction === "native-to-target"
+      ? NATIVE_LANGUAGE
+      : { flag: targetFlag, label: targetLabel, shortLabel: targetShortLabel };
+  const rightLanguage =
+    direction === "native-to-target"
+      ? { flag: targetFlag, label: targetLabel, shortLabel: targetShortLabel }
+      : NATIVE_LANGUAGE;
+  const directionLabel =
+    direction === "native-to-target"
+      ? `${NATIVE_LANGUAGE.shortLabel} → ${targetShortLabel}`
+      : `${targetShortLabel} → ${NATIVE_LANGUAGE.shortLabel}`;
+  const directionDescription =
+    direction === "native-to-target"
+      ? `${NATIVE_LANGUAGE.label} → ${targetLabel}`
+      : `${targetLabel} → ${NATIVE_LANGUAGE.label}`;
+  const isReversedDirection = direction === "target-to-native";
 
   useEffect(() => {
-    if (languageCategories[0]?.name) {
-      setCategory(languageCategories[0].name);
+    if (!languageCategories.length) {
+      setSelectedCategories([]);
+      return;
     }
+
+    setSelectedCategories((prev) => {
+      const valid = prev.filter((name) =>
+        languageCategories.some((category) => category.name === name)
+      );
+
+      if (valid.length > 0) {
+        const ordered = languageCategories
+          .map((category) => category.name)
+          .filter((name) => valid.includes(name));
+
+        const isSameLength = ordered.length === prev.length;
+        const isSameOrder = ordered.every((name, index) => name === prev[index]);
+
+        return isSameLength && isSameOrder ? prev : ordered;
+      }
+
+      return [languageCategories[0].name];
+    });
   }, [languageCategories]);
+
+  const toggleCategory = (name: string) => {
+    setSelectedCategories((prev) => {
+      if (prev.includes(name)) {
+        if (prev.length === 1) {
+          return prev;
+        }
+        return prev.filter((categoryName) => categoryName !== name);
+      }
+
+      const next = [...prev, name];
+      return languageCategories
+        .map((category) => category.name)
+        .filter((categoryName) => next.includes(categoryName));
+    });
+  };
+
+  const selectedCategoriesLabel = selectedCategories.join(", ");
   
   // Dopaminowe elementy
   const [streak, setStreak] = useState(0);
@@ -275,18 +383,6 @@ export default function FlashcardGame() {
     };
   }, [direction, targetRecognitionLocale]);
 
-  const speak = (text: string, lang: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    try {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-    } catch (err) {
-      console.error("TTS error:", err);
-    }
-  };
-
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
       try {
@@ -303,33 +399,41 @@ export default function FlashcardGame() {
     }
   };
 
-  const playPrompt = () => {
-    const prompt =
-      direction === "native-to-target" ? current.pl : current.en;
-    const lang =
-      direction === "native-to-target" ? "pl-PL" : targetSpeechLocale;
-    speak(prompt, lang);
-  };
+  const getWords = (levelToUse = level): Word[] => {
+    if (!selectedCategories.length) return [];
 
-  const getWords = (): Word[] => {
-    const selectedCategory = languageCategories.find(
-      (c) => c.name === category
+    const selected = languageCategories.filter((category) =>
+      selectedCategories.includes(category.name)
     );
-    if (!selectedCategory) return [];
-    return selectedCategory.words.filter((word) => word.level === level);
+
+    const words = selected.flatMap((category) =>
+      category.words.filter((word) => word.level === levelToUse)
+    );
+
+    const uniqueWords = new Map<number, Word>();
+    for (const word of words) {
+      uniqueWords.set(word.id, word);
+    }
+
+    return Array.from(uniqueWords.values());
   };
 
   const getAvailableLevels = (): string[] => {
-    const selectedCategory = languageCategories.find(
-      (c) => c.name === category
-    );
-    if (!selectedCategory) return [];
-    const levels = new Set(selectedCategory.words.map((word) => word.level));
+    if (!selectedCategories.length) return [];
+
+    const levels = new Set<string>();
+    languageCategories
+      .filter((category) => selectedCategories.includes(category.name))
+      .forEach((category) => {
+        category.words.forEach((word) => levels.add(word.level));
+      });
+
     return Array.from(levels);
   };
 
   const getRandomWord = (words: Word[]): Word => {
-    if (words.length === 0) return { id: -1, pl: "Brak fiszek", en: "No flashcards", level: "" };
+    if (words.length === 0)
+      return createPlaceholderWord("Brak fiszek", "No flashcards");
     const randomIndex = Math.floor(Math.random() * words.length);
     return words[randomIndex];
   };
@@ -346,14 +450,18 @@ export default function FlashcardGame() {
       setLevel(currentLevel);
     }
 
-    const words = getWords().filter(word => word.level === currentLevel);
-    const randomWord = words.length > 0 ? getRandomWord(words) : { id: -1, pl: "Brak fiszek", en: "No flashcards", level: "" };
+    const words = getWords(currentLevel);
+    const randomWord =
+      words.length > 0
+        ? getRandomWord(words)
+        : createPlaceholderWord("Brak fiszek", "No flashcards");
     
     setRemaining(words);
     setCurrent(randomWord);
     setScore(0);
     setTotalTimeSpent(0);
     setSessionStartTime(Date.now());
+    questionStartRef.current = Date.now();
     setLoading(false);
   };
 
@@ -369,10 +477,20 @@ export default function FlashcardGame() {
 
   useEffect(() => {
     loadProgress();
-  }, [category, level, language]);
+  }, [selectedCategories, level, language]);
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    if (current.id !== -1) {
+      questionStartRef.current = Date.now();
+    }
+  }, [current.id]);
+
+  const handleSubmit = async () => {
     if (current.id === -1) return;
+
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
 
     const wordToCheck = remaining.find((w) => w.id === current.id) || current;
     const correct =
@@ -381,6 +499,9 @@ export default function FlashcardGame() {
         : wordToCheck.pl.toLowerCase().trim();
     const userAnswer = input.trim().toLowerCase();
     const isCorrect = userAnswer === correct;
+    const now = Date.now();
+    const timeTaken = Math.max(0.5, (now - questionStartRef.current) / 1000);
+    questionStartRef.current = now;
 
     let updatedList = remaining;
 
@@ -440,6 +561,34 @@ export default function FlashcardGame() {
       setMaxStreak(streak);
     }
 
+    if (user) {
+      await saveAttempt(user.id, {
+        type: "flashcards",
+        id: current.id,
+        isCorrect,
+        timeTaken,
+        difficulty: current.level,
+        skillTags: [
+          "flashcards",
+          direction,
+          language,
+          ...selectedCategories.map((name) => `category:${name}`),
+        ],
+        prompt: direction === "native-to-target" ? wordToCheck.pl : wordToCheck.en,
+        expectedAnswer: correct,
+        userAnswer,
+        metadata: {
+          language,
+          category: selectedCategoriesLabel,
+          categories: selectedCategories,
+          level,
+          direction,
+          remaining_ids: updatedList.map((word) => word.id),
+        },
+        source: "flashcards",
+      });
+    }
+
     if (updatedList.length === 0) {
       // Perfect completion bonus
       if (streak === getWords().length) {
@@ -452,7 +601,7 @@ export default function FlashcardGame() {
       }
       
       setTimeout(() => {
-        setCurrent({ id: -1, pl: "Koniec!", en: "The End!", level: "" });
+        setCurrent(createPlaceholderWord("Koniec!", "The End!"));
         setFeedbackState("");
         setCorrectAnswer("");
         setInput("");
@@ -477,7 +626,10 @@ export default function FlashcardGame() {
 
   const resetGame = () => {
     const newWords = getWords();
-    const randomWord = newWords.length > 0 ? getRandomWord(newWords) : { id: -1, pl: "Brak fiszek", en: "No flashcards", level: "" };
+    const randomWord =
+      newWords.length > 0
+        ? getRandomWord(newWords)
+        : createPlaceholderWord("Brak fiszek", "No flashcards");
     setRemaining(newWords);
     setCurrent(randomWord);
     setInput("");
@@ -489,6 +641,7 @@ export default function FlashcardGame() {
     setTotalTimeSpent(0);
     setSessionStartTime(Date.now());
     setEnergy(100);
+    questionStartRef.current = Date.now();
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -547,20 +700,7 @@ export default function FlashcardGame() {
         ))}
       </div>
 
-      {/* Achievement Popup */}
-      {showAchievement && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-[var(--foreground)] px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
-            <div className="flex items-center space-x-3">
-              <div className="text-3xl">{showAchievement.icon}</div>
-              <div>
-                <div className="font-bold text-lg">{showAchievement.name}</div>
-                <div className="text-sm opacity-90">{showAchievement.description}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Streak Bonus Popup */}
       
@@ -603,14 +743,6 @@ export default function FlashcardGame() {
                       </div>
                     )}
 
-                    <button
-                      onClick={playPrompt}
-                      disabled={current.id === -1}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition-all duration-300 hover:from-[var(--cta-gradient-hover-from)] hover:to-[var(--cta-gradient-hover-to)] hover:shadow-xl disabled:from-white/10 disabled:to-white/5 disabled:text-[var(--muted-foreground)]"
-                    >
-                      <Volume2 className="w-5 h-5" />
-                      Odsłuchaj
-                    </button>
                   </div>
                 </div>
               </div>
@@ -756,102 +888,90 @@ export default function FlashcardGame() {
 
 
           <aside className="mt-8 space-y-6 lg:mt-0 lg:pl-2 lg:sticky lg:top-24">
-
-
-            <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5">
-              <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
-                <Brain className="w-5 h-5 mr-2 text-[var(--icon-blue)]" />
-                Kategoria
-              </h3>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {languageCategories.map((cat) => (
-                  <button
-                    key={cat.name}
-                    onClick={() => setCategory(cat.name)}
-                    className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
-                      category === cat.name
-                        ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
-                        : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6">
               <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5">
                 <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
                   <Target className="w-5 h-5 mr-2 text-green-400" />
                   Poziom
                 </h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {["easy", "medium", "hard"].map((lvl) => {
-                    const isAvailable = availableLevels.includes(lvl);
-                    const isSelected = level === lvl;
-                    const levelLabels: Record<string, string> = { easy: "Łatwy", medium: "Średni", hard: "Trudny" };
-                    const levelColors: Record<string, string> = {
-                      easy: "from-green-400 to-green-600",
-                      medium: "from-amber-400 to-amber-600",
-                      hard: "from-red-400 to-red-600"
-                    };
-
-                    return (
-                      <button
-                        key={lvl}
-                        onClick={() => isAvailable && setLevel(lvl)}
-                        disabled={!isAvailable}
-                        className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
-                          isSelected
-                            ? `bg-gradient-to-r ${levelColors[lvl]} text-[var(--foreground)] shadow-lg`
-                            : isAvailable
-                            ? "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
-                            : "bg-[var(--overlay-dark)] text-[var(--muted-foreground)] opacity-60 cursor-not-allowed"
-                        }`}
-                      >
-                        <div className="text-lg">
-                          {lvl === 'easy' ? '●' : lvl === 'medium' ? '●●' : '●●●'}
-                        </div>
-                        {levelLabels[lvl]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5">
-                <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
-                  <ChevronRight className="w-5 h-5 mr-2 text-[var(--icon-purple)]" />
-                  Kierunek
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setDirection("native-to-target")}
-                    className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
-                      direction === "native-to-target"
-                        ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
-                        : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
-                    }`}
-                  >
-                    <div className="text-lg">PL → {targetShortLabel}</div>
-                    <div className="text-xs text-[var(--muted-foreground)] sm:text-sm">Polski → {targetLabel}</div>
-                  </button>
-                  <button
-                    onClick={() => setDirection("target-to-native")}
-                    className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
-                      direction === "target-to-native"
-                        ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
-                        : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
-                    }`}
-                  >
-                    <div className="text-lg">{targetShortLabel} → PL</div>
-                    <div className="text-xs text-[var(--muted-foreground)] sm:text-sm">{targetLabel} → Polski</div>
-                  </button>
+                <LevelSelector
+                  options={levelOptions}
+                  value={level}
+                  onChange={setLevel}
+                  className="flex flex-col gap-3 sm:flex-row sm:flex-wrap"
+                  buttonClassName="w-full text-center sm:w-auto"
+                />
+                {!availableLevels.includes(level) && (
+                  <p className="mt-3 rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-100">
+                    Ten poziom nie jest dostępny dla wybranej kategorii. Wybierz inny poziom, aby kontynuować.
+                  </p>
+                )}
+                <div className="mt-6">
+                  <h4 className="mb-3 flex items-center text-sm font-semibold text-[var(--foreground)] sm:text-base">
+                    <ArrowLeftRight className="w-5 h-5 mr-2 text-[var(--icon-purple)]" />
+                    Kierunek nauki
+                  </h4>
+                  <div className="flex items-center justify-between gap-4 rounded-xl border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)]/60 px-4 py-4">
+                    <div className="flex flex-1 flex-col items-center text-sm font-semibold text-[var(--foreground)]">
+                      <span className="text-3xl" aria-hidden="true">{leftLanguage.flag}</span>
+                      <span className="mt-2 text-xs text-[var(--muted-foreground)]">{leftLanguage.label}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDirection((prev) =>
+                          prev === "native-to-target" ? "target-to-native" : "native-to-target"
+                        )
+                      }
+                      className="flex w-28 flex-col items-center justify-center gap-1 rounded-full border border-[color:var(--border-translucent-strong)] bg-[var(--overlay-light)] px-4 py-3 text-xs font-semibold text-[var(--foreground)] transition-all duration-300 hover:bg-[var(--overlay-light-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cta-gradient-to)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
+                      aria-label="Zmień kierunek nauki"
+                    >
+                      <ArrowLeftRight
+                        className={cn(
+                          "h-5 w-5 transition-transform duration-300",
+                          isReversedDirection ? "rotate-180" : ""
+                        )}
+                      />
+                      <span>{directionLabel}</span>
+                      <span className="text-[10px] font-medium text-[var(--muted-foreground)]">{directionDescription}</span>
+                    </button>
+                    <div className="flex flex-1 flex-col items-center text-sm font-semibold text-[var(--foreground)]">
+                      <span className="text-3xl" aria-hidden="true">{rightLanguage.flag}</span>
+                      <span className="mt-2 text-xs text-[var(--muted-foreground)]">{rightLanguage.label}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </aside>
+        </div>
+      </div>
+      <div className="mt-10">
+        <div className="bg-[var(--overlay-light)] backdrop-blur-lg rounded-2xl shadow-2xl border border-[color:var(--border-translucent-strong)] p-5 sm:p-6">
+          <h3 className="mb-4 flex items-center text-base font-semibold text-[var(--foreground)] sm:text-lg">
+            <Brain className="w-5 h-5 mr-2 text-[var(--icon-blue)]" />
+            Kategoria
+          </h3>
+          <div className="mb-4 text-xs text-[var(--muted-foreground)] sm:text-sm">
+            Kliknij, aby zaznaczyć jedną lub kilka kategorii. Aktualnie wybrane: {selectedCategoriesLabel || "brak"}.
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {languageCategories.map((cat) => (
+              <button
+                key={cat.name}
+                type="button"
+                onClick={() => toggleCategory(cat.name)}
+                aria-pressed={selectedCategories.includes(cat.name)}
+                className={`rounded-xl p-3 text-sm font-medium transition-all duration-300 ${
+                  selectedCategories.includes(cat.name)
+                    ? "bg-gradient-to-r from-[var(--cta-gradient-from)] to-[var(--cta-gradient-to)] text-[var(--foreground)] shadow-lg shadow-[rgba(29,78,216,0.35)]"
+                    : "bg-[var(--overlay-light)] backdrop-blur-sm text-[var(--muted-foreground)] hover:bg-[var(--overlay-light-strong)] border border-[color:var(--border-translucent-strong)]"
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div></div>

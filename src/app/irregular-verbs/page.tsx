@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, type KeyboardEvent } from "react";
 
-import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
 import { VERB_SETS, type Verb } from "@/components/words/irreagular_verbs";
 import {
@@ -11,7 +10,6 @@ import {
   type LearningLanguage,
 } from "@/components/words/language_packs";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { addPoints } from "../utils/addPoints";
 import { Mic, Trophy, Clock, Target, CheckCircle2, XCircle, Flame, Star, Crown, Sparkles, Zap, Brain } from "lucide-react";
 
 interface Achievement {
@@ -83,30 +81,36 @@ export default function IrregularVerbsTrainer() {
 
     return matchesSupportedLanguage ? selectedLanguage : "en";
   }, [selectedLanguage]);
-  const [remainingVerbs, setRemainingVerbs] = useState<Verb[]>(() => [
-    ...VERB_SETS[activeLanguage],
-  ]);
-  const [currentVerb, setCurrentVerb] = useState<Verb>(() =>
-    getRandomVerb(VERB_SETS[activeLanguage])
+  const verbList = useMemo(
+    () => VERB_SETS[activeLanguage] ?? VERB_SETS.en,
+    [activeLanguage]
   );
+  const [remainingVerbs, setRemainingVerbs] = useState<Verb[]>(() => [
+    ...verbList,
+  ]);
+  const [currentVerb, setCurrentVerb] = useState<Verb>(() => {
+    const fallbackVerb = verbList[0] ?? VERB_SETS.en[0];
+
+    return (
+      fallbackVerb ?? {
+        index: -1,
+        base: "",
+        past: "",
+        participle: "",
+        translation: "",
+      }
+    );
+  });
   const [inputBase, setInputBase] = useState("");
   const [inputPast, setInputPast] = useState("");
   const [inputParticiple, setInputParticiple] = useState("");
   const baseInputRef = useRef<HTMLInputElement>(null);
   const [result, setResult] = useState("");
-  const [firstName, setFirstName] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
   const [totalAnswers, setTotalAnswers] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [darkMode, setDarkMode] = useState(true);
-  const [progressId, setProgressId] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [timeSpent, setTimeSpent] = useState<number>(0);
   const [sessionTime, setSessionTime] = useState<number>(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // Dopaminowe elementy
   const [streak, setStreak] = useState(0);
@@ -146,33 +150,6 @@ export default function IrregularVerbsTrainer() {
     setTimeout(() => setParticles([]), 3000);
   };
 
-  const loadUserData = async () => {
-    try {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        if (authError) {
-          console.error("Authentication error:", authError);
-        }
-        setIsAuthenticated(false);
-        setUserId(null);
-        setFirstName(null);
-        return;
-      }
-
-      setIsAuthenticated(true);
-      setUserId(user.id);
-    } catch (error) {
-      console.error("Unexpected authentication error:", error);
-      setIsAuthenticated(false);
-      setUserId(null);
-      setFirstName(null);
-    }
-  };
-
   const startRecognition = (setter: (val: string) => void) => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -195,153 +172,6 @@ export default function IrregularVerbsTrainer() {
     };
   };
 
-  const loadProgress = async (id: string) => {
-    if (activeLanguage !== "en" || !isAuthenticated) return;
-
-    try {
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("first_name")
-        .eq("id", id)
-        .single();
-
-      if (!profileError && profileData) {
-        setFirstName(profileData.first_name);
-      }
-
-    const { data, error } = await supabase
-      .from("exercise_attempts")
-      .select("id, metadata, correct_answers, total_questions, completed_at")
-      .eq("user_id", id)
-      .eq("metadata->>progress_type", "irregular_verbs_state")
-      .order("completed_at", { ascending: false })
-      .maybeSingle();
-
-    if (error) {
-      console.error("Błąd ładowania postępu czasowników:", error.message);
-    }
-
-    if (data) {
-      setProgressId(data.id);
-      const metadata = (data.metadata as Record<string, any>) ?? {};
-      const storedRemaining = Array.isArray(metadata.remaining_verbs)
-        ? metadata.remaining_verbs
-        : [];
-      const remainingVerbObjects = VERB_SETS.en.filter((verb) =>
-        storedRemaining.includes(verb.index)
-      );
-
-      const verbsToUse =
-        remainingVerbObjects.length > 0
-          ? remainingVerbObjects
-          : [...VERB_SETS.en];
-      setRemainingVerbs(verbsToUse);
-      setCurrentVerb(getRandomVerb(verbsToUse));
-      setCorrectAnswers(data.correct_answers || 0);
-      setTotalAnswers(data.total_questions || 0);
-      setTimeSpent(Number(metadata.time_spent) || 0);
-    } else {
-      setProgressId(null);
-      setRemainingVerbs([...VERB_SETS.en]);
-      setCurrentVerb(getRandomVerb(VERB_SETS.en));
-      setCorrectAnswers(0);
-      setTotalAnswers(0);
-      setTimeSpent(0);
-    }
-    } catch (loadError) {
-      console.error(
-        "Nieoczekiwany błąd podczas ładowania postępu czasowników:",
-        loadError
-      );
-    }
-  };
-
-  const saveProgress = async (id: string) => {
-    if (activeLanguage !== "en" || !isAuthenticated) return;
-
-    const metadata = {
-      progress_type: "irregular_verbs_state",
-      remaining_verbs: remainingVerbs.map((verb) => verb.index),
-      time_spent: timeSpent + sessionTime,
-      last_updated: new Date().toISOString(),
-    };
-
-    if (progressId) {
-      const { error: updateError } = await supabase
-        .from("exercise_attempts")
-        .update({
-          metadata,
-          correct_answers: correctAnswers,
-          incorrect_answers: Math.max(totalAnswers - correctAnswers, 0),
-          total_questions: totalAnswers,
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", progressId);
-
-      if (updateError) {
-        console.error("Błąd aktualizacji postępu czasowników:", updateError.message);
-      }
-    } else {
-      const now = new Date();
-      const sessionStart = new Date(now.getTime() - Math.max(1, sessionTime) * 1000);
-
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("exercise_sessions")
-        .insert([
-          {
-            user_id: id,
-            started_at: sessionStart.toISOString(),
-            ended_at: now.toISOString(),
-            source: "irregular_verbs",
-          },
-        ])
-        .select("id")
-        .single();
-
-      if (sessionError || !sessionData) {
-        console.error("Błąd zapisu sesji czasowników:", sessionError?.message);
-        return;
-      }
-
-      const { data: attemptData, error: insertError } = await supabase
-        .from("exercise_attempts")
-        .insert([
-          {
-            session_id: sessionData.id,
-            user_id: id,
-            skill_tags: ["irregular_verbs", "progress_state"],
-            started_at: sessionStart.toISOString(),
-            completed_at: now.toISOString(),
-            total_questions: totalAnswers,
-            correct_answers: correctAnswers,
-            incorrect_answers: Math.max(totalAnswers - correctAnswers, 0),
-            metadata,
-          },
-        ])
-        .select("id")
-        .single();
-
-      if (insertError) {
-        console.error("Błąd zapisu postępu czasowników:", insertError.message);
-        return;
-      }
-
-      if (attemptData) {
-        setProgressId(attemptData.id);
-      }
-    }
-  };
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  useEffect(() => {
-    if (activeLanguage === "en" && isAuthenticated && userId) {
-      loadProgress(userId);
-    }
-  }, [activeLanguage, isAuthenticated, userId]);
-
   useEffect(() => {
     const interval = setInterval(() => {
       setSessionTime((prev) => prev + 1);
@@ -349,44 +179,6 @@ export default function IrregularVerbsTrainer() {
 
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (activeLanguage !== "en" || !isAuthenticated || !userId) return;
-    const timerId = window.setTimeout(() => {
-      saveProgress(userId);
-    }, 1000);
-
-    return () => {
-      window.clearTimeout(timerId);
-    };
-  }, [
-    activeLanguage,
-    isAuthenticated,
-    userId,
-    remainingVerbs,
-    correctAnswers,
-    totalAnswers,
-    timeSpent,
-    sessionTime,
-  ]);
-
-  useEffect(() => {
-    if (activeLanguage !== "en" || !isAuthenticated || !userId) return;
-    const interval = setInterval(() => {
-      saveProgress(userId);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [
-    activeLanguage,
-    isAuthenticated,
-    userId,
-    remainingVerbs,
-    correctAnswers,
-    totalAnswers,
-    timeSpent,
-    sessionTime,
-  ]);
 
   // Hide achievement after 3 seconds
   useEffect(() => {
@@ -397,7 +189,7 @@ export default function IrregularVerbsTrainer() {
   }, [showAchievement]);
 
   useEffect(() => {
-    const freshVerbs = [...VERB_SETS[activeLanguage]];
+    const freshVerbs = [...verbList];
     const randomVerb = getRandomVerb(freshVerbs);
     setRemainingVerbs(freshVerbs);
     setCurrentVerb(randomVerb);
@@ -410,13 +202,12 @@ export default function IrregularVerbsTrainer() {
     setTotalAnswers(0);
     setCorrectAnswers(0);
     setSessionTime(0);
-    setTimeSpent(0);
     setStreak(0);
     setFeedbackState("");
-  }, [activeLanguage]);
+  }, [activeLanguage, verbList]);
 
-  const resetTrainer = async () => {
-    const freshVerbs = [...VERB_SETS[activeLanguage]];
+  const resetTrainer = () => {
+    const freshVerbs = [...verbList];
     const randomVerb = getRandomVerb(freshVerbs);
     setRemainingVerbs(freshVerbs);
     setCurrentVerb(randomVerb);
@@ -429,16 +220,12 @@ export default function IrregularVerbsTrainer() {
     setTotalAnswers(0);
     setCorrectAnswers(0);
     setSessionTime(0);
-    setTimeSpent(0);
     setStreak(0);
     setFeedbackState("");
 
-    if (activeLanguage === "en" && isAuthenticated && userId) {
-      await saveProgress(userId);
-    }
   };
 
-  const checkAnswers = async () => {
+  const checkAnswers = () => {
     const isBaseCorrect =
       inputBase.trim().toLowerCase() === currentVerb.base.toLowerCase();
     const isPastCorrect =
@@ -449,18 +236,7 @@ export default function IrregularVerbsTrainer() {
 
     const isCorrect = isBaseCorrect && isPastCorrect && isParticipleCorrect;
     
-    // Zapisz czas odpowiedzi
-    const timeTaken = sessionTime; // lub inny sposób mierzenia czasu odpowiedzi
-
     setTotalAnswers((prev) => prev + 1);
-
-    if (isAuthenticated && userId && isCorrect) {
-      try {
-        await addPoints(userId, 4);
-      } catch (error) {
-        console.error("Error while adding points:", error);
-      }
-    }
 
     if (isCorrect) {
       setResult("✅ Wszystko poprawnie!");
@@ -495,6 +271,13 @@ export default function IrregularVerbsTrainer() {
     }
   };
 
+  const revealAnswer = () => {
+    if (!showAnswer && !answeredCorrectly) {
+      setTotalAnswers((prev) => prev + 1);
+    }
+    setShowAnswer(true);
+  };
+
   const nextVerb = () => {
     if (remainingVerbs.length === 0) {
       setResult("🎉 Wszystkie czasowniki zostały rozwiązane!");
@@ -523,19 +306,27 @@ export default function IrregularVerbsTrainer() {
   };
 
   // 🔑 Obsługa klawiatury
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
       if (showAnswer || answeredCorrectly) {
         nextVerb();
       } else {
         checkAnswers();
       }
-    } else if (e.key === " ") {
-      e.preventDefault();
-      setShowAnswer(true);
+      return;
     }
-    // ⚠️ nie przechwytujemy Taba — zostaje domyślne przechodzenie
+
+    if (
+      event.key === " " &&
+      !event.shiftKey &&
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey
+    ) {
+      event.preventDefault();
+      revealAnswer();
+    }
   };
 
   const getAccuracy = () => {
@@ -551,8 +342,8 @@ export default function IrregularVerbsTrainer() {
       .padStart(2, "0")}`;
   };
 
-  const totalTimeSpent = timeSpent + sessionTime;
-  const totalVerbs = VERB_SETS[activeLanguage].length;
+  const totalTimeSpent = sessionTime;
+  const totalVerbs = verbList.length;
   const masteredCount = totalVerbs - remainingVerbs.length;
   const progressPercentage =
     totalVerbs > 0 ? (masteredCount / totalVerbs) * 100 : 0;
@@ -586,20 +377,7 @@ export default function IrregularVerbsTrainer() {
           ))}
         </div>
 
-        {/* Achievement Popup */}
-        {showAchievement && (
-          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-[var(--foreground)] px-6 py-4 rounded-xl shadow-2xl border-2 border-yellow-300">
-              <div className="flex items-center space-x-3">
-                <div className="text-3xl">{showAchievement.icon}</div>
-                <div>
-                  <div className="font-bold text-lg">{showAchievement.name}</div>
-                  <div className="text-sm opacity-90">{showAchievement.description}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         <div className="max-w-4xl mx-auto px-4 py-6 relative">
 
@@ -642,6 +420,7 @@ export default function IrregularVerbsTrainer() {
                     ref={baseInputRef}
                     value={inputBase}
                     onChange={(e) => setInputBase(e.target.value)}
+                    onKeyDown={handleInputKeyDown}
                     placeholder={placeholders.base}
                     className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-[var(--focus-ring-strong)] focus:border-transparent transition-all duration-300 text-lg font-medium ${
                       feedbackClasses[feedbackState] || feedbackClasses.default
@@ -649,6 +428,7 @@ export default function IrregularVerbsTrainer() {
                   />
                   <button
                     onClick={() => startRecognition(setInputBase)}
+                    tabIndex={-1}
                     className="px-4 py-4 rounded-xl bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] border border-[color:var(--border-translucent-strong)] transition-all duration-300 transform hover:scale-110"
                   >
                     <Mic className="w-5 h-5" />
@@ -663,6 +443,7 @@ export default function IrregularVerbsTrainer() {
                   <input
                     value={inputPast}
                     onChange={(e) => setInputPast(e.target.value)}
+                    onKeyDown={handleInputKeyDown}
                     placeholder={placeholders.past}
                     className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-[var(--focus-ring-strong)] focus:border-transparent transition-all duration-300 text-lg font-medium ${
                       feedbackClasses[feedbackState] || feedbackClasses.default
@@ -670,6 +451,7 @@ export default function IrregularVerbsTrainer() {
                   />
                   <button
                     onClick={() => startRecognition(setInputPast)}
+                    tabIndex={-1}
                     className="px-4 py-4 rounded-xl bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] border border-[color:var(--border-translucent-strong)] transition-all duration-300 transform hover:scale-110"
                   >
                     <Mic className="w-5 h-5" />
@@ -684,6 +466,7 @@ export default function IrregularVerbsTrainer() {
                   <input
                     value={inputParticiple}
                     onChange={(e) => setInputParticiple(e.target.value)}
+                    onKeyDown={handleInputKeyDown}
                     placeholder={placeholders.participle}
                     className={`flex-1 px-6 py-4 border-2 rounded-xl focus:ring-2 focus:ring-[var(--focus-ring-strong)] focus:border-transparent transition-all duration-300 text-lg font-medium ${
                       feedbackClasses[feedbackState] || feedbackClasses.default
@@ -691,6 +474,7 @@ export default function IrregularVerbsTrainer() {
                   />
                   <button
                     onClick={() => startRecognition(setInputParticiple)}
+                    tabIndex={-1}
                     className="px-4 py-4 rounded-xl bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] border border-[color:var(--border-translucent-strong)] transition-all duration-300 transform hover:scale-110"
                   >
                     <Mic className="w-5 h-5" />
@@ -725,12 +509,7 @@ export default function IrregularVerbsTrainer() {
               </button>
 
               <button
-                onClick={() => {
-                  if (!showAnswer && !answeredCorrectly) {
-                    setTotalAnswers((prev) => prev + 1);
-                  }
-                  setShowAnswer(true);
-                }}
+                onClick={revealAnswer}
                 className="px-6 py-3 bg-[var(--overlay-light)] backdrop-blur-sm hover:bg-[var(--overlay-light-strong)] text-[var(--foreground)] rounded-xl transition-all duration-300 border border-[color:var(--border-translucent-strong)] transform hover:scale-105"
               >
                 Pokaż odpowiedź
