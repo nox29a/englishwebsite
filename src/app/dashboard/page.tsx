@@ -5,7 +5,16 @@ import { supabase } from "@/lib/supabaseClient";
 import { isAuthSessionMissingError } from "@/lib/authErrorUtils";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import ChartContainer from "@/components/ui/Chart";
+import ActivityChart from "@/app/stats/ActivityChart";
+import AccuracyTrend from "@/app/stats/AccuracyTrend";
+import Leaderboard from "@/app/stats/Leaderboard";
+import LearningHeatmap from "@/app/stats/LearningHeatmap";
+import Mistakes from "@/app/stats/Mistakes";
+import MistakesChart from "@/app/stats/MistakesChart";
+import SessionLengthDistribution from "@/app/stats/SessionLengthDistribution";
+import StreakCounter from "@/app/stats/StreakCounter";
+import TimeOfDayPerformance from "@/app/stats/TimeOfDayPerformance";
+import VocabularyGrowth from "@/app/stats/VocabularyGrowth";
 import { 
   Trophy, 
   Target, 
@@ -57,6 +66,30 @@ export default function DashboardPage() {
     () => import("@/components/ui/Chart"),
     { ssr: false }
   ) as React.FC<ChartProps>;
+
+  const skillNameMap: Record<string, string> = {
+    irregular_verbs: "Czasowniki nieregularne",
+    flashcards: "Fiszki",
+    word_match: "Dopasowywanie słów",
+    grammar: "Gramatyka",
+    vocabulary: "Słownictwo",
+  };
+
+  const formatSkillTag = (tag?: string | null) => {
+    if (!tag) {
+      return "Ogólne";
+    }
+
+    const normalized = skillNameMap[tag];
+    if (normalized) {
+      return normalized;
+    }
+
+    return tag
+      .split("_")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  };
 
   const handleLogout = async () => {
     try {
@@ -364,7 +397,7 @@ export default function DashboardPage() {
     answerEvents.reduce((acc: Record<string, { name: string; correct: number; total: number }>, event) => {
       const skill = event.skill_tag ?? 'inne';
       if (!acc[skill]) {
-        acc[skill] = { name: skill, correct: 0, total: 0 };
+        acc[skill] = { name: formatSkillTag(skill), correct: 0, total: 0 };
       }
       acc[skill].total += 1;
       if (event.is_correct) {
@@ -381,7 +414,7 @@ export default function DashboardPage() {
     answerEvents.reduce((acc: Record<string, { name: string; totalLatency: number; count: number }>, event) => {
       const skill = event.skill_tag ?? 'inne';
       if (!acc[skill]) {
-        acc[skill] = { name: skill, totalLatency: 0, count: 0 };
+        acc[skill] = { name: formatSkillTag(skill), totalLatency: 0, count: 0 };
       }
       acc[skill].totalLatency += event.latency_ms ?? 0;
       acc[skill].count += 1;
@@ -657,83 +690,7 @@ export default function DashboardPage() {
             </StatCard>
           </div>
 
-          {/* Detailed Progress Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-            {/* Flashcards Progress */}
-            <DetailedStatCard
-              title="Postępy w fiszkach"
-              icon={<Brain className="w-5 h-5 text-[#E2E8F0]" />}
-            >
-              {flashcardsData?.length > 0 ? (
-                <div className="space-y-4">
-                  {flashcardsData.map((item: any, index: number) => (
-                    <div
-                      key={`flashcard-${index}-${item.level}-${item.direction}`}
-                      className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 transition-all duration-300 hover:bg-white/10"
-                    >
-                      <h4 className="font-semibold text-slate-100 mb-2">
-                        {item.level} ({item.direction})
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm text-slate-300 mb-3">
-                        <span>Pozostało: {item.remaining_ids?.length || 0}</span>
-                        <span>Poprawne: {item.correct_answers}/{item.total_answers}</span>
-                        <span>Dokładność: {item.total_answers > 0 ? Math.round((item.correct_answers / item.total_answers) * 100) : 0}%</span>
-                        <span>Czas: {Math.round((item.time_spend || 0) / 60)} min</span>
-                      </div>
-                      <div className="bg-white/5 backdrop-blur-sm rounded-full h-2 overflow-hidden border border-white/10">
-                        <div
-                          className="bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A] h-2 rounded-full transition-all duration-1000 ease-out"
-                          style={{
-                            width: `${item.total_answers > 0 ? Math.round((item.correct_answers / item.total_answers) * 100) : 0}%`
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-slate-400">Brak danych o fiszkach</p>
-              )}
-            </DetailedStatCard>
 
-            {/* Word Match Progress */}
-            <DetailedStatCard
-              title="Dopasowywanie Słów"
-              icon={<Star className="w-5 h-5 text-[#E2E8F0]" />}
-            >
-              {wordMatchData?.length > 0 ? (
-                <div className="space-y-4">
-                  {wordMatchData.map((item: any, index: number) => (
-                    <div
-                      key={`wordmatch-${index}-${item.difficulty}`}
-                      className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 transition-all duration-300 hover:bg-white/10"
-                    >
-                      <h4 className="font-semibold text-slate-100 mb-2">
-                        Poziom: {item.difficulty}
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm text-slate-300 mb-3">
-                        <span>Nauczone: {item.learned_ids?.length || 0}</span>
-                        <span>Wynik: {item.score}</span>
-                        <span>Błędy: {item.errors}</span>
-                        <span>Czas: {Math.round(item.time_spent / 60)} min</span>
-                        <span className="col-span-2">Dokładność: {(item.score + item.errors) > 0 ? Math.round((item.score / (item.score + item.errors)) * 100) : 0}%</span>
-                      </div>
-                      <div className="bg-white/5 backdrop-blur-sm rounded-full h-2 overflow-hidden border border-white/10">
-                        <div
-                          className="bg-gradient-to-r from-[#1D4ED8] to-[#1E3A8A] h-2 rounded-full transition-all duration-1000 ease-out"
-                          style={{
-                            width: `${(item.score + item.errors) > 0 ? Math.round((item.score / (item.score + item.errors)) * 100) : 0}%`
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-slate-400">Brak danych o dopasowywaniu</p>
-              )}
-            </DetailedStatCard>
-          </div>
 
           {/* Advanced analytics from Supabase */}
           <div className="mt-10 space-y-6">
@@ -834,7 +791,7 @@ export default function DashboardPage() {
                         className="bg-[var(--overlay-dark)] backdrop-blur-sm rounded-xl p-4 border border-[color:var(--border-translucent)]"
                       >
                         <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-[var(--foreground)]">{snapshot.skill_tag}</h4>
+                          <h4 className="font-semibold text-[var(--foreground)]">{formatSkillTag(snapshot.skill_tag)}</h4>
                           <span className="text-sm text-gray-400">{new Date(snapshot.updated_at).toLocaleDateString('pl-PL')}</span>
                         </div>
                         <p className="text-gray-300 mt-2">Aktualna biegłość: {Math.round(snapshot.current_mastery ?? 0)}%</p>
@@ -864,9 +821,15 @@ export default function DashboardPage() {
                           </span>
                           <span className="text-gray-400">{new Date(event.created_at).toLocaleTimeString('pl-PL')}</span>
                         </div>
-                        <p className="text-gray-300 text-sm mt-1">Umiejętność: {event.skill_tag ?? 'ogólne'}</p>
-                        {event.question_identifier && (
-                          <p className="text-gray-400 text-xs">Id: {event.question_identifier}</p>
+                        <p className="text-gray-300 text-sm mt-1">Umiejętność: {formatSkillTag(event.skill_tag)}</p>
+                        {event.prompt && (
+                          <p className="text-gray-200 text-sm mt-2 leading-snug">Zadanie: {event.prompt}</p>
+                        )}
+                        {event.expected_answer && (
+                          <p className="text-gray-400 text-xs mt-2">Oczekiwana odpowiedź: {event.expected_answer}</p>
+                        )}
+                        {event.user_answer && (
+                          <p className="text-gray-400 text-xs">Twoja odpowiedź: {event.user_answer}</p>
                         )}
                       </div>
                     ))}
@@ -924,12 +887,35 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </DetailedStatCard>
-            </div>
+          </div>
+        </div>
+
+        {/* Deep-dive learning insights (moved from /stats) */}
+        <div className="mt-12 space-y-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl font-bold text-[var(--foreground)]">Szczegółowe analizy nauki</h2>
+            <p className="text-gray-300">
+              Wszystkie wykresy i zestawienia przeniesione z panelu statystyk – teraz w jednym miejscu z Twoim dashboardem.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <Leaderboard />
+            <StreakCounter />
+            <ActivityChart />
+            <LearningHeatmap />
+            <Mistakes />
+            <MistakesChart />
+            <SessionLengthDistribution />
+            <VocabularyGrowth />
+            <AccuracyTrend />
+            <TimeOfDayPerformance />
           </div>
         </div>
       </div>
-    </>
-  );
+    </div>
+  </>
+);
 }
 
 // Enhanced Stat Card Component

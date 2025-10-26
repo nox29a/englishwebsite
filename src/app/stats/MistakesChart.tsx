@@ -15,7 +15,7 @@ interface AttemptStat {
   value: number;
 }
 
-const COLORS = ["#EF4444", "#10B981"];
+const COLORS = ["#10B981", "#EF4444" ];
 
 export default function MistakesChart() {
   const [stats, setStats] = useState<AttemptStat[]>([]);

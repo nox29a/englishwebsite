@@ -23,6 +23,10 @@ import { cn } from "@/lib/utils";
 import { addPoints } from "../utils/addPoints";
 import { saveAttempt } from "../utils/saveAttempt";
 import type { User } from "@supabase/supabase-js";
+import {
+  CUSTOM_FLASHCARD_EVENT,
+  getCustomCategoriesForLanguage,
+} from "@/lib/customCategories";
 
 // Definicje typów dla Speech Recognition API
 declare global {
@@ -142,14 +146,42 @@ const createPlaceholderWord = (pl: string, en: string): Word => ({
 
 export default function FlashcardGame() {
   const { language, setLanguage } = useLanguage();
-  const languageCategories = useMemo(
+  const baseCategories = useMemo(
     () => LANGUAGE_DATASETS[language] ?? LANGUAGE_DATASETS.en,
     [language]
   );
+  const [customCategories, setCustomCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const updateCustomCategories = () => {
+      setCustomCategories(getCustomCategoriesForLanguage(language));
+    };
+
+    updateCustomCategories();
+
+    window.addEventListener(CUSTOM_FLASHCARD_EVENT, updateCustomCategories);
+
+    return () => {
+      window.removeEventListener(
+        CUSTOM_FLASHCARD_EVENT,
+        updateCustomCategories
+      );
+    };
+  }, [language]);
+
+  const languageCategories = useMemo(
+    () => [...baseCategories, ...customCategories],
+    [baseCategories, customCategories]
+  );
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
     languageCategories[0]?.name ? [languageCategories[0].name] : []
   );
-  const [level, setLevel] = useState("easy");
+  const [level, setLevel] = useState<(typeof LEVEL_OPTIONS)[number]>("easy");
   const [direction, setDirection] = useState<
     "native-to-target" | "target-to-native"
   >("native-to-target");
@@ -159,11 +191,46 @@ export default function FlashcardGame() {
   const [score, setScore] = useState(0);
   const [feedbackState, setFeedbackState] = useState<"correct" | "incorrect" | "">("");
   const [correctAnswer, setCorrectAnswer] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [totalTimeSpent, setTotalTimeSpent] = useState(0);
   const [availableLevels, setAvailableLevels] = useState<string[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState(Date.now());
   const questionStartRef = useRef(Date.now());
+  const [hasRestoredProgress, setHasRestoredProgress] = useState(false);
+  const skipAutoLoadRef = useRef(false);
+
+  const wordMap = useMemo(() => {
+    const map = new Map<number, Word>();
+    languageCategories.forEach((category) => {
+      category.words.forEach((word) => {
+        map.set(word.id, word);
+      });
+    });
+    return map;
+  }, [languageCategories]);
+
+  interface StoredFlashcardProgress {
+    version: number;
+    language: LearningLanguage;
+    direction: "native-to-target" | "target-to-native";
+    level: (typeof LEVEL_OPTIONS)[number];
+    selectedCategories: string[];
+    remainingIds: number[];
+    currentId: number;
+    score: number;
+    streak: number;
+    maxStreak: number;
+    totalScore: number;
+    combo: number;
+    levelXp: number;
+    userLevel: number;
+    energy: number;
+    badges: string[];
+    sessionStartTime: number;
+    totalTimeSpent: number;
+  }
+
+  const PROGRESS_STORAGE_KEY = "flashcards-progress-v1";
 
   const levelOptions = useMemo<
     LevelOption<(typeof LEVEL_OPTIONS)[number]>[]
@@ -399,11 +466,14 @@ export default function FlashcardGame() {
     }
   };
 
-  const getWords = (levelToUse = level): Word[] => {
-    if (!selectedCategories.length) return [];
+  const getWords = (
+    levelToUse = level,
+    categoriesToUse = selectedCategories
+  ): Word[] => {
+    if (!categoriesToUse.length) return [];
 
     const selected = languageCategories.filter((category) =>
-      selectedCategories.includes(category.name)
+      categoriesToUse.includes(category.name)
     );
 
     const words = selected.flatMap((category) =>
@@ -418,12 +488,14 @@ export default function FlashcardGame() {
     return Array.from(uniqueWords.values());
   };
 
-  const getAvailableLevels = (): string[] => {
-    if (!selectedCategories.length) return [];
+  const getAvailableLevels = (
+    categoriesToUse = selectedCategories
+  ): Array<(typeof LEVEL_OPTIONS)[number]> => {
+    if (!categoriesToUse.length) return [];
 
-    const levels = new Set<string>();
+    const levels = new Set<(typeof LEVEL_OPTIONS)[number]>();
     languageCategories
-      .filter((category) => selectedCategories.includes(category.name))
+      .filter((category) => categoriesToUse.includes(category.name))
       .forEach((category) => {
         category.words.forEach((word) => levels.add(word.level));
       });
@@ -440,10 +512,10 @@ export default function FlashcardGame() {
 
   const loadProgress = () => {
     setLoading(true);
-    
+
     const levels = getAvailableLevels();
     setAvailableLevels(levels);
-    
+
     let currentLevel = level;
     if (levels.length > 0 && !levels.includes(level)) {
       currentLevel = levels[0];
@@ -466,6 +538,154 @@ export default function FlashcardGame() {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!languageCategories.length) return;
+    const stored = window.localStorage.getItem(PROGRESS_STORAGE_KEY);
+
+    if (!stored) {
+      setHasRestoredProgress(true);
+      return;
+    }
+
+    try {
+      const parsed: StoredFlashcardProgress = JSON.parse(stored);
+
+      if (
+        !parsed ||
+        parsed.version !== 1 ||
+        parsed.language !== language
+      ) {
+        window.localStorage.removeItem(PROGRESS_STORAGE_KEY);
+        setHasRestoredProgress(true);
+        return;
+      }
+
+      const validCategories = parsed.selectedCategories.filter((name) =>
+        languageCategories.some((category) => category.name === name)
+      );
+
+      if (!validCategories.length) {
+        window.localStorage.removeItem(PROGRESS_STORAGE_KEY);
+        setHasRestoredProgress(true);
+        return;
+      }
+
+      const levelsForCategories = getAvailableLevels(validCategories);
+
+      if (!levelsForCategories.includes(parsed.level)) {
+        window.localStorage.removeItem(PROGRESS_STORAGE_KEY);
+        setHasRestoredProgress(true);
+        return;
+      }
+
+      const restoredRemaining = parsed.remainingIds
+        .map((id) => wordMap.get(id))
+        .filter((word): word is Word => Boolean(word));
+
+      const restoredCurrent = wordMap.get(parsed.currentId) ?? null;
+
+      skipAutoLoadRef.current = true;
+
+      setSelectedCategories(validCategories);
+      setLevel(parsed.level);
+      setDirection(parsed.direction);
+      setAvailableLevels(levelsForCategories);
+      setRemaining(restoredRemaining);
+      setCurrent(
+        restoredCurrent && restoredCurrent.id !== -1
+          ? restoredCurrent
+          : restoredRemaining.length > 0
+            ? getRandomWord(restoredRemaining)
+            : { id: -1, pl: "Brak fiszek", en: "No flashcards", level: "easy" }
+      );
+      setScore(parsed.score ?? 0);
+      setStreak(parsed.streak ?? 0);
+      setMaxStreak(parsed.maxStreak ?? 0);
+      setTotalScore(parsed.totalScore ?? 0);
+      setCombo(parsed.combo ?? 0);
+      setLevelXp(parsed.levelXp ?? 0);
+      setUserLevel(parsed.userLevel ?? 1);
+      setEnergy(parsed.energy ?? 100);
+      setBadges(parsed.badges ?? []);
+      setTotalTimeSpent(parsed.totalTimeSpent ?? 0);
+      setSessionStartTime(parsed.sessionStartTime ?? Date.now());
+      questionStartRef.current = Date.now();
+      setLoading(false);
+      setHasRestoredProgress(true);
+    } catch (error) {
+      console.error("Failed to restore flashcard progress", error);
+      window.localStorage.removeItem(PROGRESS_STORAGE_KEY);
+      setHasRestoredProgress(true);
+    }
+  }, [language, languageCategories, wordMap]);
+
+  useEffect(() => {
+    if (!hasRestoredProgress) return;
+    if (skipAutoLoadRef.current) {
+      skipAutoLoadRef.current = false;
+      return;
+    }
+
+    loadProgress();
+  }, [selectedCategories, level, language, hasRestoredProgress]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!hasRestoredProgress) return;
+    if (loading) return;
+
+    if (current.id === -1 || remaining.length === 0) {
+      window.localStorage.removeItem(PROGRESS_STORAGE_KEY);
+      return;
+    }
+
+    const payload: StoredFlashcardProgress = {
+      version: 1,
+      language,
+      direction,
+      level,
+      selectedCategories,
+      remainingIds: remaining.map((word) => word.id),
+      currentId: current.id,
+      score,
+      streak,
+      maxStreak,
+      totalScore,
+      combo,
+      levelXp: level_xp,
+      userLevel,
+      energy,
+      badges,
+      sessionStartTime,
+      totalTimeSpent,
+    };
+
+    window.localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(payload));
+  }, [
+    badges,
+    combo,
+    current,
+    direction,
+    energy,
+    hasRestoredProgress,
+    language,
+    level,
+    level_xp,
+    loading,
+    maxStreak,
+    remaining,
+    score,
+    selectedCategories,
+    sessionStartTime,
+    streak,
+    totalScore,
+    totalTimeSpent,
+    userLevel,
+  ]);
+
+  useEffect(() => {
+    if (!hasRestoredProgress) return;
+
     if (current.id !== -1) {
       setInput("");
       setFeedbackState("");
@@ -473,11 +693,7 @@ export default function FlashcardGame() {
     } else {
       loadProgress();
     }
-  }, [direction, language]);
-
-  useEffect(() => {
-    loadProgress();
-  }, [selectedCategories, level, language]);
+  }, [direction, language, hasRestoredProgress]);
 
   useEffect(() => {
     if (current.id !== -1) {

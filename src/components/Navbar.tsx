@@ -208,6 +208,10 @@ export default function Navbar() {
       label: "Nauka słówek"
     },
     {
+      href: "/youtube-kategorie",
+      label: "Kategorie z YouTube"
+    },
+    {
       href: "/vocabulary",
       label: "Dopasowanie słówek"
     },
@@ -286,10 +290,7 @@ export default function Navbar() {
                 AxonAI
               </div>
               <div>
-                <div className="text-2xl font-bold tracking-wide text-slate-100">
-                 
-                </div>
-                <div className="text-xs text-slate-400 -mt-1">Empower your Language</div>
+    
               </div>
             </Link>
 

@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, type KeyboardEvent } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  type KeyboardEvent,
+} from "react";
 
 import Navbar from "@/components/Navbar";
 import { VERB_SETS, type Verb } from "@/components/words/irreagular_verbs";
@@ -70,8 +77,10 @@ const VERB_PLACEHOLDERS: Record<
 };
 
 export default function IrregularVerbsTrainer() {
-  const getRandomVerb = (list: Verb[]) =>
-    list[Math.floor(Math.random() * list.length)] ?? list[0];
+  const getRandomVerb = useCallback(
+    (list: Verb[]) => list[Math.floor(Math.random() * list.length)] ?? list[0],
+    []
+  );
 
   const { language: selectedLanguage } = useLanguage();
   const activeLanguage = useMemo<LearningLanguage>(() => {
@@ -111,6 +120,7 @@ export default function IrregularVerbsTrainer() {
   const [totalAnswers, setTotalAnswers] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [sessionTime, setSessionTime] = useState<number>(0);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Dopaminowe elementy
   const [streak, setStreak] = useState(0);
@@ -126,6 +136,37 @@ export default function IrregularVerbsTrainer() {
   const targetLabel = currentLanguageOption?.label ?? "Angielski";
   const fieldLabels = VERB_FIELD_LABELS[activeLanguage];
   const placeholders = VERB_PLACEHOLDERS[activeLanguage];
+  const progressKey = useMemo(
+    () => `irregularVerbsProgress:${activeLanguage}`,
+    [activeLanguage]
+  );
+
+  const applyDefaultState = useCallback(() => {
+    const freshVerbs = [...verbList];
+    const fallbackVerb =
+      freshVerbs[0] ?? {
+        index: -1,
+        base: "",
+        past: "",
+        participle: "",
+        translation: "",
+      };
+    const randomVerb = getRandomVerb(freshVerbs) ?? fallbackVerb;
+
+    setRemainingVerbs(freshVerbs);
+    setCurrentVerb(randomVerb);
+    setInputBase("");
+    setInputPast("");
+    setInputParticiple("");
+    setResult("");
+    setShowAnswer(false);
+    setAnsweredCorrectly(false);
+    setTotalAnswers(0);
+    setCorrectAnswers(0);
+    setSessionTime(0);
+    setStreak(0);
+    setFeedbackState("");
+  }, [getRandomVerb, verbList]);
 
   // Particle system for celebrations
   const createParticles = (type = 'success') => {
@@ -190,40 +231,132 @@ export default function IrregularVerbsTrainer() {
 
   useEffect(() => {
     const freshVerbs = [...verbList];
-    const randomVerb = getRandomVerb(freshVerbs);
-    setRemainingVerbs(freshVerbs);
-    setCurrentVerb(randomVerb);
-    setInputBase("");
-    setInputPast("");
-    setInputParticiple("");
-    setResult("");
-    setShowAnswer(false);
-    setAnsweredCorrectly(false);
-    setTotalAnswers(0);
-    setCorrectAnswers(0);
-    setSessionTime(0);
-    setStreak(0);
-    setFeedbackState("");
-  }, [activeLanguage, verbList]);
 
-  const resetTrainer = () => {
-    const freshVerbs = [...verbList];
-    const randomVerb = getRandomVerb(freshVerbs);
-    setRemainingVerbs(freshVerbs);
-    setCurrentVerb(randomVerb);
-    setInputBase("");
-    setInputPast("");
-    setInputParticiple("");
-    setResult("");
-    setShowAnswer(false);
-    setAnsweredCorrectly(false);
-    setTotalAnswers(0);
-    setCorrectAnswers(0);
-    setSessionTime(0);
-    setStreak(0);
-    setFeedbackState("");
+    if (typeof window === "undefined") {
+      applyDefaultState();
+      setIsInitialized(true);
+      return;
+    }
 
-  };
+    const storedProgress = window.localStorage.getItem(progressKey);
+
+    if (storedProgress) {
+      try {
+        const parsed = JSON.parse(storedProgress) as {
+          remainingIndices?: number[];
+          currentIndex?: number | null;
+          inputBase?: string;
+          inputPast?: string;
+          inputParticiple?: string;
+          result?: string;
+          showAnswer?: boolean;
+          answeredCorrectly?: boolean;
+          totalAnswers?: number;
+          correctAnswers?: number;
+          sessionTime?: number;
+          streak?: number;
+          feedbackState?: string;
+        };
+
+        const verbsByIndex = new Map(verbList.map((verb) => [verb.index, verb]));
+
+        if (Array.isArray(parsed.remainingIndices)) {
+          const savedIndices = parsed.remainingIndices;
+          const restoredRemaining = savedIndices
+            .map((index) => verbsByIndex.get(index))
+            .filter((verb): verb is Verb => Boolean(verb));
+          const hasValidRemaining = savedIndices.length === restoredRemaining.length;
+
+          const restoredCurrent =
+            typeof parsed.currentIndex === "number"
+              ? verbsByIndex.get(parsed.currentIndex)
+              : undefined;
+
+          if (restoredCurrent && hasValidRemaining) {
+            setRemainingVerbs(restoredRemaining);
+            setCurrentVerb(restoredCurrent);
+            setInputBase(parsed.inputBase ?? "");
+            setInputPast(parsed.inputPast ?? "");
+            setInputParticiple(parsed.inputParticiple ?? "");
+            setResult(parsed.result ?? "");
+            setShowAnswer(Boolean(parsed.showAnswer));
+            setAnsweredCorrectly(Boolean(parsed.answeredCorrectly));
+            setTotalAnswers(
+              typeof parsed.totalAnswers === "number" ? parsed.totalAnswers : 0
+            );
+            setCorrectAnswers(
+              typeof parsed.correctAnswers === "number" ? parsed.correctAnswers : 0
+            );
+            setSessionTime(
+              typeof parsed.sessionTime === "number" ? parsed.sessionTime : 0
+            );
+            setStreak(typeof parsed.streak === "number" ? parsed.streak : 0);
+            setFeedbackState(parsed.feedbackState ?? "");
+            setIsInitialized(true);
+            return;
+          }
+        }
+
+        window.localStorage.removeItem(progressKey);
+      } catch (error) {
+        window.localStorage.removeItem(progressKey);
+      }
+    }
+
+    applyDefaultState();
+    setIsInitialized(true);
+  }, [applyDefaultState, progressKey, verbList]);
+
+  const resetTrainer = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(progressKey);
+    }
+
+    applyDefaultState();
+    setShowAchievement(null);
+    setParticles([]);
+    setIsInitialized(true);
+  }, [applyDefaultState, progressKey]);
+
+  useEffect(() => {
+    if (!isInitialized || typeof window === "undefined") {
+      return;
+    }
+
+    const payload = {
+      remainingIndices: remainingVerbs.map((verb) => verb.index),
+      currentIndex: currentVerb?.index ?? null,
+      inputBase,
+      inputPast,
+      inputParticiple,
+      result,
+      showAnswer,
+      answeredCorrectly,
+      totalAnswers,
+      correctAnswers,
+      sessionTime,
+      streak,
+      feedbackState,
+    };
+
+    window.localStorage.setItem(progressKey, JSON.stringify(payload));
+  }, [
+    answeredCorrectly,
+    correctAnswers,
+    currentVerb,
+    feedbackState,
+    inputBase,
+    inputParticiple,
+    inputPast,
+    isInitialized,
+    progressKey,
+    remainingVerbs,
+    result,
+    sessionTime,
+    showAnswer,
+    streak,
+    totalAnswers,
+  ]);
 
   const checkAnswers = () => {
     const isBaseCorrect =

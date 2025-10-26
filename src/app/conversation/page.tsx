@@ -528,6 +528,7 @@ export default function GamePage() {
   const [isCheckingLimit, setIsCheckingLimit] = useState(true);
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('intermediate');
   const messageTimerRef = useRef<number>(Date.now());
+  const isPremiumUser = userProfile?.user_type === 'premium';
 
   const currentLanguageOption = useMemo(
     () => LANGUAGE_OPTIONS.find((option) => option.code === language),
@@ -786,6 +787,23 @@ export default function GamePage() {
             <div className='h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#1D4ED8]' />
             <p className='text-lg font-medium'>Ładujemy Twój profil...</p>
             <p className='text-sm text-slate-400'>To zajmie tylko chwilę.</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (!isPremiumUser) {
+    return (
+      <>
+        <Navbar />
+        <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-[#030712] via-[#050b1f] to-black text-slate-100'>
+          <div className='max-w-lg space-y-4 rounded-2xl border border-white/10 bg-white/5 p-8 text-center shadow-xl backdrop-blur-md'>
+            <h1 className='text-2xl font-semibold text-slate-100'>Opcja rozmowy tylko w wersji Premium</h1>
+            <p className='text-sm text-slate-300'>
+              Trener rozmów jest dostępny wyłącznie dla użytkowników z aktywną subskrypcją Premium. Zaloguj się na konto premium
+              lub skontaktuj się z nami, aby uaktualnić swój plan i odblokować dostęp do rozmów.
+            </p>
           </div>
         </div>
       </>
