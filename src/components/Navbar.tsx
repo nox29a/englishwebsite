@@ -207,10 +207,7 @@ export default function Navbar() {
       href: "/flashcards",
       label: "Nauka słówek"
     },
-    {
-      href: "/youtube-kategorie",
-      label: "Kategorie z YouTube"
-    },
+
     {
       href: "/vocabulary",
       label: "Dopasowanie słówek"
